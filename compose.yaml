@@ -1,0 +1,33 @@
+services:
+  letta_db:
+    image: pgvector/pgvector:0.8.1-pg15
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${LETTA_PG_USER:-letta}
+      POSTGRES_PASSWORD: ${LETTA_PG_PASSWORD:-letta}
+      POSTGRES_DB: ${LETTA_PG_DB:-letta}
+    volumes:
+      - ./data/pgdata:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    ports:
+      - "${LETTA_PG_PORT:-5432}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${LETTA_PG_USER:-letta} -d ${LETTA_PG_DB:-letta}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  letta_server:
+    image: letta/letta:latest
+    restart: unless-stopped
+    depends_on:
+      letta_db:
+        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      LETTA_PG_URI: ${LETTA_PG_URI:-postgresql://${LETTA_PG_USER:-letta}:${LETTA_PG_PASSWORD:-letta}@${LETTA_DB_HOST:-letta_db}:${LETTA_PG_PORT:-5432}/${LETTA_PG_DB:-letta}}
+      LETTA_DEBUG: ${LETTA_DEBUG:-True}
+    ports:
+      - "${LETTA_ADE_PORT:-8083}:8083"
+      - "${LETTA_API_PORT:-8283}:8283"
