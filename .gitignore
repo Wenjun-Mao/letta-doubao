@@ -6,3 +6,7 @@ data/pgdata/
 *.pyc
 
 letta-souce-code/
+
+.env*
+!.env.example
+!.env2.example

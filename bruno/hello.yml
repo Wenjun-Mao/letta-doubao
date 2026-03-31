@@ -1,0 +1,25 @@
+info:
+  name: hello
+  type: http
+  seq: 1
+
+http:
+  method: POST
+  url: http://100.81.194.12:1234/v1/responses
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+          "model": "qwen/qwen3.5-35b-a3b",
+          "input": "你好"
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

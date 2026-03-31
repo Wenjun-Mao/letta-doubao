@@ -6,10 +6,16 @@ requires-python = ">=3.12,<3.13"
 dependencies = [
     "httpx>=0.28.1",
     "letta-client>=1.8.0",
-    "marimo>=0.21.1",
+    "marimo[recommended]>=0.21.1",
     "python-dotenv>=1.2.2",
 ]
 
 [tool.uv]
 package = false
+
+[dependency-groups]
+dev = [
+    "ipykernel>=7.2.0",
+    "ipywidgets>=8.1.8",
+]
 

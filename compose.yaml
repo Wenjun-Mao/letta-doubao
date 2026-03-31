@@ -1,3 +1,5 @@
+name: letta-qwen3.5-35B
+
 services:
   letta_db:
     image: pgvector/pgvector:0.8.1-pg15
@@ -36,7 +38,7 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - .env
+      - .env2
     environment:
       LETTA_PG_URI: ${LETTA_PG_URI:-postgresql://${LETTA_PG_USER:-letta}:${LETTA_PG_PASSWORD:-letta}@${LETTA_DB_HOST:-letta_db}:${LETTA_PG_PORT:-5432}/${LETTA_PG_DB:-letta}}
       LETTA_REDIS_HOST: ${LETTA_REDIS_HOST:-redis}
