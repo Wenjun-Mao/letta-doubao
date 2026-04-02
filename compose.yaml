@@ -38,7 +38,7 @@ services:
       redis:
         condition: service_healthy
     env_file:
-      - .env2
+      - ${LETTA_ENV_FILE:-.env2}
     environment:
       LETTA_PG_URI: ${LETTA_PG_URI:-postgresql://${LETTA_PG_USER:-letta}:${LETTA_PG_PASSWORD:-letta}@${LETTA_DB_HOST:-letta_db}:${LETTA_PG_PORT:-5432}/${LETTA_PG_DB:-letta}}
       LETTA_REDIS_HOST: ${LETTA_REDIS_HOST:-redis}
@@ -53,3 +53,23 @@ services:
       timeout: 10s
       retries: 12
       start_period: 20s
+  dev_ui:
+    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    profiles:
+      - ui
+    restart: unless-stopped
+    working_dir: /app
+    volumes:
+      - .:/app
+    environment:
+      - UV_PROJECT_ENVIRONMENT=/opt/venv
+      - UV_LINK_MODE=copy
+      - LETTA_BASE_URL=http://letta_server:8283
+      - LETTA_DEFAULT_EMBEDDING_HANDLE=${LETTA_DEFAULT_EMBEDDING_HANDLE:-}
+      - LETTA_EMBEDDING_HANDLE=${LETTA_EMBEDDING_HANDLE:-}
+    ports:
+      - "8284:8284"
+    depends_on:
+      letta_server:
+        condition: service_healthy
+    command: ["uv", "run", "--no-dev", "uvicorn", "dev_ui.main:app", "--host", "0.0.0.0", "--port", "8284"]

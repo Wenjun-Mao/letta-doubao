@@ -1,0 +1,14 @@
+{
+  "name": "recent_user_chat_turns",
+  "description": "Pulled from recent real chat session on 2026-04-01.",
+  "source_agent_id": "agent-def390bf-3b48-4f0d-91cf-b919bf72aa65",
+  "turns": [
+    "你好，我叫张伟",
+    "跟我说说你自己吧",
+    "你喜欢小狗吗？我有一只小狗叫Rocky",
+    "是一只哈士奇。你有小狗吗？",
+    "要不要我送你一只？",
+    "你花店有些什么花呀都？收入好吗？",
+    "我过来光顾你生意好不好？你花店在哪里啊？"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "doubao_memgpt_v2_chat_real_chat",
+  "description": "Doubao with MEMGPT_V2_CHAT_PROMPT on recent real user turns.",
+  "model": "openai-proxy/doubao-seed-1-8-251228",
+  "embedding": "letta/letta-free",
+  "prompt_key": "memgpt_v2_chat",
+  "persona_key": "linxiaotang",
+  "turns_file": "../conversations/recent_user_chat_turns.json",
+  "checks": {
+    "strict_forbidden": true,
+    "require_human_memory_change": true,
+    "forbidden_reply_substrings": [
+      "我是ai",
+      "作为ai",
+      "语言模型",
+      "虚拟",
+      "机器人"
+    ]
+  }
+}
