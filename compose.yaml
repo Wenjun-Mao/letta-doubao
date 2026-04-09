@@ -48,7 +48,7 @@ services:
       - "${LETTA_ADE_PORT:-8083}:8083"
       - "${LETTA_API_PORT:-8283}:8283"
     healthcheck:
-      test: ["CMD", "python", "-c", "import urllib.request; opener=urllib.request.build_opener(urllib.request.ProxyHandler({})); opener.open('http://127.0.0.1:8283/v1/health/', timeout=5).read(1)"]
+      test: ["CMD-SHELL", "curl -fsS --noproxy '*' http://127.0.0.1:8283/v1/health/ > /dev/null"]
       interval: 10s
       timeout: 10s
       retries: 18

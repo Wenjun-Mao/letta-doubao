@@ -1,0 +1,26 @@
+services:
+  letta_db:
+    networks:
+      - offline_internal
+    ports: []
+
+  redis:
+    networks:
+      - offline_internal
+
+  letta_server:
+    networks:
+      - offline_internal
+    ports:
+      - "18283:8283"
+      - "18083:8083"
+
+  dev_ui:
+    networks:
+      - offline_internal
+    ports:
+      - "18284:8284"
+
+networks:
+  offline_internal:
+    internal: true
