@@ -4,4 +4,9 @@
 __pycache__/
 .marimo/
 data/pgdata/
+data/nltk_data/
+.tmp/
+diagnostics/
+tests/outputs/
+letta-souce-code/
 

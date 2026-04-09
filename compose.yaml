@@ -30,7 +30,7 @@ services:
       retries: 20
 
   letta_server:
-    image: letta/letta:latest
+    image: ${LETTA_SERVER_IMAGE:-letta/letta:0.16.7}
     restart: unless-stopped
     depends_on:
       letta_db:
@@ -61,16 +61,12 @@ services:
       retries: ${LETTA_HEALTHCHECK_RETRIES:-30}
       start_period: ${LETTA_HEALTHCHECK_START_PERIOD:-180s}
   dev_ui:
-    image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+    image: ${DEV_UI_IMAGE:-ghcr.io/wenjun-mao/letta-doubao-dev-ui:latest}
     # profiles:
     #   - ui
     restart: unless-stopped
-    working_dir: /app
-    volumes:
-      - .:/app
     environment:
-      - UV_PROJECT_ENVIRONMENT=/opt/venv
-      - UV_LINK_MODE=copy
+      - PYTHONPATH=/app
       - LETTA_BASE_URL=http://letta_server:8283
       - LETTA_DEFAULT_EMBEDDING_HANDLE=${LETTA_DEFAULT_EMBEDDING_HANDLE:-}
       - LETTA_EMBEDDING_HANDLE=${LETTA_EMBEDDING_HANDLE:-}
@@ -79,4 +75,3 @@ services:
     depends_on:
       letta_server:
         condition: service_healthy
-    command: ["uv", "run", "--no-dev", "uvicorn", "dev_ui.main:app", "--host", "0.0.0.0", "--port", "8284"]

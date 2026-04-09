@@ -166,12 +166,30 @@ Decision:
 - Add a minimal `.dockerignore`.
 
 Why:
-- Today it has no effect because the standalone Compose file does not build an image.
-- It becomes useful immediately if a future version adds a `build:` section or a `docker build` command.
+- It keeps CI Docker build context small for `dev_ui` image publishing.
+- It avoids shipping local artifacts (for example `data/`, `.tmp/`, diagnostics outputs) into image builds.
 
 Consequence:
-- `.dockerignore` is harmless now.
-- It mainly prevents accidental inclusion of `.env`, `.venv`, local data, and caches in any future build context.
+- `.dockerignore` is part of active CI/CD performance and reproducibility.
+- It reduces build time and accidental context bloat.
+
+### 9. Option A Deployment Model (Pinned Letta + Prebuilt Web UI)
+
+Decision:
+- Use pinned upstream Letta image for `letta_server`.
+- Use prebuilt GHCR image for `dev_ui`.
+
+Why:
+- Keeps Letta maintenance burden low (no custom forked server image lifecycle).
+- Delivers deterministic remote startup for Web UI without runtime dependency installs.
+- Supports pull-first deployment on remote Ubuntu (`docker compose pull` + `up -d`).
+
+Consequence:
+- Image controls are environment-driven:
+  - `LETTA_SERVER_IMAGE` (default `letta/letta:0.16.7`)
+  - `DEV_UI_IMAGE` (default `ghcr.io/wenjun-mao/letta-doubao-dev-ui:latest`)
+- CI publishes `dev_ui` via `.github/workflows/publish-dev-ui-ghcr.yml`.
+- Remote operators should avoid `--build` for routine deploys.
 
 ## Verified Findings
 
@@ -200,6 +218,42 @@ Verified:
 - Letta can create an agent with those handles.
 - Letta can run a message through that agent and return:
   - `Letta via Doubao ok`
+
+## 2026-04 Debug Journey Notes
+
+### Letta Startup Delay Root Cause (NLTK)
+
+Observed:
+- In restricted/no-egress environments, startup could stall at `Checking NLTK data availability...` while watchdog logs continued.
+
+Root cause:
+- Letta startup calls `nltk.download("punkt_tab")` during lifespan before readiness is achieved.
+- Even with local NLTK data present, that download call may still attempt network access.
+
+Implemented fix in this bundle:
+- Pre-seeded local NLTK cache (`data/nltk_data`) via `scripts/seed_nltk_data.sh`.
+- Mounted local cache into the Letta container.
+- Added runtime patch at `docker/sitecustomize.py` to short-circuit `punkt_tab` download when local data exists, with strict-local mode and timeout fallback.
+
+Validation:
+- Internal no-egress simulation reached healthy state.
+- In-network curl health probe succeeded.
+
+### dev_ui Cold-Start Delay Root Cause
+
+Observed:
+- `dev_ui` startup logs showed runtime env creation and package download (for example `Downloading pydantic-core`), causing slow first response.
+
+Root cause:
+- `dev_ui` previously ran `uv run ...` directly in container startup, which performs dependency sync at runtime.
+
+Implemented fix in this bundle:
+- Added `docker/dev_ui.Dockerfile`.
+- Moved dependency installation to image build (`uv sync --frozen --no-dev --no-install-project`).
+- Published/pulled `dev_ui` as a prebuilt GHCR image in Option A while keeping Uvicorn runtime entrypoint from `/opt/venv/bin/uvicorn`.
+
+Expected result:
+- After build, `dev_ui` boots directly to Uvicorn without startup-time dependency download.
 
 ## Runtime Details That Matter
 

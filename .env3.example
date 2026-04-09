@@ -1,6 +1,12 @@
 COMPOSE_PROJECT_NAME=letta-hybrid
 LETTA_ENV_FILE=.env3
 
+# Option A deployment model:
+# - pinned upstream Letta image
+# - prebuilt dev_ui image from GHCR
+LETTA_SERVER_IMAGE=letta/letta:0.16.7
+DEV_UI_IMAGE=ghcr.io/wenjun-mao/letta-doubao-dev-ui:latest
+
 LETTA_PG_USER=letta
 LETTA_PG_PASSWORD=letta
 LETTA_PG_DB=letta
