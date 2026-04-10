@@ -6,7 +6,9 @@ from pydantic import BaseModel
 import json
 import os
 import sys
+from datetime import datetime
 from typing import Any
+from zoneinfo import ZoneInfo
 
 # Add project root to sys.path to resolve imports properly
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -123,10 +125,31 @@ DEFAULT_EMBEDDING = ""
 # Letta Client Initialization
 client = Letta(base_url=os.getenv("LETTA_BASE_URL", "http://localhost:8283"))
 
+_SHANGHAI_TZ = ZoneInfo("Asia/Shanghai")
+_DATETIME_QUERY_TOKENS = (
+    "today",
+    "date",
+    "time",
+    "current date",
+    "current time",
+    "what day",
+    "what time",
+    "\u4eca\u5929",       # today
+    "\u65e5\u671f",       # date
+    "\u51e0\u6708",       # month
+    "\u51e0\u53f7",       # day number
+    "\u51e0\u65e5",       # day number (variant)
+    "\u661f\u671f",       # weekday
+    "\u5468\u51e0",       # what weekday
+    "\u793c\u62dc\u51e0", # what weekday (variant)
+    "\u73b0\u5728\u51e0\u70b9", # what time now
+    "\u5f53\u524d\u65f6\u95f4", # current time
+)
 
-def _dedupe_options(options: list[dict[str, str]]) -> list[dict[str, str]]:
+
+def _dedupe_options(options: list[dict[str, Any]]) -> list[dict[str, Any]]:
     seen: set[str] = set()
-    out: list[dict[str, str]] = []
+    out: list[dict[str, Any]] = []
     for option in options:
         key = option.get("key", "")
         if not key or key in seen:
@@ -317,6 +340,28 @@ def _derive_last_interaction_at(agent_id: str, last_updated_at: str = "") -> str
         if created_at and created_at > latest:
             latest = created_at
     return latest
+
+
+def _is_datetime_query(text: str) -> bool:
+    lowered = str(text or "").lower()
+    return any(token in lowered for token in _DATETIME_QUERY_TOKENS)
+
+
+def _runtime_datetime_system_hint() -> str:
+    now = datetime.now(_SHANGHAI_TZ)
+    iso_time = now.strftime("%Y-%m-%d %H:%M:%S %Z%z")
+    return (
+        "Runtime datetime context for this turn. "
+        "Timezone: Asia/Shanghai. "
+        f"Current datetime: {iso_time}. "
+        "If the user asks about current date or time, answer directly using this value. "
+        "Do not say you cannot access a calendar."
+    )
+
+
+def _is_context_limit_error(exc: Exception) -> bool:
+    text = str(exc).lower()
+    return "context size has been exceeded" in text or "maximum context length" in text
 
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
@@ -566,11 +611,41 @@ async def api_get_raw_prompt(agent_id: str):
 
 @app.post("/api/chat")
 async def api_chat(request: ChatRequest):
-    result = chat(
-        client=client,
-        agent_id=request.agent_id,
-        input=request.message,
-    )
+    is_datetime_turn = _is_datetime_query(request.message)
+    chat_kwargs: dict[str, Any] = {
+        "input": request.message,
+    }
+
+    # Some local models ignore compile-time metadata timestamps unless the turn
+    # explicitly provides a runtime date anchor.
+    if is_datetime_turn:
+        chat_kwargs = {
+            "messages": [
+                {"role": "system", "content": _runtime_datetime_system_hint()},
+                {"role": "user", "content": request.message},
+            ]
+        }
+
+    try:
+        result = chat(
+            client=client,
+            agent_id=request.agent_id,
+            **chat_kwargs,
+        )
+    except Exception as exc:
+        # If hint injection overflows context, retry once with the original input.
+        if is_datetime_turn and _is_context_limit_error(exc):
+            try:
+                result = chat(
+                    client=client,
+                    agent_id=request.agent_id,
+                    input=request.message,
+                )
+            except Exception as retry_exc:
+                raise HTTPException(status_code=400, detail=str(retry_exc)) from retry_exc
+        else:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
     result.pop("raw_messages", None)
     return result
 
