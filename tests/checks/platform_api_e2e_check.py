@@ -103,6 +103,21 @@ def main() -> None:
                 "total_steps": int(message_payload.get("result", {}).get("total_steps", 0)),
             }
 
+            tool_probe_response = http.post(
+                "/api/platform/tools/test-invoke",
+                json={
+                    "agent_id": agent_id,
+                    "input": "请判断是否需要调用工具，然后返回简短回答。",
+                },
+            )
+            tool_probe_response.raise_for_status()
+            tool_probe_payload = tool_probe_response.json()
+            summary["steps"]["tool_test_invoke"] = {
+                "ok": True,
+                "tool_call_count": int(tool_probe_payload.get("tool_call_count", 0)),
+                "tool_return_count": int(tool_probe_payload.get("tool_return_count", 0)),
+            }
+
             system_text = f"E2E system update at {int(time.time())}"
             system_response = http.patch(
                 f"/api/platform/agents/{agent_id}/system",
@@ -137,6 +152,29 @@ def main() -> None:
                 raise RuntimeError("Core-memory block update did not persist expected value")
             summary["steps"]["update_core_memory_block"] = {
                 "ok": True,
+            }
+
+            revisions_response = http.get(
+                "/api/platform/metadata/prompts-personas/revisions",
+                params={"agent_id": agent_id, "limit": 40},
+            )
+            revisions_response.raise_for_status()
+            revisions_payload = revisions_response.json()
+            revision_items = revisions_payload.get("items", [])
+            if not revision_items:
+                raise RuntimeError("Prompt/persona revision history returned no records")
+
+            revision_fields = {str(item.get("field", "") or "") for item in revision_items}
+            if "system" not in revision_fields or "human" not in revision_fields:
+                raise RuntimeError(
+                    "Prompt/persona revision history is missing expected fields "
+                    f"(found={sorted(revision_fields)})"
+                )
+
+            summary["steps"]["prompt_persona_revisions"] = {
+                "ok": True,
+                "total": int(revisions_payload.get("total", 0)),
+                "fields": sorted(revision_fields),
             }
 
             attached_tools = list(letta_client.agents.tools.list(agent_id=agent_id))

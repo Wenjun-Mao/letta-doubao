@@ -34,8 +34,8 @@ Deliver a production-ready Agent Platform backbone for a new ADE frontend while 
 - [x] Tool catalog discovery endpoint (MVP).
 - [x] Prompt and persona metadata endpoint (MVP).
 - [x] Test-run artifact listing and artifact content endpoints.
-- [ ] Tool test invocation endpoint (phase-2).
-- [ ] Prompt/persona revision history endpoint (phase-2).
+- [x] Tool test invocation endpoint (phase-2).
+- [x] Prompt/persona revision history endpoint (phase-2).
 
 ### Frontend
 
@@ -64,7 +64,9 @@ Deliver a production-ready Agent Platform backbone for a new ADE frontend while 
 
 - Added migration status endpoint: GET /api/platform/migration-status.
 - Added tool discovery endpoint: GET /api/platform/tools.
+- Added tool test invocation endpoint: POST /api/platform/tools/test-invoke.
 - Added prompt/persona metadata endpoint: GET /api/platform/metadata/prompts-personas.
+- Added prompt/persona revision history endpoint: GET /api/platform/metadata/prompts-personas/revisions.
 - Added run artifact endpoints:
   - GET /api/platform/test-runs/{run_id}/artifacts
   - GET /api/platform/test-runs/{run_id}/artifacts/{artifact_id}
@@ -80,6 +82,9 @@ Deliver a production-ready Agent Platform backbone for a new ADE frontend while 
 - Added migration flag rollout check script (`tests/checks/migration_flag_rollout_check.py`).
 - Added combined dual-run cutover gate (`tests/checks/platform_dual_run_gate.py`).
 - Extended orchestrator/Test Center run types to include ADE smoke, flag rollout, and dual-run gate checks.
+- Consolidated Prompt/Persona Lab and Toolbench into Agent Studio wrappers with deep-link redirects.
+- Added Agent Studio phase-2 UX: compact mode, execution trace filtering, tool probe UI, and prompt/persona revision timeline panel.
+- Extended platform API E2E check to validate phase-2 tool probe and revision history endpoints.
 
 ## Feature Flags
 
@@ -90,6 +95,6 @@ Deliver a production-ready Agent Platform backbone for a new ADE frontend while 
 
 ## Immediate Next Tasks
 
-1. Implement tool test invocation endpoint and Toolbench phase-2 UI.
-2. Add prompt/persona revision history backend API and UI timeline.
-3. Add richer ADE artifact browsing (download/filters) as post-MVP polish.
+1. Add richer ADE artifact browsing (download/filters) as post-MVP polish.
+2. Consider revision timeline diff drill-down (full before/after modal).
+3. Add scripted browser-level regression for Agent Studio deep-link wrappers.

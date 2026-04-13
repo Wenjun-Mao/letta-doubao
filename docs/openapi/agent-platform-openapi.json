@@ -206,6 +206,57 @@
         "title": "PlatformTestRunRequest",
         "type": "object"
       },
+      "PlatformToolTestInvokeRequest": {
+        "properties": {
+          "agent_id": {
+            "title": "Agent Id",
+            "type": "string"
+          },
+          "expected_tool_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Tool Name"
+          },
+          "input": {
+            "title": "Input",
+            "type": "string"
+          },
+          "override_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override Model"
+          },
+          "override_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Override System"
+          }
+        },
+        "required": [
+          "agent_id",
+          "input"
+        ],
+        "title": "PlatformToolTestInvokeRequest",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -287,6 +338,16 @@
               "default": 100,
               "title": "Limit",
               "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_last_interaction",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Last Interaction",
+              "type": "boolean"
             }
           }
         ],
@@ -518,6 +579,18 @@
     "/api/options": {
       "get": {
         "operationId": "api_get_options_api_options_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Refresh",
+              "type": "boolean"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -526,6 +599,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Api Get Options"
@@ -876,6 +959,79 @@
         ]
       }
     },
+    "/api/platform/metadata/prompts-personas/revisions": {
+      "get": {
+        "operationId": "api_platform_prompt_persona_revisions_api_platform_metadata_prompts_personas_revisions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "agent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Agent Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "field",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Field"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 80,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get prompt/persona revision history timeline",
+        "tags": [
+          "platform-meta"
+        ]
+      }
+    },
     "/api/platform/migration-status": {
       "get": {
         "operationId": "api_platform_migration_status_api_platform_migration_status_get",
@@ -1192,6 +1348,45 @@
           }
         },
         "summary": "List tools for Toolbench discovery",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/platform/tools/test-invoke": {
+      "post": {
+        "operationId": "api_platform_tool_test_invoke_api_platform_tools_test_invoke_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformToolTestInvokeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Invoke a runtime message to validate tool-call behavior",
         "tags": [
           "platform-tools"
         ]

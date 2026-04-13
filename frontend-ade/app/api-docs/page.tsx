@@ -2,6 +2,10 @@ import Link from "next/link";
 
 const DOCS_PATH = process.env.NEXT_PUBLIC_MINTLIFY_DOCS_URL || "/docs";
 
+function isExternalLink(href: string): boolean {
+  return /^https?:\/\//i.test(href);
+}
+
 export default function ApiDocsPage() {
   return (
     <section>
@@ -18,9 +22,15 @@ export default function ApiDocsPage() {
           <li>Exporter: scripts/export_openapi.py</li>
         </ul>
         <p style={{ marginTop: 14 }}>
-          <Link href={DOCS_PATH} className="nav-link">
-            Open docs entry
-          </Link>
+          {isExternalLink(DOCS_PATH) ? (
+            <a href={DOCS_PATH} className="nav-link" target="_blank" rel="noreferrer">
+              Open docs entry
+            </a>
+          ) : (
+            <Link href={DOCS_PATH} className="nav-link">
+              Open docs entry
+            </Link>
+          )}
         </p>
       </div>
     </section>

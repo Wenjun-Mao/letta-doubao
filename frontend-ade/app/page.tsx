@@ -5,21 +5,13 @@ import { useEffect, useMemo, useState } from "react";
 
 import { fetchCapabilities, fetchMigrationStatus, listAgents, listTestRuns } from "../lib/api";
 
+const DOCS_HREF = process.env.NEXT_PUBLIC_MINTLIFY_DOCS_URL || "/api-docs";
+
 const MODULES = [
   {
     title: "Agent Studio",
-    description: "Runtime chat, execution trace, memory diff, and persistent state inspection.",
+    description: "Runtime chat, prompt and persona editing, tool management, execution trace, and persistent state inspection.",
     href: "/agent-studio",
-  },
-  {
-    title: "Prompt and Persona Lab",
-    description: "Edit system prompt and persona or human memory blocks with immediate persistence.",
-    href: "/prompt-persona-lab",
-  },
-  {
-    title: "Toolbench",
-    description: "Discover available tools and attach or detach them to a selected agent.",
-    href: "/toolbench",
   },
   {
     title: "Test Center",
@@ -29,9 +21,13 @@ const MODULES = [
   {
     title: "API Docs",
     description: "OpenAPI-backed Mintlify docs for external consumers and internal operator reference.",
-    href: "/api-docs",
+    href: DOCS_HREF,
   },
 ];
+
+function isExternalLink(href: string): boolean {
+  return /^https?:\/\//i.test(href);
+}
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
@@ -138,12 +134,29 @@ export default function DashboardPage() {
       ) : null}
 
       <div className="card-grid" style={{ marginTop: 18 }}>
-        {MODULES.map((module) => (
-          <Link key={module.title} className="card" href={module.href}>
-            <h3>{module.title}</h3>
-            <p>{module.description}</p>
-          </Link>
-        ))}
+        {MODULES.map((module) => {
+          const content = (
+            <>
+              <h3>{module.title}</h3>
+              <p>{module.description}</p>
+              <p className="dashboard-module-hint">Open module</p>
+            </>
+          );
+
+          if (isExternalLink(module.href)) {
+            return (
+              <a key={module.title} className="card dashboard-module-link" href={module.href} target="_blank" rel="noreferrer">
+                {content}
+              </a>
+            );
+          }
+
+          return (
+            <Link key={module.title} className="card dashboard-module-link" href={module.href}>
+              {content}
+            </Link>
+          );
+        })}
       </div>
     </section>
   );

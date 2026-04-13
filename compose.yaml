@@ -61,7 +61,9 @@ services:
       retries: ${LETTA_HEALTHCHECK_RETRIES:-30}
       start_period: ${LETTA_HEALTHCHECK_START_PERIOD:-180s}
   dev_ui:
-    image: ${DEV_UI_IMAGE:-ghcr.io/wenjun-mao/letta-doubao-dev-ui:latest}
+    build:
+      context: .
+      dockerfile: dev_ui/Dockerfile
     # profiles:
     #   - ui
     restart: unless-stopped
@@ -77,8 +79,8 @@ services:
         condition: service_healthy
 
   ade_frontend:
-    profiles:
-      - ade
+    # profiles:
+    #   - ade
     build:
       context: ./frontend-ade
       dockerfile: Dockerfile

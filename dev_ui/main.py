@@ -6,6 +6,8 @@ from pydantic import BaseModel
 import json
 import os
 import sys
+import time
+from uuid import uuid4
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Literal
@@ -71,6 +73,14 @@ class PlatformModelUpdateRequest(BaseModel):
 
 class PlatformMemoryBlockUpdateRequest(BaseModel):
     value: str
+
+
+class PlatformToolTestInvokeRequest(BaseModel):
+    agent_id: str
+    input: str
+    expected_tool_name: str | None = None
+    override_model: str | None = None
+    override_system: str | None = None
 
 
 class PlatformTestRunRequest(BaseModel):
@@ -148,12 +158,20 @@ PROMPT_MAP = {
 DEFAULT_MODEL = ""
 DEFAULT_PROMPT_KEY = "custom_v2"
 DEFAULT_EMBEDDING = ""
+_OPTIONS_CACHE_TTL_SECONDS = max(1, int(os.getenv("AGENT_PLATFORM_OPTIONS_CACHE_TTL_SECONDS", "30")))
+_OPTIONS_CACHE: dict[str, Any] = {
+    "expires_at": 0.0,
+    "models": [],
+    "embeddings": [],
+}
 
 # Letta Client Initialization
 client = Letta(base_url=os.getenv("LETTA_BASE_URL", "http://localhost:8283"))
 agent_platform = AgentPlatformService(client)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 test_orchestrator = PlatformTestOrchestrator(project_root=PROJECT_ROOT)
+REVISION_LOG_DIR = PROJECT_ROOT / "diagnostics"
+REVISION_LOG_FILE = REVISION_LOG_DIR / "prompt_persona_revisions.jsonl"
 
 
 def _is_truthy(value: str | None) -> bool:
@@ -263,7 +281,19 @@ def _dedupe_options(options: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
-def _runtime_options() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+def _runtime_options(force_refresh: bool = False) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    cache_expires_at = float(_OPTIONS_CACHE.get("expires_at", 0.0) or 0.0)
+    cached_models = _OPTIONS_CACHE.get("models")
+    cached_embeddings = _OPTIONS_CACHE.get("embeddings")
+    if (
+        not force_refresh
+        and time.monotonic() < cache_expires_at
+        and isinstance(cached_models, list)
+        and isinstance(cached_embeddings, list)
+        and cached_models
+    ):
+        return [dict(option) for option in cached_models], [dict(option) for option in cached_embeddings]
+
     model_options = [dict(option) for option in PREFERRED_MODEL_OPTIONS]
     embedding_options = [dict(option) for option in PREFERRED_EMBEDDING_OPTIONS]
     known_embedding_keys = {option["key"] for option in embedding_options}
@@ -335,7 +365,11 @@ def _runtime_options() -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
     for option in embedding_options:
         option["available"] = option["key"] in discovered_embedding_handles if discovered_embedding_handles else True
 
-    return model_options, embedding_options
+    _OPTIONS_CACHE["models"] = [dict(option) for option in model_options]
+    _OPTIONS_CACHE["embeddings"] = [dict(option) for option in embedding_options]
+    _OPTIONS_CACHE["expires_at"] = time.monotonic() + _OPTIONS_CACHE_TTL_SECONDS
+
+    return [dict(option) for option in model_options], [dict(option) for option in embedding_options]
 
 
 def _safe_json(value: Any) -> str:
@@ -470,6 +504,83 @@ def _first_non_empty_line(text: str) -> str:
             return cleaned
     return ""
 
+
+def _trim_preview(value: str, max_len: int = 180) -> str:
+    line = _first_non_empty_line(value)
+    if len(line) <= max_len:
+        return line
+    return f"{line[:max_len]}..."
+
+
+def _append_prompt_persona_revision(
+    *,
+    agent_id: str,
+    field: str,
+    before: str,
+    after: str,
+    source: str,
+) -> None:
+    if before == after:
+        return
+
+    record = {
+        "revision_id": str(uuid4()),
+        "recorded_at": datetime.now(timezone.utc).isoformat(),
+        "agent_id": agent_id,
+        "field": field,
+        "source": source,
+        "before": before,
+        "after": after,
+        "before_preview": _trim_preview(before),
+        "after_preview": _trim_preview(after),
+        "before_length": len(before),
+        "after_length": len(after),
+        "delta_length": len(after) - len(before),
+    }
+
+    try:
+        REVISION_LOG_DIR.mkdir(parents=True, exist_ok=True)
+        with REVISION_LOG_FILE.open("a", encoding="utf-8") as handle:
+            handle.write(json.dumps(record, ensure_ascii=False) + "\n")
+    except Exception:
+        # Revision history should not break primary mutation APIs.
+        return
+
+
+def _read_prompt_persona_revisions(
+    *,
+    agent_id: str | None,
+    field: str | None,
+    limit: int,
+) -> list[dict[str, Any]]:
+    if not REVISION_LOG_FILE.exists():
+        return []
+
+    items: list[dict[str, Any]] = []
+    try:
+        for raw_line in REVISION_LOG_FILE.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            try:
+                payload = json.loads(line)
+            except Exception:
+                continue
+
+            if agent_id and str(payload.get("agent_id", "") or "") != agent_id:
+                continue
+            if field and str(payload.get("field", "") or "") != field:
+                continue
+
+            items.append(payload)
+    except Exception:
+        return []
+
+    if len(items) > limit:
+        items = items[-limit:]
+    items.reverse()
+    return items
+
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
     with open(os.path.join(os.path.dirname(__file__), "static", "index.html"), "r", encoding="utf-8") as f:
@@ -477,10 +588,10 @@ async def read_index():
 
 
 @app.get("/api/options")
-async def api_get_options():
+async def api_get_options(refresh: bool = False):
     _ensure_legacy_api_enabled()
 
-    model_options, embedding_options = _runtime_options()
+    model_options, embedding_options = _runtime_options(force_refresh=refresh)
 
     # Force explicit model choice in the UI for every new-agent creation.
     default_model = ""
@@ -505,7 +616,7 @@ async def api_get_options():
 
 
 @app.get("/api/agents")
-async def api_list_agents(limit: int = 100):
+async def api_list_agents(limit: int = 100, include_last_interaction: bool = False):
     """List existing agents so the UI can pull and inspect prior state."""
     _ensure_legacy_api_enabled()
 
@@ -519,7 +630,10 @@ async def api_list_agents(limit: int = 100):
     for agent in agents:
         agent_id = str(getattr(agent, "id", ""))
         last_updated_at = str(getattr(agent, "last_updated_at", ""))
-        last_interaction_at = _derive_last_interaction_at(agent_id, last_updated_at)
+        if include_last_interaction:
+            last_interaction_at = _derive_last_interaction_at(agent_id, last_updated_at)
+        else:
+            last_interaction_at = last_updated_at or str(getattr(agent, "created_at", ""))
         items.append(
             {
                 "id": agent_id,
@@ -797,6 +911,65 @@ async def api_platform_list_tools(search: str = "", limit: int = 100, agent_id: 
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
 
+@app.post(
+    "/api/platform/tools/test-invoke",
+    tags=["platform-tools"],
+    summary="Invoke a runtime message to validate tool-call behavior",
+)
+async def api_platform_tool_test_invoke(request: PlatformToolTestInvokeRequest):
+    _ensure_platform_api_enabled()
+
+    agent_id = request.agent_id.strip()
+    text = request.input.strip()
+    expected_tool_name = (request.expected_tool_name or "").strip()
+
+    if not agent_id:
+        raise HTTPException(status_code=400, detail="agent_id is required")
+    if not text:
+        raise HTTPException(status_code=400, detail="input is required")
+
+    try:
+        payload = agent_platform.send_runtime_message(
+            agent_id=agent_id,
+            message=text,
+            override_model=(request.override_model or "").strip() or None,
+            override_system=(request.override_system or "").strip() or None,
+        )
+
+        result = payload.get("result", {}) if isinstance(payload, dict) else {}
+        sequence = result.get("sequence", []) if isinstance(result, dict) else []
+        tool_calls = [
+            step
+            for step in sequence
+            if str(step.get("type", "") or "").strip().lower() == "tool_call"
+        ]
+        tool_returns = [
+            step
+            for step in sequence
+            if str(step.get("type", "") or "").strip().lower() == "tool_return"
+        ]
+
+        expected_matched: bool | None = None
+        if expected_tool_name:
+            expected_lower = expected_tool_name.lower()
+            expected_matched = any(
+                str(step.get("name", "") or "").strip().lower() == expected_lower
+                for step in tool_calls
+            )
+
+        return {
+            "agent_id": agent_id,
+            "input": text,
+            "expected_tool_name": expected_tool_name or None,
+            "expected_tool_matched": expected_matched,
+            "tool_call_count": len(tool_calls),
+            "tool_return_count": len(tool_returns),
+            "result": result,
+        }
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
 @app.get(
     "/api/platform/metadata/prompts-personas",
     tags=["platform-meta"],
@@ -840,6 +1013,38 @@ async def api_platform_prompt_persona_metadata():
     }
 
 
+@app.get(
+    "/api/platform/metadata/prompts-personas/revisions",
+    tags=["platform-meta"],
+    summary="Get prompt/persona revision history timeline",
+)
+async def api_platform_prompt_persona_revisions(
+    agent_id: str | None = None,
+    field: str | None = None,
+    limit: int = 80,
+):
+    _ensure_platform_api_enabled()
+
+    resolved_field = (field or "").strip().lower() or None
+    if resolved_field and resolved_field not in {"system", "persona", "human"}:
+        raise HTTPException(status_code=400, detail="field must be one of: system, persona, human")
+
+    resolved_limit = max(1, min(limit, 500))
+    resolved_agent_id = (agent_id or "").strip() or None
+    items = _read_prompt_persona_revisions(
+        agent_id=resolved_agent_id,
+        field=resolved_field,
+        limit=resolved_limit,
+    )
+    return {
+        "total": len(items),
+        "limit": resolved_limit,
+        "agent_id": resolved_agent_id,
+        "field": resolved_field,
+        "items": items,
+    }
+
+
 @app.post(
     "/api/platform/agents/{agent_id}/messages",
     tags=["platform-runtime"],
@@ -876,7 +1081,15 @@ async def api_platform_update_system(agent_id: str, request: PlatformSystemUpdat
         raise HTTPException(status_code=400, detail="system is required")
 
     try:
-        return agent_platform.update_system_prompt(agent_id=agent_id, system_prompt=system_text)
+        payload = agent_platform.update_system_prompt(agent_id=agent_id, system_prompt=system_text)
+        _append_prompt_persona_revision(
+            agent_id=agent_id,
+            field="system",
+            before=str(payload.get("system_before", "") or ""),
+            after=str(payload.get("system_after", "") or ""),
+            source="api/platform/agents/{agent_id}/system",
+        )
+        return payload
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -916,11 +1129,20 @@ async def api_platform_update_memory_block(
         raise HTTPException(status_code=400, detail="block_label is required")
 
     try:
-        return agent_platform.update_core_memory_block(
+        payload = agent_platform.update_core_memory_block(
             agent_id=agent_id,
             block_label=label,
             value=request.value,
         )
+        if label in {"persona", "human"}:
+            _append_prompt_persona_revision(
+                agent_id=agent_id,
+                field=label,
+                before=str(payload.get("value_before", "") or ""),
+                after=str(payload.get("value_after", "") or ""),
+                source=f"api/platform/agents/{{agent_id}}/core-memory/blocks/{label}",
+            )
+        return payload
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
