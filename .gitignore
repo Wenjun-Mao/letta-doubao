@@ -20,3 +20,5 @@ diagnostics
 
 frontend-ade/node_modules/
 frontend-ade/.next/
+
+temps/
