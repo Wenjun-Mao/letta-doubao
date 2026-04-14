@@ -26,6 +26,25 @@ class AgentPlatformService:
         return set(inspect.signature(self._client.agents.messages.create).parameters.keys())
 
     @staticmethod
+    def _serialize_tool(tool: Any) -> dict[str, Any]:
+        tags_raw = getattr(tool, "tags", None) or []
+        tags = [str(tag) for tag in tags_raw if str(tag).strip()]
+        return {
+            "id": str(getattr(tool, "id", "") or ""),
+            "name": str(getattr(tool, "name", "") or ""),
+            "description": str(getattr(tool, "description", "") or ""),
+            "tool_type": str(getattr(tool, "tool_type", "") or ""),
+            "source_type": str(getattr(tool, "source_type", "") or ""),
+            "created_at": str(getattr(tool, "created_at", "") or ""),
+            "last_updated_at": str(getattr(tool, "last_updated_at", "") or ""),
+            "tags": tags,
+            "source_code": str(getattr(tool, "source_code", "") or ""),
+            "return_char_limit": getattr(tool, "return_char_limit", None),
+            "enable_parallel_execution": bool(getattr(tool, "enable_parallel_execution", False)),
+            "default_requires_approval": bool(getattr(tool, "default_requires_approval", False)),
+        }
+
+    @staticmethod
     def _is_context_limit_error(exc: Exception) -> bool:
         text = str(exc).lower()
         return "context size has been exceeded" in text or "maximum context length" in text
@@ -42,25 +61,107 @@ class AgentPlatformService:
             list_kwargs["search"] = query
 
         tools = list(self._client.tools.list(**list_kwargs))
-        results: list[dict[str, Any]] = []
-        for tool in tools:
-            tags_raw = getattr(tool, "tags", None) or []
-            tags = [str(tag) for tag in tags_raw if str(tag).strip()]
+        return [self._serialize_tool(tool) for tool in tools]
 
-            results.append(
-                {
-                    "id": str(getattr(tool, "id", "") or ""),
-                    "name": str(getattr(tool, "name", "") or ""),
-                    "description": str(getattr(tool, "description", "") or ""),
-                    "tool_type": str(getattr(tool, "tool_type", "") or ""),
-                    "source_type": str(getattr(tool, "source_type", "") or ""),
-                    "created_at": str(getattr(tool, "created_at", "") or ""),
-                    "last_updated_at": str(getattr(tool, "last_updated_at", "") or ""),
-                    "tags": tags,
-                }
-            )
+    @retry(**_RETRY_KWARGS)
+    def retrieve_tool(self, *, tool_id: str) -> dict[str, Any]:
+        if not str(tool_id or "").strip():
+            raise ValueError("tool_id is required")
+        tool = self._client.tools.retrieve(tool_id=tool_id)
+        return self._serialize_tool(tool)
 
-        return results
+    @retry(**_RETRY_KWARGS)
+    def create_tool(
+        self,
+        *,
+        source_code: str,
+        description: str | None = None,
+        tags: list[str] | None = None,
+        source_type: str | None = "python",
+        enable_parallel_execution: bool | None = None,
+        default_requires_approval: bool | None = None,
+        return_char_limit: int | None = None,
+        pip_requirements: list[dict[str, Any]] | None = None,
+        npm_requirements: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        text = str(source_code or "").strip()
+        if not text:
+            raise ValueError("source_code is required")
+
+        create_kwargs: dict[str, Any] = {
+            "source_code": source_code,
+        }
+        if description is not None:
+            create_kwargs["description"] = description
+        if tags:
+            create_kwargs["tags"] = tags
+        if source_type:
+            create_kwargs["source_type"] = source_type
+        if enable_parallel_execution is not None:
+            create_kwargs["enable_parallel_execution"] = bool(enable_parallel_execution)
+        if default_requires_approval is not None:
+            create_kwargs["default_requires_approval"] = bool(default_requires_approval)
+        if return_char_limit is not None:
+            create_kwargs["return_char_limit"] = int(return_char_limit)
+        if pip_requirements:
+            create_kwargs["pip_requirements"] = pip_requirements
+        if npm_requirements:
+            create_kwargs["npm_requirements"] = npm_requirements
+
+        created = self._client.tools.create(**create_kwargs)
+        return self._serialize_tool(created)
+
+    @retry(**_RETRY_KWARGS)
+    def update_tool(
+        self,
+        *,
+        tool_id: str,
+        source_code: str | None = None,
+        description: str | None = None,
+        tags: list[str] | None = None,
+        source_type: str | None = None,
+        enable_parallel_execution: bool | None = None,
+        default_requires_approval: bool | None = None,
+        return_char_limit: int | None = None,
+        pip_requirements: list[dict[str, Any]] | None = None,
+        npm_requirements: list[dict[str, Any]] | None = None,
+    ) -> dict[str, Any]:
+        resolved_tool_id = str(tool_id or "").strip()
+        if not resolved_tool_id:
+            raise ValueError("tool_id is required")
+
+        update_kwargs: dict[str, Any] = {}
+        if source_code is not None:
+            update_kwargs["source_code"] = source_code
+        if description is not None:
+            update_kwargs["description"] = description
+        if tags is not None:
+            update_kwargs["tags"] = tags
+        if source_type is not None:
+            update_kwargs["source_type"] = source_type
+        if enable_parallel_execution is not None:
+            update_kwargs["enable_parallel_execution"] = bool(enable_parallel_execution)
+        if default_requires_approval is not None:
+            update_kwargs["default_requires_approval"] = bool(default_requires_approval)
+        if return_char_limit is not None:
+            update_kwargs["return_char_limit"] = int(return_char_limit)
+        if pip_requirements is not None:
+            update_kwargs["pip_requirements"] = pip_requirements
+        if npm_requirements is not None:
+            update_kwargs["npm_requirements"] = npm_requirements
+
+        if not update_kwargs:
+            raise ValueError("At least one updatable tool field is required")
+
+        updated = self._client.tools.update(tool_id=resolved_tool_id, **update_kwargs)
+        return self._serialize_tool(updated)
+
+    @retry(**_RETRY_KWARGS)
+    def delete_tool(self, *, tool_id: str) -> None:
+        resolved_tool_id = str(tool_id or "").strip()
+        if not resolved_tool_id:
+            raise ValueError("tool_id is required")
+        self._client.tools.delete(tool_id=resolved_tool_id)
 
     def capabilities(self) -> dict[str, Any]:
         message_params = self._message_create_params()

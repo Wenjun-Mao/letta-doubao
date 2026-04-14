@@ -10,6 +10,7 @@ from typing import Any
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 CHECKS: list[tuple[str, str]] = [
     ("backend_platform_api_e2e", "tests/checks/platform_api_e2e_check.py"),
+    ("prompt_tool_archive_e2e", "tests/checks/prompt_tool_archive_api_check.py"),
     ("ade_mvp_smoke_e2e", "tests/checks/ade_mvp_smoke_e2e_check.py"),
 ]
 

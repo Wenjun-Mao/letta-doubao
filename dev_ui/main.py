@@ -19,12 +19,10 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 from letta_client import Letta
 from utils.agent_platform_service import AgentPlatformService
+from utils.custom_tool_registry import CustomToolRegistry, ToolRegistryError
 from utils.platform_test_orchestrator import PlatformTestOrchestrator
-from prompts.persona import PERSONAS, HUMAN_TEMPLATE
-from prompts.system_prompts import (
-    CUSTOM_V1_PROMPT,
-    CUSTOM_V2_PROMPT,
-)
+from utils.prompt_persona_registry import PromptPersonaRegistry, RegistryError
+from prompts.persona import HUMAN_TEMPLATE
 
 APP_VERSION = os.getenv("AGENT_PLATFORM_API_VERSION", "0.2.0")
 
@@ -62,6 +60,7 @@ class AgentCreateRequest(BaseModel):
     name: str = "dev-agent"
     model: str = ""
     prompt_key: str = "custom_v2"
+    persona_key: str = "linxiaotang"
     embedding: str | None = None
 
 
@@ -120,6 +119,7 @@ class ApiOptionEntryResponse(BaseModel):
 class ApiOptionsDefaultsResponse(BaseModel):
     model: str
     prompt_key: str
+    persona_key: str
     embedding: str
 
 
@@ -127,6 +127,7 @@ class ApiOptionsResponse(BaseModel):
     models: list[ApiOptionEntryResponse]
     embeddings: list[ApiOptionEntryResponse]
     prompts: list[ApiOptionEntryResponse]
+    personas: list[ApiOptionEntryResponse]
     defaults: ApiOptionsDefaultsResponse
 
 
@@ -150,6 +151,7 @@ class ApiAgentCreateResponse(BaseModel):
     model: str
     embedding: str | None = None
     prompt_key: str
+    persona_key: str
 
 
 class ApiAgentDetailsResponse(BaseModel):
@@ -272,6 +274,10 @@ class ApiPlatformToolResponse(BaseModel):
     last_updated_at: str
     tags: list[str]
     attached_to_agent: bool | None = None
+    managed: bool | None = None
+    read_only: bool | None = None
+    archived: bool | None = None
+    slug: str | None = None
 
 
 class ApiPlatformToolListResponse(BaseModel):
@@ -315,6 +321,102 @@ class ApiPromptPersonaMetadataResponse(BaseModel):
     defaults: ApiPromptPersonaDefaultResponse
     prompts: list[ApiPromptMetadataResponse]
     personas: list[ApiPersonaMetadataResponse]
+
+
+class PromptTemplateWriteRequest(BaseModel):
+    key: str
+    label: str = ""
+    description: str = ""
+    content: str
+
+
+class PromptTemplatePatchRequest(BaseModel):
+    label: str | None = None
+    description: str | None = None
+    content: str | None = None
+
+
+class PersonaTemplateWriteRequest(BaseModel):
+    key: str
+    label: str = ""
+    description: str = ""
+    content: str
+
+
+class PersonaTemplatePatchRequest(BaseModel):
+    label: str | None = None
+    description: str | None = None
+    content: str | None = None
+
+
+class ApiTemplateRecordResponse(BaseModel):
+    kind: str
+    key: str
+    label: str
+    description: str
+    content: str
+    preview: str
+    length: int
+    archived: bool
+    source_path: str
+    updated_at: str
+
+
+class ApiTemplateListResponse(BaseModel):
+    total: int
+    include_archived: bool
+    items: list[ApiTemplateRecordResponse]
+
+
+class ToolCenterCreateRequest(BaseModel):
+    slug: str
+    source_code: str
+    description: str = ""
+    tags: list[str] = Field(default_factory=list)
+    source_type: str = "python"
+    enable_parallel_execution: bool | None = None
+    default_requires_approval: bool | None = None
+    return_char_limit: int | None = None
+    pip_requirements: list[dict[str, Any]] | None = None
+    npm_requirements: list[dict[str, Any]] | None = None
+
+
+class ToolCenterUpdateRequest(BaseModel):
+    source_code: str | None = None
+    description: str | None = None
+    tags: list[str] | None = None
+    source_type: str | None = None
+    enable_parallel_execution: bool | None = None
+    default_requires_approval: bool | None = None
+    return_char_limit: int | None = None
+    pip_requirements: list[dict[str, Any]] | None = None
+    npm_requirements: list[dict[str, Any]] | None = None
+
+
+class ApiToolCenterItemResponse(BaseModel):
+    slug: str | None = None
+    tool_id: str
+    name: str
+    description: str
+    tool_type: str
+    source_type: str
+    tags: list[str] = Field(default_factory=list)
+    managed: bool
+    read_only: bool
+    archived: bool
+    source_path: str | None = None
+    source_code: str | None = None
+    created_at: str = ""
+    last_updated_at: str = ""
+    updated_at: str | None = None
+    archived_at: str | None = None
+
+
+class ApiToolCenterListResponse(BaseModel):
+    total: int
+    include_archived: bool
+    include_builtin: bool
+    items: list[ApiToolCenterItemResponse]
 
 
 class ApiPromptPersonaRevisionResponse(BaseModel):
@@ -462,27 +564,11 @@ PREFERRED_EMBEDDING_OPTIONS = [
     },
 ]
 
-PROMPT_OPTIONS = [
-    {
-        "key": "custom_v2",
-        "label": "Custom V2 Chat (Default)",
-        "description": "Recommended baseline for robust persona adherence and tool-flow behavior.",
-    },
-    {
-        "key": "custom_v1",
-        "label": "Custom V1 (Alternate)",
-        "description": "Alternate baseline kept for A/B testing and regression comparison.",
-    },
-]
-
-PROMPT_MAP = {
-    "custom_v1": CUSTOM_V1_PROMPT,
-    "custom_v2": CUSTOM_V2_PROMPT,
-}
-
 DEFAULT_MODEL = ""
 DEFAULT_PROMPT_KEY = "custom_v2"
+DEFAULT_PERSONA_KEY = "linxiaotang"
 DEFAULT_EMBEDDING = ""
+MANAGED_TOOL_TAG = "ade:managed"
 _OPTIONS_CACHE_TTL_SECONDS = max(1, int(os.getenv("AGENT_PLATFORM_OPTIONS_CACHE_TTL_SECONDS", "30")))
 _OPTIONS_CACHE: dict[str, Any] = {
     "expires_at": 0.0,
@@ -495,6 +581,8 @@ client = Letta(base_url=os.getenv("LETTA_BASE_URL", "http://localhost:8283"))
 agent_platform = AgentPlatformService(client)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 test_orchestrator = PlatformTestOrchestrator(project_root=PROJECT_ROOT)
+prompt_persona_registry = PromptPersonaRegistry(PROJECT_ROOT)
+custom_tool_registry = CustomToolRegistry(PROJECT_ROOT)
 REVISION_LOG_DIR = PROJECT_ROOT / "diagnostics"
 REVISION_LOG_FILE = REVISION_LOG_DIR / "prompt_persona_revisions.jsonl"
 
@@ -674,6 +762,80 @@ def _runtime_options(force_refresh: bool = False) -> tuple[list[dict[str, Any]],
     _OPTIONS_CACHE["expires_at"] = time.monotonic() + _OPTIONS_CACHE_TTL_SECONDS
 
     return [dict(option) for option in model_options], [dict(option) for option in embedding_options]
+
+
+def _invalidate_options_cache() -> None:
+    _OPTIONS_CACHE["expires_at"] = 0.0
+
+
+def _active_prompt_records() -> list[dict[str, Any]]:
+    return [
+        record
+        for record in prompt_persona_registry.list_templates("prompt", include_archived=False)
+        if not bool(record.get("archived", False))
+    ]
+
+
+def _active_persona_records() -> list[dict[str, Any]]:
+    return [
+        record
+        for record in prompt_persona_registry.list_templates("persona", include_archived=False)
+        if not bool(record.get("archived", False))
+    ]
+
+
+def _prompt_content_map() -> dict[str, str]:
+    return {
+        str(record.get("key", "")): str(record.get("content", "") or "")
+        for record in _active_prompt_records()
+        if str(record.get("key", "")).strip()
+    }
+
+
+def _persona_content_map() -> dict[str, str]:
+    return {
+        str(record.get("key", "")): str(record.get("content", "") or "")
+        for record in _active_persona_records()
+        if str(record.get("key", "")).strip()
+    }
+
+
+def _prompt_option_entries() -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    for record in _active_prompt_records():
+        entries.append(
+            {
+                "key": str(record.get("key", "") or ""),
+                "label": str(record.get("label", "") or ""),
+                "description": str(record.get("description", "") or ""),
+            }
+        )
+    return entries
+
+
+def _persona_option_entries() -> list[dict[str, Any]]:
+    entries: list[dict[str, Any]] = []
+    for record in _active_persona_records():
+        entries.append(
+            {
+                "key": str(record.get("key", "") or ""),
+                "label": str(record.get("label", "") or ""),
+                "description": str(record.get("description", "") or ""),
+            }
+        )
+    return entries
+
+
+def _resolve_default_prompt_key(prompt_options: list[dict[str, Any]]) -> str:
+    if any(str(option.get("key", "")) == DEFAULT_PROMPT_KEY for option in prompt_options):
+        return DEFAULT_PROMPT_KEY
+    return str(prompt_options[0].get("key", "") if prompt_options else "")
+
+
+def _resolve_default_persona_key(persona_options: list[dict[str, Any]]) -> str:
+    if any(str(option.get("key", "")) == DEFAULT_PERSONA_KEY for option in persona_options):
+        return DEFAULT_PERSONA_KEY
+    return str(persona_options[0].get("key", "") if persona_options else "")
 
 
 def _safe_json(value: Any) -> str:
@@ -885,6 +1047,78 @@ def _read_prompt_persona_revisions(
     items.reverse()
     return items
 
+
+def _as_template_record(record: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "kind": str(record.get("kind", "") or ""),
+        "key": str(record.get("key", "") or ""),
+        "label": str(record.get("label", "") or ""),
+        "description": str(record.get("description", "") or ""),
+        "content": str(record.get("content", "") or ""),
+        "preview": str(record.get("preview", "") or ""),
+        "length": int(record.get("length", 0) or 0),
+        "archived": bool(record.get("archived", False)),
+        "source_path": str(record.get("source_path", "") or ""),
+        "updated_at": str(record.get("updated_at", "") or ""),
+    }
+
+
+def _managed_tool_tags(extra_tags: list[str] | None = None) -> list[str]:
+    tags = [MANAGED_TOOL_TAG]
+    for raw in extra_tags or []:
+        tag = str(raw or "").strip()
+        if not tag or tag in tags:
+            continue
+        tags.append(tag)
+    return tags
+
+
+def _as_tool_center_item(
+    *,
+    managed_entry: dict[str, Any] | None,
+    remote_tool: dict[str, Any] | None,
+    include_source: bool,
+) -> dict[str, Any]:
+    if managed_entry:
+        return {
+            "slug": str(managed_entry.get("slug", "") or ""),
+            "tool_id": str(managed_entry.get("tool_id", "") or ""),
+            "name": str((remote_tool or {}).get("name", managed_entry.get("name", "")) or ""),
+            "description": str((remote_tool or {}).get("description", managed_entry.get("description", "")) or ""),
+            "tool_type": str((remote_tool or {}).get("tool_type", managed_entry.get("tool_type", "custom")) or "custom"),
+            "source_type": str((remote_tool or {}).get("source_type", managed_entry.get("source_type", "python")) or "python"),
+            "tags": [str(tag) for tag in ((remote_tool or {}).get("tags", managed_entry.get("tags", [])) or []) if str(tag).strip()],
+            "managed": True,
+            "read_only": False,
+            "archived": bool(managed_entry.get("archived", False)),
+            "source_path": str(managed_entry.get("source_path", "") or "") or None,
+            "source_code": str(managed_entry.get("source_code", "") or "") if include_source else None,
+            "created_at": str((remote_tool or {}).get("created_at", managed_entry.get("created_at", "")) or ""),
+            "last_updated_at": str((remote_tool or {}).get("last_updated_at", managed_entry.get("updated_at", "")) or ""),
+            "updated_at": str(managed_entry.get("updated_at", "") or "") or None,
+            "archived_at": managed_entry.get("archived_at"),
+        }
+
+    tool = remote_tool or {}
+    return {
+        "slug": None,
+        "tool_id": str(tool.get("id", "") or ""),
+        "name": str(tool.get("name", "") or ""),
+        "description": str(tool.get("description", "") or ""),
+        "tool_type": str(tool.get("tool_type", "") or ""),
+        "source_type": str(tool.get("source_type", "") or ""),
+        "tags": [str(tag) for tag in (tool.get("tags", []) or []) if str(tag).strip()],
+        "managed": False,
+        "read_only": True,
+        "archived": False,
+        "source_path": None,
+        "source_code": None,
+        "created_at": str(tool.get("created_at", "") or ""),
+        "last_updated_at": str(tool.get("last_updated_at", "") or ""),
+        "updated_at": None,
+        "archived_at": None,
+    }
+
 @app.get("/", response_class=HTMLResponse)
 async def read_index():
     with open(os.path.join(os.path.dirname(__file__), "static", "index.html"), "r", encoding="utf-8") as f:
@@ -896,9 +1130,13 @@ async def api_get_options(refresh: bool = False):
     _ensure_platform_api_enabled()
 
     model_options, embedding_options = _runtime_options(force_refresh=refresh)
+    prompt_options = _prompt_option_entries()
+    persona_options = _persona_option_entries()
 
     # Force explicit model choice in the UI for every new-agent creation.
     default_model = ""
+    default_prompt_key = _resolve_default_prompt_key(prompt_options)
+    default_persona_key = _resolve_default_persona_key(persona_options)
 
     default_embedding = os.getenv("LETTA_DEFAULT_EMBEDDING_HANDLE") or os.getenv("LETTA_EMBEDDING_HANDLE") or DEFAULT_EMBEDDING
     if default_embedding and not any(option["key"] == default_embedding for option in embedding_options):
@@ -910,10 +1148,12 @@ async def api_get_options(refresh: bool = False):
     return {
         "models": model_options,
         "embeddings": embedding_options,
-        "prompts": PROMPT_OPTIONS,
+        "prompts": prompt_options,
+        "personas": persona_options,
         "defaults": {
             "model": default_model,
-            "prompt_key": DEFAULT_PROMPT_KEY,
+            "prompt_key": default_prompt_key,
+            "persona_key": default_persona_key,
             "embedding": default_embedding,
         },
     }
@@ -962,6 +1202,8 @@ async def api_create_agent(request: AgentCreateRequest):
     _ensure_platform_api_enabled()
 
     model_options, embedding_options = _runtime_options()
+    prompt_map = _prompt_content_map()
+    persona_map = _persona_content_map()
     allowed_models = {option["key"] for option in model_options}
     allowed_embeddings = {option["key"] for option in embedding_options}
 
@@ -970,21 +1212,23 @@ async def api_create_agent(request: AgentCreateRequest):
 
     if request.model not in allowed_models:
         raise HTTPException(status_code=400, detail=f"Invalid model: {request.model}")
-    if request.prompt_key not in PROMPT_MAP:
+    if request.prompt_key not in prompt_map:
         raise HTTPException(status_code=400, detail=f"Invalid prompt key: {request.prompt_key}")
+    if request.persona_key not in persona_map:
+        raise HTTPException(status_code=400, detail=f"Invalid persona key: {request.persona_key}")
     if request.embedding and request.embedding not in allowed_embeddings:
         raise HTTPException(status_code=400, detail=f"Invalid embedding handle: {request.embedding}")
 
     create_args: dict[str, Any] = {
         "name": request.name,
-        "system": PROMPT_MAP[request.prompt_key],
+        "system": prompt_map[request.prompt_key],
         "model": request.model,
         "timezone": "Asia/Shanghai",
         "context_window_limit": 16384,
         "memory_blocks": [
             {
                 "label": "persona",
-                "value": PERSONAS["linxiaotang"],
+                "value": persona_map[request.persona_key],
             },
             {
                 "label": "human",
@@ -1015,6 +1259,7 @@ async def api_create_agent(request: AgentCreateRequest):
         "model": request.model,
         "embedding": request.embedding,
         "prompt_key": request.prompt_key,
+        "persona_key": request.persona_key,
     }
 
 @app.get("/api/v1/agents/{agent_id}/details", response_model=ApiAgentDetailsResponse)
@@ -1177,6 +1422,11 @@ async def api_platform_list_tools(search: str = "", limit: int = 100, agent_id: 
     resolved_limit = max(1, min(limit, 500))
     try:
         tools = agent_platform.list_available_tools(search=(search or "").strip() or None, limit=resolved_limit)
+        managed_entries = {
+            str(entry.get("tool_id", "") or ""): entry
+            for entry in custom_tool_registry.list_tools(include_archived=False, include_source=False)
+            if str(entry.get("tool_id", "") or "").strip()
+        }
 
         attached_ids: set[str] = set()
         if agent_id:
@@ -1188,7 +1438,12 @@ async def api_platform_list_tools(search: str = "", limit: int = 100, agent_id: 
 
         for tool in tools:
             tool_id = str(tool.get("id", "") or "")
+            managed_entry = managed_entries.get(tool_id)
             tool["attached_to_agent"] = bool(agent_id and tool_id in attached_ids)
+            tool["managed"] = bool(managed_entry)
+            tool["read_only"] = not bool(managed_entry)
+            tool["archived"] = False
+            tool["slug"] = str(managed_entry.get("slug", "") or "") if managed_entry else None
 
         return {
             "total": len(tools),
@@ -1270,35 +1525,38 @@ async def api_platform_tool_test_invoke(request: PlatformToolTestInvokeRequest):
 async def api_platform_prompt_persona_metadata():
     _ensure_platform_api_enabled()
 
+    prompt_records = _active_prompt_records()
+    persona_records = _active_persona_records()
+
     prompts: list[dict[str, Any]] = []
-    for option in PROMPT_OPTIONS:
-        key = str(option.get("key", "") or "")
-        prompt_text = str(PROMPT_MAP.get(key, "") or "")
+    for record in prompt_records:
         prompts.append(
             {
-                "key": key,
-                "label": str(option.get("label", "") or ""),
-                "description": str(option.get("description", "") or ""),
-                "preview": _first_non_empty_line(prompt_text)[:180],
-                "length": len(prompt_text),
+                "key": str(record.get("key", "") or ""),
+                "label": str(record.get("label", "") or ""),
+                "description": str(record.get("description", "") or ""),
+                "preview": str(record.get("preview", "") or ""),
+                "length": int(record.get("length", 0) or 0),
             }
         )
 
     personas: list[dict[str, Any]] = []
-    for key, value in sorted(PERSONAS.items()):
-        persona_text = str(value or "")
+    for record in persona_records:
         personas.append(
             {
-                "key": key,
-                "preview": _first_non_empty_line(persona_text)[:180],
-                "length": len(persona_text),
+                "key": str(record.get("key", "") or ""),
+                "preview": str(record.get("preview", "") or ""),
+                "length": int(record.get("length", 0) or 0),
             }
         )
 
+    default_prompt_key = _resolve_default_prompt_key(_prompt_option_entries())
+    default_persona_key = _resolve_default_persona_key(_persona_option_entries())
+
     return {
         "defaults": {
-            "prompt_key": DEFAULT_PROMPT_KEY,
-            "persona_key": "linxiaotang",
+            "prompt_key": default_prompt_key,
+            "persona_key": default_persona_key,
         },
         "prompts": prompts,
         "personas": personas,
@@ -1336,6 +1594,627 @@ async def api_platform_prompt_persona_revisions(
         "field": resolved_field,
         "items": items,
     }
+
+
+@app.get(
+    "/api/v1/platform/prompt-center/prompts",
+    response_model=ApiTemplateListResponse,
+    tags=["platform-prompts"],
+    summary="List system prompt templates",
+)
+async def api_prompt_center_list_prompts(include_archived: bool = False):
+    _ensure_platform_api_enabled()
+
+    try:
+        records = prompt_persona_registry.list_templates("prompt", include_archived=include_archived)
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    payload = [_as_template_record(record) for record in records]
+    return {
+        "total": len(payload),
+        "include_archived": include_archived,
+        "items": payload,
+    }
+
+
+@app.get(
+    "/api/v1/platform/prompt-center/prompts/{key}",
+    response_model=ApiTemplateRecordResponse,
+    tags=["platform-prompts"],
+    summary="Get system prompt template",
+)
+async def api_prompt_center_get_prompt(key: str, archived: bool = False):
+    _ensure_platform_api_enabled()
+
+    try:
+        record = prompt_persona_registry.get_template("prompt", key, archived=archived)
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    if not record:
+        raise HTTPException(status_code=404, detail="Prompt template not found")
+    return _as_template_record(record)
+
+
+@app.post(
+    "/api/v1/platform/prompt-center/prompts",
+    response_model=ApiTemplateRecordResponse,
+    tags=["platform-prompts"],
+    summary="Create system prompt template",
+)
+async def api_prompt_center_create_prompt(request: PromptTemplateWriteRequest):
+    _ensure_platform_api_enabled()
+
+    if not request.content.strip():
+        raise HTTPException(status_code=400, detail="content is required")
+
+    try:
+        record = prompt_persona_registry.create_template(
+            "prompt",
+            key=request.key,
+            content=request.content,
+            label=request.label,
+            description=request.description,
+        )
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _invalidate_options_cache()
+    return _as_template_record(record)
+
+
+@app.patch(
+    "/api/v1/platform/prompt-center/prompts/{key}",
+    response_model=ApiTemplateRecordResponse,
+    tags=["platform-prompts"],
+    summary="Update system prompt template",
+)
+async def api_prompt_center_update_prompt(key: str, request: PromptTemplatePatchRequest):
+    _ensure_platform_api_enabled()
+
+    if request.label is None and request.description is None and request.content is None:
+        raise HTTPException(status_code=400, detail="At least one field must be provided")
+
+    try:
+        record = prompt_persona_registry.update_template(
+            "prompt",
+            key=key,
+            content=request.content,
+            label=request.label,
+            description=request.description,
+        )
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _invalidate_options_cache()
+    return _as_template_record(record)
+
+
+@app.post(
+    "/api/v1/platform/prompt-center/prompts/{key}/archive",
+    response_model=ApiTemplateRecordResponse,
+    tags=["platform-prompts"],
+    summary="Archive system prompt template",
+)
+async def api_prompt_center_archive_prompt(key: str):
+    _ensure_platform_api_enabled()
+
+    try:
+        record = prompt_persona_registry.archive_template("prompt", key)
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _invalidate_options_cache()
+    return _as_template_record(record)
+
+
+@app.post(
+    "/api/v1/platform/prompt-center/prompts/{key}/restore",
+    response_model=ApiTemplateRecordResponse,
+    tags=["platform-prompts"],
+    summary="Restore archived system prompt template",
+)
+async def api_prompt_center_restore_prompt(key: str):
+    _ensure_platform_api_enabled()
+
+    try:
+        record = prompt_persona_registry.restore_template("prompt", key)
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _invalidate_options_cache()
+    return _as_template_record(record)
+
+
+@app.delete(
+    "/api/v1/platform/prompt-center/prompts/{key}/purge",
+    tags=["platform-prompts"],
+    summary="Purge archived system prompt template",
+)
+async def api_prompt_center_purge_prompt(key: str):
+    _ensure_platform_api_enabled()
+
+    try:
+        prompt_persona_registry.purge_template("prompt", key)
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _invalidate_options_cache()
+    return {"ok": True, "key": key, "kind": "prompt"}
+
+
+@app.get(
+    "/api/v1/platform/prompt-center/personas",
+    response_model=ApiTemplateListResponse,
+    tags=["platform-prompts"],
+    summary="List persona templates",
+)
+async def api_prompt_center_list_personas(include_archived: bool = False):
+    _ensure_platform_api_enabled()
+
+    try:
+        records = prompt_persona_registry.list_templates("persona", include_archived=include_archived)
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    payload = [_as_template_record(record) for record in records]
+    return {
+        "total": len(payload),
+        "include_archived": include_archived,
+        "items": payload,
+    }
+
+
+@app.get(
+    "/api/v1/platform/prompt-center/personas/{key}",
+    response_model=ApiTemplateRecordResponse,
+    tags=["platform-prompts"],
+    summary="Get persona template",
+)
+async def api_prompt_center_get_persona(key: str, archived: bool = False):
+    _ensure_platform_api_enabled()
+
+    try:
+        record = prompt_persona_registry.get_template("persona", key, archived=archived)
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    if not record:
+        raise HTTPException(status_code=404, detail="Persona template not found")
+    return _as_template_record(record)
+
+
+@app.post(
+    "/api/v1/platform/prompt-center/personas",
+    response_model=ApiTemplateRecordResponse,
+    tags=["platform-prompts"],
+    summary="Create persona template",
+)
+async def api_prompt_center_create_persona(request: PersonaTemplateWriteRequest):
+    _ensure_platform_api_enabled()
+
+    if not request.content.strip():
+        raise HTTPException(status_code=400, detail="content is required")
+
+    try:
+        record = prompt_persona_registry.create_template(
+            "persona",
+            key=request.key,
+            content=request.content,
+            label=request.label,
+            description=request.description,
+        )
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _invalidate_options_cache()
+    return _as_template_record(record)
+
+
+@app.patch(
+    "/api/v1/platform/prompt-center/personas/{key}",
+    response_model=ApiTemplateRecordResponse,
+    tags=["platform-prompts"],
+    summary="Update persona template",
+)
+async def api_prompt_center_update_persona(key: str, request: PersonaTemplatePatchRequest):
+    _ensure_platform_api_enabled()
+
+    if request.label is None and request.description is None and request.content is None:
+        raise HTTPException(status_code=400, detail="At least one field must be provided")
+
+    try:
+        record = prompt_persona_registry.update_template(
+            "persona",
+            key=key,
+            content=request.content,
+            label=request.label,
+            description=request.description,
+        )
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _invalidate_options_cache()
+    return _as_template_record(record)
+
+
+@app.post(
+    "/api/v1/platform/prompt-center/personas/{key}/archive",
+    response_model=ApiTemplateRecordResponse,
+    tags=["platform-prompts"],
+    summary="Archive persona template",
+)
+async def api_prompt_center_archive_persona(key: str):
+    _ensure_platform_api_enabled()
+
+    try:
+        record = prompt_persona_registry.archive_template("persona", key)
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _invalidate_options_cache()
+    return _as_template_record(record)
+
+
+@app.post(
+    "/api/v1/platform/prompt-center/personas/{key}/restore",
+    response_model=ApiTemplateRecordResponse,
+    tags=["platform-prompts"],
+    summary="Restore archived persona template",
+)
+async def api_prompt_center_restore_persona(key: str):
+    _ensure_platform_api_enabled()
+
+    try:
+        record = prompt_persona_registry.restore_template("persona", key)
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _invalidate_options_cache()
+    return _as_template_record(record)
+
+
+@app.delete(
+    "/api/v1/platform/prompt-center/personas/{key}/purge",
+    tags=["platform-prompts"],
+    summary="Purge archived persona template",
+)
+async def api_prompt_center_purge_persona(key: str):
+    _ensure_platform_api_enabled()
+
+    try:
+        prompt_persona_registry.purge_template("persona", key)
+    except RegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    _invalidate_options_cache()
+    return {"ok": True, "key": key, "kind": "persona"}
+
+
+@app.get(
+    "/api/v1/platform/tool-center/tools",
+    response_model=ApiToolCenterListResponse,
+    tags=["platform-tools"],
+    summary="List Tool Center entries",
+)
+async def api_tool_center_list_tools(
+    include_archived: bool = False,
+    include_builtin: bool = True,
+    include_source: bool = False,
+    search: str = "",
+):
+    _ensure_platform_api_enabled()
+
+    query = str(search or "").strip().lower()
+
+    def _matches_query(*values: str) -> bool:
+        if not query:
+            return True
+        combined = "\n".join(str(value or "") for value in values).lower()
+        return query in combined
+
+    managed_records = custom_tool_registry.list_tools(
+        include_archived=include_archived,
+        include_source=include_source,
+    )
+    remote_tools = agent_platform.list_available_tools(search=None, limit=500)
+    remote_by_id = {
+        str(tool.get("id", "") or ""): tool
+        for tool in remote_tools
+        if str(tool.get("id", "") or "").strip()
+    }
+
+    items: list[dict[str, Any]] = []
+    managed_ids: set[str] = set()
+    for managed in managed_records:
+        tool_id = str(managed.get("tool_id", "") or "")
+        if tool_id:
+            managed_ids.add(tool_id)
+        if not _matches_query(
+            str(managed.get("slug", "") or ""),
+            str(managed.get("name", "") or ""),
+            str(managed.get("description", "") or ""),
+        ):
+            continue
+        remote_tool = None if bool(managed.get("archived", False)) else remote_by_id.get(tool_id)
+        items.append(
+            _as_tool_center_item(
+                managed_entry=managed,
+                remote_tool=remote_tool,
+                include_source=include_source,
+            )
+        )
+
+    if include_builtin:
+        for remote in remote_tools:
+            tool_id = str(remote.get("id", "") or "")
+            if not tool_id or tool_id in managed_ids:
+                continue
+            if not _matches_query(
+                str(remote.get("name", "") or ""),
+                str(remote.get("description", "") or ""),
+                str(remote.get("tool_type", "") or ""),
+            ):
+                continue
+
+            items.append(
+                _as_tool_center_item(
+                    managed_entry=None,
+                    remote_tool=remote,
+                    include_source=False,
+                )
+            )
+
+    return {
+        "total": len(items),
+        "include_archived": include_archived,
+        "include_builtin": include_builtin,
+        "items": items,
+    }
+
+
+@app.get(
+    "/api/v1/platform/tool-center/tools/{slug}",
+    response_model=ApiToolCenterItemResponse,
+    tags=["platform-tools"],
+    summary="Get Tool Center managed custom tool",
+)
+async def api_tool_center_get_tool(slug: str, include_source: bool = True):
+    _ensure_platform_api_enabled()
+
+    try:
+        managed = custom_tool_registry.get_tool(slug, include_source=include_source)
+    except ToolRegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    if not managed:
+        raise HTTPException(status_code=404, detail="Managed custom tool not found")
+
+    remote_tool: dict[str, Any] | None = None
+    if not bool(managed.get("archived", False)):
+        tool_id = str(managed.get("tool_id", "") or "")
+        if tool_id:
+            try:
+                remote_tool = agent_platform.retrieve_tool(tool_id=tool_id)
+            except Exception:
+                remote_tool = None
+
+    return _as_tool_center_item(
+        managed_entry=managed,
+        remote_tool=remote_tool,
+        include_source=include_source,
+    )
+
+
+@app.post(
+    "/api/v1/platform/tool-center/tools",
+    response_model=ApiToolCenterItemResponse,
+    tags=["platform-tools"],
+    summary="Create managed custom tool",
+)
+async def api_tool_center_create_tool(request: ToolCenterCreateRequest):
+    _ensure_platform_api_enabled()
+
+    if not request.source_code.strip():
+        raise HTTPException(status_code=400, detail="source_code is required")
+
+    tags = _managed_tool_tags(request.tags)
+
+    try:
+        created_remote = agent_platform.create_tool(
+            source_code=request.source_code,
+            description=request.description,
+            tags=tags,
+            source_type=request.source_type,
+            enable_parallel_execution=request.enable_parallel_execution,
+            default_requires_approval=request.default_requires_approval,
+            return_char_limit=request.return_char_limit,
+            pip_requirements=request.pip_requirements,
+            npm_requirements=request.npm_requirements,
+        )
+
+        managed = custom_tool_registry.create_tool(
+            slug=request.slug,
+            tool_id=str(created_remote.get("id", "") or ""),
+            name=str(created_remote.get("name", "") or request.slug),
+            description=str(created_remote.get("description", "") or request.description),
+            source_code=request.source_code,
+            tags=[str(tag) for tag in (created_remote.get("tags", tags) or []) if str(tag).strip()],
+            source_type=str(created_remote.get("source_type", request.source_type) or request.source_type),
+            tool_type=str(created_remote.get("tool_type", "custom") or "custom"),
+        )
+    except (ToolRegistryError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return _as_tool_center_item(managed_entry=managed, remote_tool=created_remote, include_source=True)
+
+
+@app.patch(
+    "/api/v1/platform/tool-center/tools/{slug}",
+    response_model=ApiToolCenterItemResponse,
+    tags=["platform-tools"],
+    summary="Update managed custom tool",
+)
+async def api_tool_center_update_tool(slug: str, request: ToolCenterUpdateRequest):
+    _ensure_platform_api_enabled()
+
+    if (
+        request.source_code is None
+        and request.description is None
+        and request.tags is None
+        and request.source_type is None
+        and request.enable_parallel_execution is None
+        and request.default_requires_approval is None
+        and request.return_char_limit is None
+        and request.pip_requirements is None
+        and request.npm_requirements is None
+    ):
+        raise HTTPException(status_code=400, detail="At least one updatable field is required")
+
+    try:
+        managed = custom_tool_registry.get_tool(slug, include_source=True)
+        if not managed:
+            raise HTTPException(status_code=404, detail="Managed custom tool not found")
+        if bool(managed.get("archived", False)):
+            raise HTTPException(status_code=400, detail="Archived tool must be restored before update")
+
+        tool_id = str(managed.get("tool_id", "") or "")
+        if not tool_id:
+            raise HTTPException(status_code=400, detail="Managed custom tool is missing tool_id")
+
+        merged_tags = request.tags
+        if merged_tags is not None:
+            merged_tags = _managed_tool_tags(merged_tags)
+
+        updated_remote = agent_platform.update_tool(
+            tool_id=tool_id,
+            source_code=request.source_code,
+            description=request.description,
+            tags=merged_tags,
+            source_type=request.source_type,
+            enable_parallel_execution=request.enable_parallel_execution,
+            default_requires_approval=request.default_requires_approval,
+            return_char_limit=request.return_char_limit,
+            pip_requirements=request.pip_requirements,
+            npm_requirements=request.npm_requirements,
+        )
+
+        updated_managed = custom_tool_registry.update_tool(
+            slug=slug,
+            tool_id=str(updated_remote.get("id", "") or tool_id),
+            name=str(updated_remote.get("name", "") or managed.get("name", "")),
+            description=str(updated_remote.get("description", "") or request.description or managed.get("description", "")),
+            source_code=request.source_code,
+            tags=[str(tag) for tag in (updated_remote.get("tags", merged_tags or managed.get("tags", [])) or []) if str(tag).strip()],
+            source_type=str(updated_remote.get("source_type", request.source_type or managed.get("source_type", "python")) or "python"),
+            tool_type=str(updated_remote.get("tool_type", managed.get("tool_type", "custom")) or "custom"),
+        )
+    except HTTPException:
+        raise
+    except (ToolRegistryError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return _as_tool_center_item(managed_entry=updated_managed, remote_tool=updated_remote, include_source=True)
+
+
+@app.post(
+    "/api/v1/platform/tool-center/tools/{slug}/archive",
+    response_model=ApiToolCenterItemResponse,
+    tags=["platform-tools"],
+    summary="Archive managed custom tool",
+)
+async def api_tool_center_archive_tool(slug: str):
+    _ensure_platform_api_enabled()
+
+    try:
+        managed = custom_tool_registry.get_tool(slug, include_source=True)
+        if not managed:
+            raise HTTPException(status_code=404, detail="Managed custom tool not found")
+        if bool(managed.get("archived", False)):
+            raise HTTPException(status_code=400, detail="Tool is already archived")
+
+        tool_id = str(managed.get("tool_id", "") or "")
+        if not tool_id:
+            raise HTTPException(status_code=400, detail="Managed custom tool is missing tool_id")
+
+        agent_platform.delete_tool(tool_id=tool_id)
+        archived = custom_tool_registry.archive_tool(slug)
+    except HTTPException:
+        raise
+    except (ToolRegistryError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return _as_tool_center_item(managed_entry=archived, remote_tool=None, include_source=True)
+
+
+@app.post(
+    "/api/v1/platform/tool-center/tools/{slug}/restore",
+    response_model=ApiToolCenterItemResponse,
+    tags=["platform-tools"],
+    summary="Restore archived managed custom tool",
+)
+async def api_tool_center_restore_tool(slug: str):
+    _ensure_platform_api_enabled()
+
+    try:
+        managed = custom_tool_registry.get_tool(slug, include_source=True)
+        if not managed:
+            raise HTTPException(status_code=404, detail="Managed custom tool not found")
+        if not bool(managed.get("archived", False)):
+            raise HTTPException(status_code=400, detail="Tool is not archived")
+
+        source_code = str(managed.get("source_code", "") or "")
+        if not source_code.strip():
+            raise HTTPException(status_code=400, detail="Archived source_code is missing")
+
+        tags = _managed_tool_tags([str(tag) for tag in (managed.get("tags", []) or []) if str(tag).strip()])
+        restored_remote = agent_platform.create_tool(
+            source_code=source_code,
+            description=str(managed.get("description", "") or ""),
+            tags=tags,
+            source_type=str(managed.get("source_type", "python") or "python"),
+        )
+
+        restored = custom_tool_registry.restore_tool(
+            slug=slug,
+            tool_id=str(restored_remote.get("id", "") or ""),
+            name=str(restored_remote.get("name", "") or slug),
+            description=str(restored_remote.get("description", "") or managed.get("description", "")),
+            tags=[str(tag) for tag in (restored_remote.get("tags", tags) or []) if str(tag).strip()],
+            source_type=str(restored_remote.get("source_type", managed.get("source_type", "python")) or "python"),
+            tool_type=str(restored_remote.get("tool_type", managed.get("tool_type", "custom")) or "custom"),
+        )
+    except HTTPException:
+        raise
+    except (ToolRegistryError, ValueError) as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return _as_tool_center_item(managed_entry=restored, remote_tool=restored_remote, include_source=True)
+
+
+@app.delete(
+    "/api/v1/platform/tool-center/tools/{slug}/purge",
+    tags=["platform-tools"],
+    summary="Purge archived managed custom tool",
+)
+async def api_tool_center_purge_tool(slug: str):
+    _ensure_platform_api_enabled()
+
+    try:
+        custom_tool_registry.purge_tool(slug)
+    except ToolRegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {"ok": True, "slug": slug, "kind": "custom_tool"}
 
 
 @app.post(

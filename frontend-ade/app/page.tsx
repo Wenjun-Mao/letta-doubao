@@ -38,6 +38,10 @@ const COPY = {
       agentStudioTitle: "Agent Studio",
       agentStudioDescription:
         "Runtime chat, prompt and persona editing, tool management, execution trace, and persistent state inspection.",
+      promptCenterTitle: "Prompt Center",
+      promptCenterDescription: "Manage system prompts and persona templates with workspace-persisted CRUD and archive/restore.",
+      toolCenterTitle: "Tool Center",
+      toolCenterDescription: "Create and maintain managed custom tools, then attach them in Agent Studio without restart.",
       testCenterTitle: "Test Center",
       testCenterDescription: "Create and monitor backend orchestrated checks and runners, including run artifacts.",
       apiDocsTitle: "API Docs",
@@ -72,6 +76,10 @@ const COPY = {
     modules: {
       agentStudioTitle: "智能体工作台",
       agentStudioDescription: "支持运行时对话、提示词和 Persona 编辑、工具管理、执行轨迹及持久化状态查看。",
+      promptCenterTitle: "提示词中心",
+      promptCenterDescription: "管理 System Prompt 与 Persona 模板，支持工作区持久化 CRUD 与归档恢复。",
+      toolCenterTitle: "工具中心",
+      toolCenterDescription: "创建并维护受管自定义工具，无需重启即可在智能体工作台挂载使用。",
       testCenterTitle: "测试中心",
       testCenterDescription: "创建并监控后端编排检查与运行任务，包括产物查看。",
       apiDocsTitle: "API 文档",
@@ -150,6 +158,16 @@ export default function DashboardPage() {
         title: copy.modules.agentStudioTitle,
         description: copy.modules.agentStudioDescription,
         href: "/agent-studio",
+      },
+      {
+        title: copy.modules.promptCenterTitle,
+        description: copy.modules.promptCenterDescription,
+        href: "/prompt-center",
+      },
+      {
+        title: copy.modules.toolCenterTitle,
+        description: copy.modules.toolCenterDescription,
+        href: "/tool-center",
       },
       {
         title: copy.modules.testCenterTitle,

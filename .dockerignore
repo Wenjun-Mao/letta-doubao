@@ -9,4 +9,15 @@ data/nltk_data/
 diagnostics/
 tests/outputs/
 letta-souce-code/
+.github/
+.vscode/
+bruno/
+memory-export/
+notebooks/
+temps/
+frontend-ade/node_modules/
+frontend-ade/.next/
+frontend-ade/.turbo/
+frontend-ade/.env.local
+frontend-ade/.env.production.local
 

@@ -7,6 +7,8 @@ import { useI18n } from "../../lib/i18n";
 const NAV_ITEMS = [
   { href: "/", key: "dashboard" },
   { href: "/agent-studio", key: "agentStudio" },
+  { href: "/prompt-center", key: "promptCenter" },
+  { href: "/tool-center", key: "toolCenter" },
   { href: "/test-center", key: "testCenter" },
   { href: "/api-docs", key: "apiDocs" },
 ] as const;
@@ -17,6 +19,8 @@ const COPY = {
     languageAriaLabel: "Language",
     dashboard: "Dashboard",
     agentStudio: "Agent Studio",
+    promptCenter: "Prompt Center",
+    toolCenter: "Tool Center",
     testCenter: "Test Center",
     apiDocs: "API Docs",
   },
@@ -25,6 +29,8 @@ const COPY = {
     languageAriaLabel: "语言",
     dashboard: "仪表盘",
     agentStudio: "智能体工作台",
+    promptCenter: "提示词中心",
+    toolCenter: "工具中心",
     testCenter: "测试中心",
     apiDocs: "API 文档",
   },

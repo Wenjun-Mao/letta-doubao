@@ -120,6 +120,42 @@ export type PlatformTool = {
   last_updated_at: string;
   tags: string[];
   attached_to_agent?: boolean;
+  managed?: boolean;
+  read_only?: boolean;
+  archived?: boolean;
+  slug?: string | null;
+};
+
+export type PromptTemplateRecord = {
+  kind: "prompt" | "persona";
+  key: string;
+  label: string;
+  description: string;
+  content: string;
+  preview: string;
+  length: number;
+  archived: boolean;
+  source_path: string;
+  updated_at: string;
+};
+
+export type ToolCenterItem = {
+  slug?: string | null;
+  tool_id: string;
+  name: string;
+  description: string;
+  tool_type: string;
+  source_type: string;
+  tags: string[];
+  managed: boolean;
+  read_only: boolean;
+  archived: boolean;
+  source_path?: string | null;
+  source_code?: string | null;
+  created_at?: string;
+  last_updated_at?: string;
+  updated_at?: string | null;
+  archived_at?: string | null;
 };
 
 export type PlatformToolTestInvokeResult = {
@@ -272,9 +308,11 @@ export function fetchOptions() {
     models: OptionEntry[];
     embeddings: OptionEntry[];
     prompts: OptionEntry[];
+    personas: OptionEntry[];
     defaults: {
       model: string;
       prompt_key: string;
+      persona_key: string;
       embedding: string;
     };
   }>("/api/v1/options", { cacheTtlMs: 60_000 });
@@ -297,6 +335,7 @@ export function createAgent(payload: {
   name: string;
   model: string;
   prompt_key: string;
+  persona_key?: string;
   embedding?: string | null;
 }) {
   return requestJson<{
@@ -305,6 +344,7 @@ export function createAgent(payload: {
     model: string;
     embedding?: string | null;
     prompt_key: string;
+    persona_key?: string;
   }>("/api/v1/agents", {
     method: "POST",
     body: payload,
@@ -460,6 +500,245 @@ export function detachTool(agentId: string, toolId: string) {
   }).then((payload) => {
     invalidateAgentScope(agentId);
     return payload;
+  });
+}
+
+export function listPromptTemplates(includeArchived = false) {
+  const params = new URLSearchParams();
+  params.set("include_archived", includeArchived ? "true" : "false");
+  return requestJson<{
+    total: number;
+    include_archived: boolean;
+    items: PromptTemplateRecord[];
+  }>(`/api/v1/platform/prompt-center/prompts?${params.toString()}`, { cacheTtlMs: 10_000 });
+}
+
+export function createPromptTemplate(payload: {
+  key: string;
+  label?: string;
+  description?: string;
+  content: string;
+}) {
+  return requestJson<PromptTemplateRecord>("/api/v1/platform/prompt-center/prompts", {
+    method: "POST",
+    body: payload,
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
+    return record;
+  });
+}
+
+export function updatePromptTemplate(
+  key: string,
+  payload: {
+    label?: string;
+    description?: string;
+    content?: string;
+  },
+) {
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/prompts/${key}`, {
+    method: "PATCH",
+    body: payload,
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
+    return record;
+  });
+}
+
+export function archivePromptTemplate(key: string) {
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/prompts/${key}/archive`, {
+    method: "POST",
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
+    return record;
+  });
+}
+
+export function restorePromptTemplate(key: string) {
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/prompts/${key}/restore`, {
+    method: "POST",
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
+    return record;
+  });
+}
+
+export function purgePromptTemplate(key: string) {
+  return requestJson<{ ok: boolean; key: string; kind: string }>(`/api/v1/platform/prompt-center/prompts/${key}/purge`, {
+    method: "DELETE",
+  }).then((result) => {
+    invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
+    return result;
+  });
+}
+
+export function listPersonaTemplates(includeArchived = false) {
+  const params = new URLSearchParams();
+  params.set("include_archived", includeArchived ? "true" : "false");
+  return requestJson<{
+    total: number;
+    include_archived: boolean;
+    items: PromptTemplateRecord[];
+  }>(`/api/v1/platform/prompt-center/personas?${params.toString()}`, { cacheTtlMs: 10_000 });
+}
+
+export function createPersonaTemplate(payload: {
+  key: string;
+  label?: string;
+  description?: string;
+  content: string;
+}) {
+  return requestJson<PromptTemplateRecord>("/api/v1/platform/prompt-center/personas", {
+    method: "POST",
+    body: payload,
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
+    return record;
+  });
+}
+
+export function updatePersonaTemplate(
+  key: string,
+  payload: {
+    label?: string;
+    description?: string;
+    content?: string;
+  },
+) {
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/personas/${key}`, {
+    method: "PATCH",
+    body: payload,
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
+    return record;
+  });
+}
+
+export function archivePersonaTemplate(key: string) {
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/personas/${key}/archive`, {
+    method: "POST",
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
+    return record;
+  });
+}
+
+export function restorePersonaTemplate(key: string) {
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/personas/${key}/restore`, {
+    method: "POST",
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
+    return record;
+  });
+}
+
+export function purgePersonaTemplate(key: string) {
+  return requestJson<{ ok: boolean; key: string; kind: string }>(`/api/v1/platform/prompt-center/personas/${key}/purge`, {
+    method: "DELETE",
+  }).then((result) => {
+    invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
+    return result;
+  });
+}
+
+export function listToolCenterTools(options?: {
+  includeArchived?: boolean;
+  includeBuiltin?: boolean;
+  includeSource?: boolean;
+  search?: string;
+}) {
+  const params = new URLSearchParams();
+  params.set("include_archived", options?.includeArchived ? "true" : "false");
+  params.set("include_builtin", options?.includeBuiltin === false ? "false" : "true");
+  params.set("include_source", options?.includeSource ? "true" : "false");
+  if (options?.search?.trim()) {
+    params.set("search", options.search.trim());
+  }
+
+  return requestJson<{
+    total: number;
+    include_archived: boolean;
+    include_builtin: boolean;
+    items: ToolCenterItem[];
+  }>(`/api/v1/platform/tool-center/tools?${params.toString()}`, { cacheTtlMs: 8_000 });
+}
+
+export function getToolCenterTool(slug: string, includeSource = true) {
+  const params = new URLSearchParams();
+  params.set("include_source", includeSource ? "true" : "false");
+  return requestJson<ToolCenterItem>(`/api/v1/platform/tool-center/tools/${slug}?${params.toString()}`, {
+    cacheTtlMs: 8_000,
+  });
+}
+
+export function createToolCenterTool(payload: {
+  slug: string;
+  source_code: string;
+  description?: string;
+  tags?: string[];
+  source_type?: string;
+  enable_parallel_execution?: boolean;
+  default_requires_approval?: boolean;
+  return_char_limit?: number;
+  pip_requirements?: Array<Record<string, unknown>>;
+  npm_requirements?: Array<Record<string, unknown>>;
+}) {
+  return requestJson<ToolCenterItem>("/api/v1/platform/tool-center/tools", {
+    method: "POST",
+    body: payload,
+  }).then((item) => {
+    invalidateApiCache(["/api/v1/platform/tool-center", "/api/v1/platform/tools"]);
+    return item;
+  });
+}
+
+export function updateToolCenterTool(
+  slug: string,
+  payload: {
+    source_code?: string;
+    description?: string;
+    tags?: string[];
+    source_type?: string;
+    enable_parallel_execution?: boolean;
+    default_requires_approval?: boolean;
+    return_char_limit?: number;
+    pip_requirements?: Array<Record<string, unknown>>;
+    npm_requirements?: Array<Record<string, unknown>>;
+  },
+) {
+  return requestJson<ToolCenterItem>(`/api/v1/platform/tool-center/tools/${slug}`, {
+    method: "PATCH",
+    body: payload,
+  }).then((item) => {
+    invalidateApiCache(["/api/v1/platform/tool-center", "/api/v1/platform/tools"]);
+    return item;
+  });
+}
+
+export function archiveToolCenterTool(slug: string) {
+  return requestJson<ToolCenterItem>(`/api/v1/platform/tool-center/tools/${slug}/archive`, {
+    method: "POST",
+  }).then((item) => {
+    invalidateApiCache(["/api/v1/platform/tool-center", "/api/v1/platform/tools"]);
+    return item;
+  });
+}
+
+export function restoreToolCenterTool(slug: string) {
+  return requestJson<ToolCenterItem>(`/api/v1/platform/tool-center/tools/${slug}/restore`, {
+    method: "POST",
+  }).then((item) => {
+    invalidateApiCache(["/api/v1/platform/tool-center", "/api/v1/platform/tools"]);
+    return item;
+  });
+}
+
+export function purgeToolCenterTool(slug: string) {
+  return requestJson<{ ok: boolean; slug: string; kind: string }>(`/api/v1/platform/tool-center/tools/${slug}/purge`, {
+    method: "DELETE",
+  }).then((result) => {
+    invalidateApiCache(["/api/v1/platform/tool-center", "/api/v1/platform/tools"]);
+    return result;
   });
 }
 

@@ -9,16 +9,16 @@ const COPY = {
   en: {
     kicker: "Consolidated Module",
     title: "Prompt and Persona Lab",
-    movedTitle: "Moved Into Agent Studio",
-    movedText: "Prompt and persona editing is now part of the unified Agent Studio inspector. Redirecting now.",
-    openButton: "Open Agent Studio (Prompt Tab)",
+    movedTitle: "Moved Into Prompt Center",
+    movedText: "Prompt and persona CRUD workflows now live in Prompt Center. Redirecting now.",
+    openButton: "Open Prompt Center",
   },
   zh: {
     kicker: "模块已合并",
     title: "提示词与 Persona 实验室",
-    movedTitle: "已迁入智能体工作台",
-    movedText: "提示词与 Persona 编辑现已并入统一的智能体工作台检查面板，正在跳转。",
-    openButton: "打开智能体工作台（Prompt 标签）",
+    movedTitle: "已迁入提示词中心",
+    movedText: "提示词与 Persona 的 CRUD 工作流现已迁至提示词中心，正在跳转。",
+    openButton: "打开提示词中心",
   },
 } as const;
 
@@ -28,7 +28,7 @@ export default function PromptPersonaLabPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/agent-studio?focus=prompt");
+    router.replace("/prompt-center");
   }, [router]);
 
   return (
@@ -39,7 +39,7 @@ export default function PromptPersonaLabPage() {
         <h3>{copy.movedTitle}</h3>
         <p>{copy.movedText}</p>
         <div className="toolbar" style={{ marginTop: 10 }}>
-          <Link className="button" href="/agent-studio?focus=prompt">
+          <Link className="button" href="/prompt-center">
             {copy.openButton}
           </Link>
         </div>

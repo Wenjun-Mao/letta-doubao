@@ -9,16 +9,16 @@ const COPY = {
   en: {
     kicker: "Consolidated Module",
     title: "Toolbench",
-    movedTitle: "Moved Into Agent Studio",
-    movedText: "Tool discovery and attach/detach flows now live in the Agent Studio tools tab. Redirecting now.",
-    openButton: "Open Agent Studio (Tools Tab)",
+    movedTitle: "Moved Into Tool Center",
+    movedText: "Tool CRUD and lifecycle operations now live in Tool Center. Redirecting now.",
+    openButton: "Open Tool Center",
   },
   zh: {
     kicker: "模块已合并",
     title: "工具台",
-    movedTitle: "已迁入智能体工作台",
-    movedText: "工具发现与挂载/卸载流程现已迁至智能体工作台的 Tools 标签，正在跳转。",
-    openButton: "打开智能体工作台（Tools 标签）",
+    movedTitle: "已迁入工具中心",
+    movedText: "工具的 CRUD 与生命周期管理现已迁至工具中心，正在跳转。",
+    openButton: "打开工具中心",
   },
 } as const;
 
@@ -28,7 +28,7 @@ export default function ToolbenchPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.replace("/agent-studio?focus=tools");
+    router.replace("/tool-center");
   }, [router]);
 
   return (
@@ -39,7 +39,7 @@ export default function ToolbenchPage() {
         <h3>{copy.movedTitle}</h3>
         <p>{copy.movedText}</p>
         <div className="toolbar" style={{ marginTop: 10 }}>
-          <Link className="button" href="/agent-studio?focus=tools">
+          <Link className="button" href="/tool-center">
             {copy.openButton}
           </Link>
         </div>

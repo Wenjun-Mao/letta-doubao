@@ -315,6 +315,7 @@ export default function AgentStudioPage() {
   const [models, setModels] = useState<OptionEntry[]>([]);
   const [embeddings, setEmbeddings] = useState<OptionEntry[]>([]);
   const [prompts, setPrompts] = useState<OptionEntry[]>([]);
+  const [personas, setPersonas] = useState<OptionEntry[]>([]);
 
   const [agents, setAgents] = useState<AgentItem[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState("");
@@ -326,6 +327,7 @@ export default function AgentStudioPage() {
   const [createName, setCreateName] = useState("ade-agent");
   const [createModel, setCreateModel] = useState("");
   const [createPromptKey, setCreatePromptKey] = useState("custom_v2");
+  const [createPersonaKey, setCreatePersonaKey] = useState("linxiaotang");
   const [createEmbedding, setCreateEmbedding] = useState("");
   const [modelEditValue, setModelEditValue] = useState("");
 
@@ -544,8 +546,28 @@ export default function AgentStudioPage() {
         setModels(optionsPayload.models || []);
         setEmbeddings(optionsPayload.embeddings || []);
         setPrompts(optionsPayload.prompts || []);
+        setPersonas(optionsPayload.personas || []);
+
+        const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const requestedPromptKey = (params?.get("promptKey") || "").trim();
+        const requestedPersonaKey = (params?.get("personaKey") || "").trim();
+
+        const promptKeys = (optionsPayload.prompts || []).map((item) => item.key);
+        const personaKeys = (optionsPayload.personas || []).map((item) => item.key);
+
+        const resolvedPromptKey =
+          requestedPromptKey && promptKeys.includes(requestedPromptKey)
+            ? requestedPromptKey
+            : optionsPayload.defaults?.prompt_key || optionsPayload.prompts?.[0]?.key || "custom_v2";
+
+        const resolvedPersonaKey =
+          requestedPersonaKey && personaKeys.includes(requestedPersonaKey)
+            ? requestedPersonaKey
+            : optionsPayload.defaults?.persona_key || optionsPayload.personas?.[0]?.key || "linxiaotang";
+
         setCreateModel(optionsPayload.defaults?.model || optionsPayload.models?.[0]?.key || "");
-        setCreatePromptKey(optionsPayload.defaults?.prompt_key || "custom_v2");
+        setCreatePromptKey(resolvedPromptKey);
+        setCreatePersonaKey(resolvedPersonaKey);
         setCreateEmbedding(optionsPayload.defaults?.embedding || "");
 
         const mapped = agentsPayload.items.map((item) => ({
@@ -677,6 +699,7 @@ export default function AgentStudioPage() {
         name: createName.trim() || "ade-agent",
         model: createModel,
         prompt_key: createPromptKey,
+        persona_key: createPersonaKey,
         embedding: createEmbedding.trim() || null,
       });
 
@@ -950,6 +973,16 @@ export default function AgentStudioPage() {
               <span>{t("Prompt", "提示词")}</span>
               <select className="input" value={createPromptKey} onChange={(e) => setCreatePromptKey(e.target.value)}>
                 {prompts.map((item) => (
+                  <option key={item.key} value={item.key}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="field">
+              <span>{t("Persona", "Persona")}</span>
+              <select className="input" value={createPersonaKey} onChange={(e) => setCreatePersonaKey(e.target.value)}>
+                {personas.map((item) => (
                   <option key={item.key} value={item.key}>
                     {item.label}
                   </option>
