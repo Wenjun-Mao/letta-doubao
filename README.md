@@ -160,7 +160,7 @@ After this, `dev_ui` should start directly with Uvicorn and no startup-time pack
 
 Current baseline assumptions for development tests:
 
-- Default system prompt baseline: `CUSTOM_V2_PROMPT`
+- Default system prompt baseline: `CHAT_V20260418_PROMPT`
 - Default test embedding: `letta/letta-free`
 
 Testing runners live under `tests/`:

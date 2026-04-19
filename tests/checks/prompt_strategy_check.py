@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 from letta_client import Letta
 from prompts.persona import PERSONAS, HUMAN_TEMPLATE
 from prompts.system_prompts import (
-    CUSTOM_V2_PROMPT,
+    CHAT_V20260418_PROMPT,
 )
 from tests.shared.config_defaults import DEFAULT_CONTEXT_WINDOW_LIMIT, DEFAULT_LETTA_BASE_URL, DEFAULT_TEST_MODEL_HANDLE
 from utils.message_parser import chat
@@ -50,7 +50,7 @@ def test_prompt(system_prompt, prompt_name) -> bool:
         memory_blocks=[
             {
                 "label": "persona",
-                "value": PERSONAS["linxiaotang"],
+                "value": PERSONAS["chat_linxiaotang"],
             },
             {
                 "label": "human",
@@ -105,6 +105,6 @@ if __name__ == "__main__":
     import warnings
     warnings.filterwarnings("ignore")
 
-    ok = test_prompt(CUSTOM_V2_PROMPT, "CUSTOM_V2_PROMPT")
+    ok = test_prompt(CHAT_V20260418_PROMPT, "CHAT_V20260418_PROMPT")
     if not ok:
         raise SystemExit(1)

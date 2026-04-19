@@ -7,28 +7,34 @@ from pathlib import Path
 from typing import Any, Literal
 
 TemplateKind = Literal["prompt", "persona"]
+ScenarioKind = Literal["chat", "comment"]
 
 _KEY_PATTERN = re.compile(r"^[a-z][a-z0-9_-]{1,63}$")
 _META_LABEL = "LABEL"
 _META_DESCRIPTION = "DESCRIPTION"
 _PROMPT_VAR = "PROMPT"
 _PERSONA_VAR = "PERSONA_TEXT"
+_KNOWN_SCENARIOS: tuple[ScenarioKind, ...] = ("chat", "comment")
 
 _DEFAULT_PROMPT_META: dict[str, dict[str, str]] = {
-    "custom_v2": {
-        "label": "Custom V2 Chat (Default)",
-        "description": "Recommended baseline for robust persona adherence and tool-flow behavior.",
+    "chat_v20260418": {
+        "label": "Chat V20260418",
+        "description": "Chat scenario prompt baseline for memory-augmented user conversations.",
     },
-    "custom_v1": {
-        "label": "Custom V1 (Alternate)",
-        "description": "Alternate baseline kept for A/B testing and regression comparison.",
+    "comment_v20260418": {
+        "label": "Comment V20260418",
+        "description": "Comment scenario prompt baseline for stateless news and thread responses.",
     },
 }
 
 _DEFAULT_PERSONA_META: dict[str, dict[str, str]] = {
-    "linxiaotang": {
-        "label": "Lin Xiao Tang",
-        "description": "Default warm and gentle persona profile.",
+    "chat_linxiaotang": {
+        "label": "Chat Lin Xiao Tang",
+        "description": "Default chat persona profile for warm conversational replies.",
+    },
+    "comment_linxiaotang": {
+        "label": "Comment Lin Xiao Tang",
+        "description": "Default commenting persona profile for concise public discussion.",
     }
 }
 
@@ -52,16 +58,41 @@ class PromptPersonaRegistry:
         self.prompt_archive_dir.mkdir(parents=True, exist_ok=True)
         self.persona_archive_dir.mkdir(parents=True, exist_ok=True)
 
-    def list_templates(self, kind: TemplateKind, include_archived: bool = False) -> list[dict[str, Any]]:
-        records = self._list_from_dir(kind=kind, archived=False)
+    def list_templates(
+        self,
+        kind: TemplateKind,
+        include_archived: bool = False,
+        scenario: ScenarioKind | None = None,
+    ) -> list[dict[str, Any]]:
+        resolved_scenario = self._normalize_scenario(scenario, allow_none=True)
+        records = self._list_from_dir(kind=kind, archived=False, scenario=resolved_scenario)
         if include_archived:
-            records.extend(self._list_from_dir(kind=kind, archived=True))
-        records.sort(key=lambda item: (bool(item.get("archived")), str(item.get("key", ""))))
+            records.extend(self._list_from_dir(kind=kind, archived=True, scenario=resolved_scenario))
+        records.sort(
+            key=lambda item: (
+                bool(item.get("archived")),
+                str(item.get("scenario", "")),
+                str(item.get("key", "")),
+            )
+        )
         return records
 
-    def get_template(self, kind: TemplateKind, key: str, *, archived: bool = False) -> dict[str, Any] | None:
+    def get_template(
+        self,
+        kind: TemplateKind,
+        key: str,
+        *,
+        archived: bool = False,
+        scenario: ScenarioKind | None = None,
+    ) -> dict[str, Any] | None:
         normalized = self._normalize_key(key)
-        file_path = self._file_path(kind=kind, key=normalized, archived=archived)
+        resolved_scenario = self._normalize_scenario(scenario, allow_none=True)
+        file_path = self._find_template_path(
+            kind=kind,
+            key=normalized,
+            archived=archived,
+            scenario=resolved_scenario,
+        )
         if not file_path.exists():
             return None
         return self._parse_template_file(kind=kind, path=file_path, archived=archived)
@@ -74,11 +105,15 @@ class PromptPersonaRegistry:
         content: str,
         label: str = "",
         description: str = "",
+        scenario: ScenarioKind = "chat",
     ) -> dict[str, Any]:
         normalized = self._normalize_key(key)
-        if self._file_path(kind=kind, key=normalized, archived=False).exists():
+        resolved_scenario = self._normalize_scenario(scenario)
+        self._validate_key_scenario(normalized, resolved_scenario)
+
+        if self._find_template_path(kind=kind, key=normalized, archived=False, scenario=None).exists():
             raise RegistryError(f"{kind} '{normalized}' already exists")
-        if self._file_path(kind=kind, key=normalized, archived=True).exists():
+        if self._find_template_path(kind=kind, key=normalized, archived=True, scenario=None).exists():
             raise RegistryError(f"{kind} '{normalized}' already exists in archive; restore it instead")
 
         source = self._render_source(
@@ -89,7 +124,13 @@ class PromptPersonaRegistry:
             description=description.strip(),
         )
 
-        output_path = self._file_path(kind=kind, key=normalized, archived=False)
+        output_path = self._file_path_for_create(
+            kind=kind,
+            key=normalized,
+            scenario=resolved_scenario,
+            archived=False,
+        )
+        output_path.parent.mkdir(parents=True, exist_ok=True)
         output_path.write_text(source, encoding="utf-8")
         return self._parse_template_file(kind=kind, path=output_path, archived=False)
 
@@ -103,6 +144,7 @@ class PromptPersonaRegistry:
         description: str | None = None,
     ) -> dict[str, Any]:
         normalized = self._normalize_key(key)
+        existing_path = self._find_template_path(kind=kind, key=normalized, archived=False, scenario=None)
         existing = self.get_template(kind=kind, key=normalized, archived=False)
         if not existing:
             raise RegistryError(f"{kind} '{normalized}' not found")
@@ -118,14 +160,20 @@ class PromptPersonaRegistry:
             label=next_label,
             description=next_description,
         )
-        output_path = self._file_path(kind=kind, key=normalized, archived=False)
-        output_path.write_text(source, encoding="utf-8")
-        return self._parse_template_file(kind=kind, path=output_path, archived=False)
+        existing_path.write_text(source, encoding="utf-8")
+        return self._parse_template_file(kind=kind, path=existing_path, archived=False)
 
-    def archive_template(self, kind: TemplateKind, key: str) -> dict[str, Any]:
+    def archive_template(self, kind: TemplateKind, key: str, scenario: ScenarioKind | None = None) -> dict[str, Any]:
         normalized = self._normalize_key(key)
-        active_path = self._file_path(kind=kind, key=normalized, archived=False)
-        archived_path = self._file_path(kind=kind, key=normalized, archived=True)
+        resolved_scenario = self._normalize_scenario(scenario, allow_none=True)
+        active_path = self._find_template_path(
+            kind=kind,
+            key=normalized,
+            archived=False,
+            scenario=resolved_scenario,
+        )
+        active_dir, archived_dir = self._dirs_for_kind(kind)
+        archived_path = archived_dir / active_path.relative_to(active_dir)
         if not active_path.exists():
             raise RegistryError(f"{kind} '{normalized}' not found")
         if archived_path.exists():
@@ -135,10 +183,17 @@ class PromptPersonaRegistry:
         active_path.replace(archived_path)
         return self._parse_template_file(kind=kind, path=archived_path, archived=True)
 
-    def restore_template(self, kind: TemplateKind, key: str) -> dict[str, Any]:
+    def restore_template(self, kind: TemplateKind, key: str, scenario: ScenarioKind | None = None) -> dict[str, Any]:
         normalized = self._normalize_key(key)
-        active_path = self._file_path(kind=kind, key=normalized, archived=False)
-        archived_path = self._file_path(kind=kind, key=normalized, archived=True)
+        resolved_scenario = self._normalize_scenario(scenario, allow_none=True)
+        archived_path = self._find_template_path(
+            kind=kind,
+            key=normalized,
+            archived=True,
+            scenario=resolved_scenario,
+        )
+        active_dir, archived_dir = self._dirs_for_kind(kind)
+        active_path = active_dir / archived_path.relative_to(archived_dir)
         if not archived_path.exists():
             raise RegistryError(f"Archived {kind} '{normalized}' not found")
         if active_path.exists():
@@ -148,9 +203,15 @@ class PromptPersonaRegistry:
         archived_path.replace(active_path)
         return self._parse_template_file(kind=kind, path=active_path, archived=False)
 
-    def purge_template(self, kind: TemplateKind, key: str) -> None:
+    def purge_template(self, kind: TemplateKind, key: str, scenario: ScenarioKind | None = None) -> None:
         normalized = self._normalize_key(key)
-        archived_path = self._file_path(kind=kind, key=normalized, archived=True)
+        resolved_scenario = self._normalize_scenario(scenario, allow_none=True)
+        archived_path = self._find_template_path(
+            kind=kind,
+            key=normalized,
+            archived=True,
+            scenario=resolved_scenario,
+        )
         if not archived_path.exists():
             raise RegistryError(f"Archived {kind} '{normalized}' not found")
         archived_path.unlink()
@@ -162,6 +223,23 @@ class PromptPersonaRegistry:
                 "Invalid key. Use 2-64 chars with lowercase letters, numbers, underscores, or hyphens; must start with a letter."
             )
         return normalized
+
+    def _normalize_scenario(self, scenario: str | None, allow_none: bool = False) -> ScenarioKind | None:
+        if scenario is None:
+            return None if allow_none else "chat"
+        normalized = str(scenario or "").strip().lower()
+        if not normalized:
+            return None if allow_none else "chat"
+        if normalized not in _KNOWN_SCENARIOS:
+            raise RegistryError(f"Unsupported scenario: {scenario}")
+        return normalized
+
+    def _validate_key_scenario(self, key: str, scenario: ScenarioKind) -> None:
+        required_prefix = f"{scenario}_"
+        if not key.startswith(required_prefix):
+            raise RegistryError(
+                f"Key '{key}' must start with '{required_prefix}' for scenario '{scenario}'."
+            )
 
     def _dirs_for_kind(self, kind: TemplateKind) -> tuple[Path, Path]:
         if kind == "prompt":
@@ -183,20 +261,78 @@ class PromptPersonaRegistry:
             "description": f"{pretty} template managed in workspace files.",
         }
 
-    def _file_path(self, kind: TemplateKind, key: str, archived: bool) -> Path:
+    def _file_path_for_create(self, kind: TemplateKind, key: str, scenario: ScenarioKind, archived: bool) -> Path:
         active_dir, archived_dir = self._dirs_for_kind(kind)
         base = archived_dir if archived else active_dir
-        return base / f"{key}.py"
+        return base / scenario / f"{key}.py"
 
-    def _list_from_dir(self, kind: TemplateKind, archived: bool) -> list[dict[str, Any]]:
+    def _find_template_path(
+        self,
+        *,
+        kind: TemplateKind,
+        key: str,
+        archived: bool,
+        scenario: ScenarioKind | None,
+    ) -> Path:
+        active_dir, archived_dir = self._dirs_for_kind(kind)
+        base_dir = archived_dir if archived else active_dir
+        if not base_dir.exists():
+            return base_dir / f"{key}.py"
+
+        matches: list[Path] = []
+        for file_path in sorted(base_dir.rglob("*.py")):
+            if file_path.name == "__init__.py" or file_path.name.startswith("_"):
+                continue
+            rel = file_path.relative_to(base_dir)
+            if not archived and rel.parts and rel.parts[0] == "archive":
+                continue
+            if file_path.stem != key:
+                continue
+            inferred_scenario = self._infer_scenario_from_path(file_path, base_dir)
+            if scenario and inferred_scenario != scenario:
+                continue
+            matches.append(file_path)
+
+        if len(matches) > 1:
+            raise RegistryError(
+                f"Key collision for {kind} '{key}' across scenarios. Use explicit scenario filter."
+            )
+        if matches:
+            return matches[0]
+
+        if scenario:
+            return base_dir / scenario / f"{key}.py"
+        return base_dir / f"{key}.py"
+
+    def _infer_scenario_from_path(self, path: Path, base_dir: Path) -> ScenarioKind:
+        rel = path.relative_to(base_dir)
+        if rel.parts:
+            first = str(rel.parts[0]).strip().lower()
+            if first in _KNOWN_SCENARIOS:
+                return first
+
+        key = path.stem
+        if key.startswith("comment_"):
+            return "comment"
+        return "chat"
+
+    def _list_from_dir(
+        self,
+        kind: TemplateKind,
+        archived: bool,
+        scenario: ScenarioKind | None,
+    ) -> list[dict[str, Any]]:
         active_dir, archived_dir = self._dirs_for_kind(kind)
         base_dir = archived_dir if archived else active_dir
         if not base_dir.exists():
             return []
 
         records: list[dict[str, Any]] = []
-        for file_path in sorted(base_dir.glob("*.py")):
+        for file_path in sorted(base_dir.rglob("*.py")):
             if file_path.name == "__init__.py" or file_path.name.startswith("_"):
+                continue
+            rel = file_path.relative_to(base_dir)
+            if not archived and rel.parts and rel.parts[0] == "archive":
                 continue
             try:
                 parsed = self._parse_template_file(kind=kind, path=file_path, archived=archived)
@@ -205,6 +341,8 @@ class PromptPersonaRegistry:
                 if "does not define required variable" in str(exc):
                     continue
                 raise
+            if scenario and str(parsed.get("scenario", "")) != scenario:
+                continue
             if parsed:
                 records.append(parsed)
         return records
@@ -233,6 +371,9 @@ class PromptPersonaRegistry:
             raise RegistryError(f"{path} does not define required variable '{content_var}'")
 
         key = path.stem
+        active_dir, archived_dir = self._dirs_for_kind(kind)
+        base_dir = archived_dir if archived else active_dir
+        scenario = self._infer_scenario_from_path(path, base_dir)
         defaults = self._default_meta_for_kind(kind, key)
         module_doc = ast.get_docstring(module) or ""
         module_doc_preview = module_doc.strip().splitlines()[0].strip() if module_doc.strip() else ""
@@ -246,6 +387,7 @@ class PromptPersonaRegistry:
         stat = path.stat()
         return {
             "kind": kind,
+            "scenario": scenario,
             "key": key,
             "label": label,
             "description": description,

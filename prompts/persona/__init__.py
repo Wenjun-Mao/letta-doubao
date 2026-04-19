@@ -44,8 +44,11 @@ def _discover_personas() -> dict[str, str]:
     personas: dict[str, str] = {}
     persona_dir = Path(__file__).resolve().parent
 
-    for path in sorted(persona_dir.glob("*.py")):
+    for path in sorted(persona_dir.rglob("*.py")):
         if path.name == "__init__.py" or path.name.startswith("_"):
+            continue
+        rel = path.relative_to(persona_dir)
+        if rel.parts and rel.parts[0] == "archive":
             continue
         persona_text = _parse_persona_text(path)
         if persona_text:

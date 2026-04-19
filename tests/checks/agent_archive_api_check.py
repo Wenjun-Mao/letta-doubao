@@ -58,6 +58,7 @@ def _resolve_create_payload(options_payload: dict[str, Any], stamp: int) -> dict
     embedding_value = str(defaults.get("embedding", "") or "").strip() or None
 
     return {
+        "scenario": "chat",
         "name": f"tmp-agent-archive-{stamp}",
         "model": model_key,
         "prompt_key": prompt_key,
@@ -114,7 +115,7 @@ def main() -> None:
             if not bool(capabilities.json().get("enabled", False)):
                 raise RuntimeError("Platform API is not enabled")
 
-            options = http.get("/api/v1/options")
+            options = http.get("/api/v1/options", params={"scenario": "chat"})
             _require_status(options, allowed=(200,), action="options")
             create_payload = _resolve_create_payload(options.json(), stamp)
 

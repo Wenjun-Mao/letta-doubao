@@ -52,6 +52,7 @@ type InspectorTab = "model" | "prompt" | "tools";
 type PersistentTab = "summary" | "memory" | "history";
 type EditorKind = "system" | "persona" | "human" | null;
 type TimelineFilter = "all" | "assistant" | "tool" | "reasoning";
+const AGENT_CREATE_SCENARIO = "chat" as const;
 
 type DiffOp<T> = {
   type: "equal" | "insert" | "delete";
@@ -331,8 +332,8 @@ export default function AgentStudioPage() {
 
   const [createName, setCreateName] = useState("ade-agent");
   const [createModel, setCreateModel] = useState("");
-  const [createPromptKey, setCreatePromptKey] = useState("custom_v2");
-  const [createPersonaKey, setCreatePersonaKey] = useState("linxiaotang");
+  const [createPromptKey, setCreatePromptKey] = useState("chat_v20260418");
+  const [createPersonaKey, setCreatePersonaKey] = useState("chat_linxiaotang");
   const [createEmbedding, setCreateEmbedding] = useState("");
   const [modelEditValue, setModelEditValue] = useState("");
 
@@ -567,7 +568,10 @@ export default function AgentStudioPage() {
       setLoading(true);
       setError("");
       try {
-        const [optionsPayload, agentsPayload] = await Promise.all([fetchOptions(), listAgents(200, false, false)]);
+        const [optionsPayload, agentsPayload] = await Promise.all([
+          fetchOptions(AGENT_CREATE_SCENARIO),
+          listAgents(200, false, false),
+        ]);
         if (cancelled) {
           return;
         }
@@ -587,12 +591,12 @@ export default function AgentStudioPage() {
         const resolvedPromptKey =
           requestedPromptKey && promptKeys.includes(requestedPromptKey)
             ? requestedPromptKey
-            : optionsPayload.defaults?.prompt_key || optionsPayload.prompts?.[0]?.key || "custom_v2";
+            : optionsPayload.defaults?.prompt_key || optionsPayload.prompts?.[0]?.key || "chat_v20260418";
 
         const resolvedPersonaKey =
           requestedPersonaKey && personaKeys.includes(requestedPersonaKey)
             ? requestedPersonaKey
-            : optionsPayload.defaults?.persona_key || optionsPayload.personas?.[0]?.key || "linxiaotang";
+            : optionsPayload.defaults?.persona_key || optionsPayload.personas?.[0]?.key || "chat_linxiaotang";
 
         setCreateModel(optionsPayload.defaults?.model || optionsPayload.models?.[0]?.key || "");
         setCreatePromptKey(resolvedPromptKey);
@@ -731,6 +735,7 @@ export default function AgentStudioPage() {
     setStatus("");
     try {
       const created = await createAgent({
+        scenario: AGENT_CREATE_SCENARIO,
         name: createName.trim() || "ade-agent",
         model: createModel,
         prompt_key: createPromptKey,

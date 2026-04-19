@@ -57,7 +57,7 @@ uv run tests/checks/platform_dual_run_gate.py
 
 Examples:
 ```bash
-uv run python tests/runners/persona_guardrail_runner.py --config tests/configs/suites/lmstudio_custom_v2.json --model lmstudio_openai/gemma-4-31b-it --embedding letta/letta-free
+uv run python tests/runners/persona_guardrail_runner.py --config tests/configs/suites/lmstudio_chat_v20260418.json --model lmstudio_openai/gemma-4-31b-it --embedding letta/letta-free
 
 uv run python tests/runners/memory_update_runner.py --rounds 10 --model lmstudio_openai/gemma-4-31b-it --embedding letta/letta-free --turn "你好，我叫张伟"
 

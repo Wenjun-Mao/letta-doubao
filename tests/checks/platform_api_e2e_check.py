@@ -50,12 +50,14 @@ def _poll_run(http: httpx.Client, run_id: str, timeout_seconds: int = 240) -> di
 
 
 def _resolve_runtime_defaults(http: httpx.Client) -> dict[str, str]:
-    response = http.get("/api/v1/options")
+    response = http.get("/api/v1/options", params={"scenario": "chat"})
     response.raise_for_status()
     payload = response.json()
 
     models = list(payload.get("models", []) or [])
+    embeddings = list(payload.get("embeddings", []) or [])
     prompts = list(payload.get("prompts", []) or [])
+    personas = list(payload.get("personas", []) or [])
     defaults = dict(payload.get("defaults", {}) or {})
 
     model = str(defaults.get("model", "") or "").strip()
@@ -71,11 +73,22 @@ def _resolve_runtime_defaults(http: httpx.Client) -> dict[str, str]:
     if not prompt_key:
         prompt_key = DEFAULT_PROMPT_KEY
 
-    embedding = str(defaults.get("embedding", "") or "").strip() or DEFAULT_EMBEDDING_HANDLE
+    persona_key = str(defaults.get("persona_key", "") or "").strip()
+    if not persona_key and personas:
+        persona_key = str(personas[0].get("key", "") or "")
+
+    embedding = str(defaults.get("embedding", "") or "").strip()
+    if not embedding:
+        available_embeddings = [str(item.get("key", "") or "") for item in embeddings if bool(item.get("available", True))]
+        embedding = available_embeddings[0] if available_embeddings else ""
+    if not embedding and any(str(item.get("key", "") or "") == DEFAULT_EMBEDDING_HANDLE for item in embeddings):
+        embedding = DEFAULT_EMBEDDING_HANDLE
 
     return {
+        "scenario": "chat",
         "model": model,
         "prompt_key": prompt_key,
+        "persona_key": persona_key,
         "embedding": embedding,
     }
 
@@ -106,14 +119,39 @@ def main() -> None:
             runtime_defaults = _resolve_runtime_defaults(http)
             resolved_model = str(runtime_defaults.get("model", "") or DEFAULT_TEST_MODEL_HANDLE)
             resolved_prompt_key = str(runtime_defaults.get("prompt_key", "") or DEFAULT_PROMPT_KEY)
-            resolved_embedding = str(runtime_defaults.get("embedding", "") or DEFAULT_EMBEDDING_HANDLE)
+            resolved_persona_key = str(runtime_defaults.get("persona_key", "") or "")
+            resolved_embedding = str(runtime_defaults.get("embedding", "") or "")
 
             create_payload = {
+                "scenario": "chat",
                 "name": f"platform-e2e-{int(time.time())}",
                 "model": resolved_model,
                 "prompt_key": resolved_prompt_key,
-                "embedding": resolved_embedding,
+                "persona_key": resolved_persona_key,
             }
+            if resolved_embedding:
+                create_payload["embedding"] = resolved_embedding
+
+            guard_payload = {
+                "scenario": "comment",
+                "name": f"platform-e2e-guard-{int(time.time())}",
+                "model": resolved_model,
+                "prompt_key": resolved_prompt_key,
+                "persona_key": resolved_persona_key,
+            }
+            if resolved_embedding:
+                guard_payload["embedding"] = resolved_embedding
+            scenario_guard = http.post("/api/v1/agents", json=guard_payload)
+            if scenario_guard.status_code != 400:
+                raise RuntimeError(
+                    "Expected /api/v1/agents to reject non-chat scenario, "
+                    f"got status={scenario_guard.status_code}"
+                )
+            summary["steps"]["scenario_guard"] = {
+                "ok": True,
+                "status": scenario_guard.status_code,
+            }
+
             create_response = http.post("/api/v1/agents", json=create_payload)
             create_response.raise_for_status()
             created = create_response.json()

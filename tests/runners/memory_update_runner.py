@@ -16,7 +16,7 @@ from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_ex
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from prompts.persona import HUMAN_TEMPLATE, PERSONAS
-from prompts.system_prompts import CUSTOM_V2_PROMPT
+from prompts.system_prompts import CHAT_V20260418_PROMPT
 from tests.shared.config_defaults import (
     DEFAULT_CLIENT_TIMEOUT_SECONDS,
     DEFAULT_CONTEXT_WINDOW_LIMIT,
@@ -149,7 +149,7 @@ def _build_create_args(
 ) -> dict[str, Any]:
     return {
         "name": f"mem-update-r{round_index}-{int(time.time())}",
-        "system": CUSTOM_V2_PROMPT,
+        "system": CHAT_V20260418_PROMPT,
         "model": model_handle,
         "timezone": timezone_name,
         "context_window_limit": context_window_limit,
@@ -363,7 +363,7 @@ def main() -> int:
     )
     parser.add_argument("--rounds", type=int, default=10, help="How many fresh agents to run.")
     parser.add_argument("--model", default=DEFAULT_TEST_MODEL_HANDLE, help="Model handle.")
-    parser.add_argument("--persona-key", default="linxiaotang", help="Persona key in prompts/persona.py")
+    parser.add_argument("--persona-key", default="chat_linxiaotang", help="Persona key in prompts/persona.py")
     parser.add_argument("--embedding", default=DEFAULT_EMBEDDING_HANDLE, help="Embedding handle.")
     parser.add_argument("--timezone", default=DEFAULT_TIMEZONE, help="Agent timezone.")
     parser.add_argument(

@@ -184,7 +184,7 @@ class PlatformTestOrchestrator:
         resolved_model = (model or "").strip() or DEFAULT_TEST_MODEL_HANDLE
         resolved_embedding = (embedding or "").strip() or DEFAULT_EMBEDDING_HANDLE
         resolved_rounds = max(1, int(rounds or 10))
-        resolved_config_path = (config_path or "").strip() or "tests/configs/suites/lmstudio_custom_v2.json"
+        resolved_config_path = (config_path or "").strip() or "tests/configs/suites/lmstudio_chat_v20260418.json"
 
         command = self._build_command(
             run_type=run_type,

@@ -122,7 +122,7 @@ export default function TestCenterPage() {
   const [model, setModel] = useState("");
   const [embedding, setEmbedding] = useState("");
   const [rounds, setRounds] = useState("10");
-  const [configPath, setConfigPath] = useState("tests/configs/suites/lmstudio_custom_v2.json");
+  const [configPath, setConfigPath] = useState("tests/configs/suites/lmstudio_chat_v20260418.json");
 
   const [artifacts, setArtifacts] = useState<PlatformArtifact[]>([]);
   const [selectedArtifactId, setSelectedArtifactId] = useState("");

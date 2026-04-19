@@ -20,12 +20,14 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from letta_client import Letta
 from utils.agent_lifecycle_registry import AgentLifecycleRegistry, AgentLifecycleRegistryError
 from utils.agent_platform_service import AgentPlatformService
+from utils.commenting_service import CommentingService
 from utils.custom_tool_registry import CustomToolRegistry, ToolRegistryError
 from utils.platform_test_orchestrator import PlatformTestOrchestrator
 from utils.prompt_persona_registry import PromptPersonaRegistry, RegistryError
 from prompts.persona import HUMAN_TEMPLATE
 
 APP_VERSION = os.getenv("AGENT_PLATFORM_API_VERSION", "0.2.0")
+ScenarioType = Literal["chat", "comment"]
 
 
 @asynccontextmanager
@@ -58,10 +60,11 @@ class ChatRequest(BaseModel):
     message: str
 
 class AgentCreateRequest(BaseModel):
+    scenario: ScenarioType = "chat"
     name: str = "dev-agent"
     model: str = ""
-    prompt_key: str = "custom_v2"
-    persona_key: str = "linxiaotang"
+    prompt_key: str = "chat_v20260418"
+    persona_key: str = "chat_linxiaotang"
     embedding: str | None = None
 
 
@@ -113,11 +116,13 @@ class ApiOptionEntryResponse(BaseModel):
     key: str
     label: str
     description: str
+    scenario: ScenarioType | None = None
     available: bool | None = None
     is_default: bool | None = None
 
 
 class ApiOptionsDefaultsResponse(BaseModel):
+    scenario: ScenarioType
     model: str
     prompt_key: str
     persona_key: str
@@ -125,6 +130,7 @@ class ApiOptionsDefaultsResponse(BaseModel):
 
 
 class ApiOptionsResponse(BaseModel):
+    scenario: ScenarioType
     models: list[ApiOptionEntryResponse]
     embeddings: list[ApiOptionEntryResponse]
     prompts: list[ApiOptionEntryResponse]
@@ -150,6 +156,7 @@ class ApiAgentListResponse(BaseModel):
 class ApiAgentCreateResponse(BaseModel):
     id: str
     name: str
+    scenario: ScenarioType
     model: str
     embedding: str | None = None
     prompt_key: str
@@ -316,11 +323,13 @@ class ApiPlatformToolTestInvokeResponse(BaseModel):
 
 
 class ApiPromptPersonaDefaultResponse(BaseModel):
+    scenario: ScenarioType
     prompt_key: str
     persona_key: str
 
 
 class ApiPromptMetadataResponse(BaseModel):
+    scenario: ScenarioType
     key: str
     label: str
     description: str
@@ -329,6 +338,7 @@ class ApiPromptMetadataResponse(BaseModel):
 
 
 class ApiPersonaMetadataResponse(BaseModel):
+    scenario: ScenarioType
     key: str
     preview: str
     length: int
@@ -341,6 +351,7 @@ class ApiPromptPersonaMetadataResponse(BaseModel):
 
 
 class PromptTemplateWriteRequest(BaseModel):
+    scenario: ScenarioType = "chat"
     key: str
     label: str = ""
     description: str = ""
@@ -354,6 +365,7 @@ class PromptTemplatePatchRequest(BaseModel):
 
 
 class PersonaTemplateWriteRequest(BaseModel):
+    scenario: ScenarioType = "chat"
     key: str
     label: str = ""
     description: str = ""
@@ -368,6 +380,7 @@ class PersonaTemplatePatchRequest(BaseModel):
 
 class ApiTemplateRecordResponse(BaseModel):
     kind: str
+    scenario: ScenarioType
     key: str
     label: str
     description: str
@@ -381,6 +394,7 @@ class ApiTemplateRecordResponse(BaseModel):
 
 class ApiTemplateListResponse(BaseModel):
     total: int
+    scenario: ScenarioType | None = None
     include_archived: bool
     items: list[ApiTemplateRecordResponse]
 
@@ -545,6 +559,23 @@ class ApiChatResponse(BaseModel):
     memory_diff: dict[str, Any] = Field(default_factory=dict)
 
 
+class CommentingGenerateRequest(BaseModel):
+    scenario: ScenarioType = "comment"
+    input: str
+    prompt_key: str = "comment_v20260418"
+    persona_key: str = "comment_linxiaotang"
+    model: str | None = None
+
+
+class ApiCommentingGenerateResponse(BaseModel):
+    scenario: ScenarioType
+    prompt_key: str
+    persona_key: str
+    model: str
+    content: str
+    provider: str
+
+
 PREFERRED_MODEL_OPTIONS = [
     {
         "key": "lmstudio_openai/qwen3.5-27b",
@@ -582,9 +613,21 @@ PREFERRED_EMBEDDING_OPTIONS = [
 ]
 
 DEFAULT_MODEL = ""
-DEFAULT_PROMPT_KEY = "custom_v2"
-DEFAULT_PERSONA_KEY = "linxiaotang"
+DEFAULT_CHAT_PROMPT_KEY = "chat_v20260418"
+DEFAULT_CHAT_PERSONA_KEY = "chat_linxiaotang"
+DEFAULT_COMMENT_PROMPT_KEY = "comment_v20260418"
+DEFAULT_COMMENT_PERSONA_KEY = "comment_linxiaotang"
 DEFAULT_EMBEDDING = ""
+SCENARIO_DEFAULTS: dict[ScenarioType, dict[str, str]] = {
+    "chat": {
+        "prompt_key": DEFAULT_CHAT_PROMPT_KEY,
+        "persona_key": DEFAULT_CHAT_PERSONA_KEY,
+    },
+    "comment": {
+        "prompt_key": DEFAULT_COMMENT_PROMPT_KEY,
+        "persona_key": DEFAULT_COMMENT_PERSONA_KEY,
+    },
+}
 MANAGED_TOOL_TAG = "ade:managed"
 _OPTIONS_CACHE_TTL_SECONDS = max(1, int(os.getenv("AGENT_PLATFORM_OPTIONS_CACHE_TTL_SECONDS", "30")))
 _OPTIONS_CACHE: dict[str, Any] = {
@@ -601,6 +644,7 @@ test_orchestrator = PlatformTestOrchestrator(project_root=PROJECT_ROOT)
 prompt_persona_registry = PromptPersonaRegistry(PROJECT_ROOT)
 custom_tool_registry = CustomToolRegistry(PROJECT_ROOT)
 agent_lifecycle_registry = AgentLifecycleRegistry(PROJECT_ROOT)
+commenting_service = CommentingService()
 REVISION_LOG_DIR = PROJECT_ROOT / "diagnostics"
 REVISION_LOG_FILE = REVISION_LOG_DIR / "prompt_persona_revisions.jsonl"
 
@@ -819,73 +863,108 @@ def _invalidate_options_cache() -> None:
     _OPTIONS_CACHE["expires_at"] = 0.0
 
 
-def _active_prompt_records() -> list[dict[str, Any]]:
-    return [
+def _normalize_scenario(value: str | None, *, default: ScenarioType = "chat") -> ScenarioType:
+    normalized = str(value or "").strip().lower()
+    if not normalized:
+        return default
+    if normalized not in {"chat", "comment"}:
+        raise HTTPException(status_code=400, detail="scenario must be either 'chat' or 'comment'")
+    return normalized
+
+
+def _active_prompt_records(scenario: ScenarioType | None = None) -> list[dict[str, Any]]:
+    records = [
         record
-        for record in prompt_persona_registry.list_templates("prompt", include_archived=False)
+        for record in prompt_persona_registry.list_templates(
+            "prompt",
+            include_archived=False,
+            scenario=scenario,
+        )
         if not bool(record.get("archived", False))
     ]
+    if scenario:
+        records = [
+            record
+            for record in records
+            if str(record.get("key", "") or "").startswith(f"{scenario}_")
+        ]
+    return records
 
 
-def _active_persona_records() -> list[dict[str, Any]]:
-    return [
+def _active_persona_records(scenario: ScenarioType | None = None) -> list[dict[str, Any]]:
+    records = [
         record
-        for record in prompt_persona_registry.list_templates("persona", include_archived=False)
+        for record in prompt_persona_registry.list_templates(
+            "persona",
+            include_archived=False,
+            scenario=scenario,
+        )
         if not bool(record.get("archived", False))
     ]
+    if scenario:
+        records = [
+            record
+            for record in records
+            if str(record.get("key", "") or "").startswith(f"{scenario}_")
+        ]
+    return records
 
 
-def _prompt_content_map() -> dict[str, str]:
+def _prompt_content_map(scenario: ScenarioType | None = None) -> dict[str, str]:
     return {
         str(record.get("key", "")): str(record.get("content", "") or "")
-        for record in _active_prompt_records()
+        for record in _active_prompt_records(scenario)
         if str(record.get("key", "")).strip()
     }
 
 
-def _persona_content_map() -> dict[str, str]:
+def _persona_content_map(scenario: ScenarioType | None = None) -> dict[str, str]:
     return {
         str(record.get("key", "")): str(record.get("content", "") or "")
-        for record in _active_persona_records()
+        for record in _active_persona_records(scenario)
         if str(record.get("key", "")).strip()
     }
 
 
-def _prompt_option_entries() -> list[dict[str, Any]]:
+def _prompt_option_entries(scenario: ScenarioType | None = None) -> list[dict[str, Any]]:
     entries: list[dict[str, Any]] = []
-    for record in _active_prompt_records():
+    for record in _active_prompt_records(scenario):
         entries.append(
             {
                 "key": str(record.get("key", "") or ""),
                 "label": str(record.get("label", "") or ""),
                 "description": str(record.get("description", "") or ""),
+                "scenario": str(record.get("scenario", "") or "") or None,
             }
         )
     return entries
 
 
-def _persona_option_entries() -> list[dict[str, Any]]:
+def _persona_option_entries(scenario: ScenarioType | None = None) -> list[dict[str, Any]]:
     entries: list[dict[str, Any]] = []
-    for record in _active_persona_records():
+    for record in _active_persona_records(scenario):
         entries.append(
             {
                 "key": str(record.get("key", "") or ""),
                 "label": str(record.get("label", "") or ""),
                 "description": str(record.get("description", "") or ""),
+                "scenario": str(record.get("scenario", "") or "") or None,
             }
         )
     return entries
 
 
-def _resolve_default_prompt_key(prompt_options: list[dict[str, Any]]) -> str:
-    if any(str(option.get("key", "")) == DEFAULT_PROMPT_KEY for option in prompt_options):
-        return DEFAULT_PROMPT_KEY
+def _resolve_default_prompt_key(prompt_options: list[dict[str, Any]], scenario: ScenarioType) -> str:
+    preferred = SCENARIO_DEFAULTS[scenario]["prompt_key"]
+    if any(str(option.get("key", "")) == preferred for option in prompt_options):
+        return preferred
     return str(prompt_options[0].get("key", "") if prompt_options else "")
 
 
-def _resolve_default_persona_key(persona_options: list[dict[str, Any]]) -> str:
-    if any(str(option.get("key", "")) == DEFAULT_PERSONA_KEY for option in persona_options):
-        return DEFAULT_PERSONA_KEY
+def _resolve_default_persona_key(persona_options: list[dict[str, Any]], scenario: ScenarioType) -> str:
+    preferred = SCENARIO_DEFAULTS[scenario]["persona_key"]
+    if any(str(option.get("key", "")) == preferred for option in persona_options):
+        return preferred
     return str(persona_options[0].get("key", "") if persona_options else "")
 
 
@@ -1102,6 +1181,7 @@ def _read_prompt_persona_revisions(
 def _as_template_record(record: dict[str, Any]) -> dict[str, Any]:
     return {
         "kind": str(record.get("kind", "") or ""),
+        "scenario": str(record.get("scenario", "") or "chat"),
         "key": str(record.get("key", "") or ""),
         "label": str(record.get("label", "") or ""),
         "description": str(record.get("description", "") or ""),
@@ -1177,17 +1257,18 @@ async def read_index():
 
 
 @app.get("/api/v1/options", response_model=ApiOptionsResponse)
-async def api_get_options(refresh: bool = False):
+async def api_get_options(refresh: bool = False, scenario: str = "chat"):
     _ensure_platform_api_enabled()
+    resolved_scenario = _normalize_scenario(scenario)
 
     model_options, embedding_options = _runtime_options(force_refresh=refresh)
-    prompt_options = _prompt_option_entries()
-    persona_options = _persona_option_entries()
+    prompt_options = _prompt_option_entries(resolved_scenario)
+    persona_options = _persona_option_entries(resolved_scenario)
 
     # Force explicit model choice in the UI for every new-agent creation.
     default_model = ""
-    default_prompt_key = _resolve_default_prompt_key(prompt_options)
-    default_persona_key = _resolve_default_persona_key(persona_options)
+    default_prompt_key = _resolve_default_prompt_key(prompt_options, resolved_scenario)
+    default_persona_key = _resolve_default_persona_key(persona_options, resolved_scenario)
 
     default_embedding = os.getenv("LETTA_DEFAULT_EMBEDDING_HANDLE") or os.getenv("LETTA_EMBEDDING_HANDLE") or DEFAULT_EMBEDDING
     if default_embedding and not any(option["key"] == default_embedding for option in embedding_options):
@@ -1197,11 +1278,13 @@ async def api_get_options(refresh: bool = False):
         option["is_default"] = bool(default_embedding and option["key"] == default_embedding)
 
     return {
+        "scenario": resolved_scenario,
         "models": model_options,
         "embeddings": embedding_options,
         "prompts": prompt_options,
         "personas": persona_options,
         "defaults": {
+            "scenario": resolved_scenario,
             "model": default_model,
             "prompt_key": default_prompt_key,
             "persona_key": default_persona_key,
@@ -1256,10 +1339,16 @@ async def api_list_agents(limit: int = 100, include_last_interaction: bool = Fal
 @app.post("/api/v1/agents", response_model=ApiAgentCreateResponse)
 async def api_create_agent(request: AgentCreateRequest):
     _ensure_platform_api_enabled()
+    resolved_scenario = _normalize_scenario(request.scenario)
+    if resolved_scenario != "chat":
+        raise HTTPException(
+            status_code=400,
+            detail="/api/v1/agents supports only scenario='chat'. Use /api/v1/commenting/generate for stateless comments.",
+        )
 
     model_options, embedding_options = _runtime_options()
-    prompt_map = _prompt_content_map()
-    persona_map = _persona_content_map()
+    prompt_map = _prompt_content_map("chat")
+    persona_map = _persona_content_map("chat")
     allowed_models = {option["key"] for option in model_options}
     allowed_embeddings = {option["key"] for option in embedding_options}
 
@@ -1268,6 +1357,10 @@ async def api_create_agent(request: AgentCreateRequest):
 
     if request.model not in allowed_models:
         raise HTTPException(status_code=400, detail=f"Invalid model: {request.model}")
+    if not request.prompt_key.startswith("chat_"):
+        raise HTTPException(status_code=400, detail=f"Prompt key '{request.prompt_key}' is not valid for scenario 'chat'")
+    if not request.persona_key.startswith("chat_"):
+        raise HTTPException(status_code=400, detail=f"Persona key '{request.persona_key}' is not valid for scenario 'chat'")
     if request.prompt_key not in prompt_map:
         raise HTTPException(status_code=400, detail=f"Invalid prompt key: {request.prompt_key}")
     if request.persona_key not in persona_map:
@@ -1312,6 +1405,7 @@ async def api_create_agent(request: AgentCreateRequest):
     return {
         "id": agent.id,
         "name": agent.name,
+        "scenario": "chat",
         "model": request.model,
         "embedding": request.embedding,
         "prompt_key": request.prompt_key,
@@ -1689,16 +1783,19 @@ async def api_platform_tool_test_invoke(request: PlatformToolTestInvokeRequest):
     tags=["platform-meta"],
     summary="Get prompt and persona metadata",
 )
-async def api_platform_prompt_persona_metadata():
+async def api_platform_prompt_persona_metadata(scenario: str = "chat"):
     _ensure_platform_api_enabled()
 
-    prompt_records = _active_prompt_records()
-    persona_records = _active_persona_records()
+    resolved_scenario = _normalize_scenario(scenario)
+
+    prompt_records = _active_prompt_records(resolved_scenario)
+    persona_records = _active_persona_records(resolved_scenario)
 
     prompts: list[dict[str, Any]] = []
     for record in prompt_records:
         prompts.append(
             {
+                "scenario": str(record.get("scenario", "") or resolved_scenario),
                 "key": str(record.get("key", "") or ""),
                 "label": str(record.get("label", "") or ""),
                 "description": str(record.get("description", "") or ""),
@@ -1711,17 +1808,19 @@ async def api_platform_prompt_persona_metadata():
     for record in persona_records:
         personas.append(
             {
+                "scenario": str(record.get("scenario", "") or resolved_scenario),
                 "key": str(record.get("key", "") or ""),
                 "preview": str(record.get("preview", "") or ""),
                 "length": int(record.get("length", 0) or 0),
             }
         )
 
-    default_prompt_key = _resolve_default_prompt_key(_prompt_option_entries())
-    default_persona_key = _resolve_default_persona_key(_persona_option_entries())
+    default_prompt_key = _resolve_default_prompt_key(_prompt_option_entries(resolved_scenario), resolved_scenario)
+    default_persona_key = _resolve_default_persona_key(_persona_option_entries(resolved_scenario), resolved_scenario)
 
     return {
         "defaults": {
+            "scenario": resolved_scenario,
             "prompt_key": default_prompt_key,
             "persona_key": default_persona_key,
         },
@@ -1769,17 +1868,24 @@ async def api_platform_prompt_persona_revisions(
     tags=["platform-prompts"],
     summary="List system prompt templates",
 )
-async def api_prompt_center_list_prompts(include_archived: bool = False):
+async def api_prompt_center_list_prompts(include_archived: bool = False, scenario: str | None = None):
     _ensure_platform_api_enabled()
 
+    resolved_scenario = _normalize_scenario(scenario) if scenario else None
+
     try:
-        records = prompt_persona_registry.list_templates("prompt", include_archived=include_archived)
+        records = prompt_persona_registry.list_templates(
+            "prompt",
+            include_archived=include_archived,
+            scenario=resolved_scenario,
+        )
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     payload = [_as_template_record(record) for record in records]
     return {
         "total": len(payload),
+        "scenario": resolved_scenario,
         "include_archived": include_archived,
         "items": payload,
     }
@@ -1791,11 +1897,18 @@ async def api_prompt_center_list_prompts(include_archived: bool = False):
     tags=["platform-prompts"],
     summary="Get system prompt template",
 )
-async def api_prompt_center_get_prompt(key: str, archived: bool = False):
+async def api_prompt_center_get_prompt(key: str, archived: bool = False, scenario: str | None = None):
     _ensure_platform_api_enabled()
 
+    resolved_scenario = _normalize_scenario(scenario) if scenario else None
+
     try:
-        record = prompt_persona_registry.get_template("prompt", key, archived=archived)
+        record = prompt_persona_registry.get_template(
+            "prompt",
+            key,
+            archived=archived,
+            scenario=resolved_scenario,
+        )
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -1823,6 +1936,7 @@ async def api_prompt_center_create_prompt(request: PromptTemplateWriteRequest):
             content=request.content,
             label=request.label,
             description=request.description,
+            scenario=request.scenario,
         )
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -1864,11 +1978,13 @@ async def api_prompt_center_update_prompt(key: str, request: PromptTemplatePatch
     tags=["platform-prompts"],
     summary="Archive system prompt template",
 )
-async def api_prompt_center_archive_prompt(key: str):
+async def api_prompt_center_archive_prompt(key: str, scenario: str | None = None):
     _ensure_platform_api_enabled()
 
+    resolved_scenario = _normalize_scenario(scenario) if scenario else None
+
     try:
-        record = prompt_persona_registry.archive_template("prompt", key)
+        record = prompt_persona_registry.archive_template("prompt", key, scenario=resolved_scenario)
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -1882,11 +1998,13 @@ async def api_prompt_center_archive_prompt(key: str):
     tags=["platform-prompts"],
     summary="Restore archived system prompt template",
 )
-async def api_prompt_center_restore_prompt(key: str):
+async def api_prompt_center_restore_prompt(key: str, scenario: str | None = None):
     _ensure_platform_api_enabled()
 
+    resolved_scenario = _normalize_scenario(scenario) if scenario else None
+
     try:
-        record = prompt_persona_registry.restore_template("prompt", key)
+        record = prompt_persona_registry.restore_template("prompt", key, scenario=resolved_scenario)
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -1899,11 +2017,13 @@ async def api_prompt_center_restore_prompt(key: str):
     tags=["platform-prompts"],
     summary="Purge archived system prompt template",
 )
-async def api_prompt_center_purge_prompt(key: str):
+async def api_prompt_center_purge_prompt(key: str, scenario: str | None = None):
     _ensure_platform_api_enabled()
 
+    resolved_scenario = _normalize_scenario(scenario) if scenario else None
+
     try:
-        prompt_persona_registry.purge_template("prompt", key)
+        prompt_persona_registry.purge_template("prompt", key, scenario=resolved_scenario)
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -1917,17 +2037,24 @@ async def api_prompt_center_purge_prompt(key: str):
     tags=["platform-prompts"],
     summary="List persona templates",
 )
-async def api_prompt_center_list_personas(include_archived: bool = False):
+async def api_prompt_center_list_personas(include_archived: bool = False, scenario: str | None = None):
     _ensure_platform_api_enabled()
 
+    resolved_scenario = _normalize_scenario(scenario) if scenario else None
+
     try:
-        records = prompt_persona_registry.list_templates("persona", include_archived=include_archived)
+        records = prompt_persona_registry.list_templates(
+            "persona",
+            include_archived=include_archived,
+            scenario=resolved_scenario,
+        )
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     payload = [_as_template_record(record) for record in records]
     return {
         "total": len(payload),
+        "scenario": resolved_scenario,
         "include_archived": include_archived,
         "items": payload,
     }
@@ -1939,11 +2066,18 @@ async def api_prompt_center_list_personas(include_archived: bool = False):
     tags=["platform-prompts"],
     summary="Get persona template",
 )
-async def api_prompt_center_get_persona(key: str, archived: bool = False):
+async def api_prompt_center_get_persona(key: str, archived: bool = False, scenario: str | None = None):
     _ensure_platform_api_enabled()
 
+    resolved_scenario = _normalize_scenario(scenario) if scenario else None
+
     try:
-        record = prompt_persona_registry.get_template("persona", key, archived=archived)
+        record = prompt_persona_registry.get_template(
+            "persona",
+            key,
+            archived=archived,
+            scenario=resolved_scenario,
+        )
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -1971,6 +2105,7 @@ async def api_prompt_center_create_persona(request: PersonaTemplateWriteRequest)
             content=request.content,
             label=request.label,
             description=request.description,
+            scenario=request.scenario,
         )
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -2012,11 +2147,13 @@ async def api_prompt_center_update_persona(key: str, request: PersonaTemplatePat
     tags=["platform-prompts"],
     summary="Archive persona template",
 )
-async def api_prompt_center_archive_persona(key: str):
+async def api_prompt_center_archive_persona(key: str, scenario: str | None = None):
     _ensure_platform_api_enabled()
 
+    resolved_scenario = _normalize_scenario(scenario) if scenario else None
+
     try:
-        record = prompt_persona_registry.archive_template("persona", key)
+        record = prompt_persona_registry.archive_template("persona", key, scenario=resolved_scenario)
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -2030,11 +2167,13 @@ async def api_prompt_center_archive_persona(key: str):
     tags=["platform-prompts"],
     summary="Restore archived persona template",
 )
-async def api_prompt_center_restore_persona(key: str):
+async def api_prompt_center_restore_persona(key: str, scenario: str | None = None):
     _ensure_platform_api_enabled()
 
+    resolved_scenario = _normalize_scenario(scenario) if scenario else None
+
     try:
-        record = prompt_persona_registry.restore_template("persona", key)
+        record = prompt_persona_registry.restore_template("persona", key, scenario=resolved_scenario)
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -2047,11 +2186,13 @@ async def api_prompt_center_restore_persona(key: str):
     tags=["platform-prompts"],
     summary="Purge archived persona template",
 )
-async def api_prompt_center_purge_persona(key: str):
+async def api_prompt_center_purge_persona(key: str, scenario: str | None = None):
     _ensure_platform_api_enabled()
 
+    resolved_scenario = _normalize_scenario(scenario) if scenario else None
+
     try:
-        prompt_persona_registry.purge_template("persona", key)
+        prompt_persona_registry.purge_template("persona", key, scenario=resolved_scenario)
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
 
@@ -2632,6 +2773,85 @@ async def api_platform_read_test_run_artifact(run_id: str, artifact_id: str, max
     if payload is None:
         raise HTTPException(status_code=404, detail="run_id or artifact_id not found")
     return payload
+
+
+@app.post(
+    "/api/v1/commenting/generate",
+    response_model=ApiCommentingGenerateResponse,
+    tags=["commenting"],
+    summary="Generate a stateless comment for news/comment threads",
+)
+async def api_commenting_generate(request: CommentingGenerateRequest):
+    _ensure_platform_api_enabled()
+
+    resolved_scenario = _normalize_scenario(request.scenario, default="comment")
+    if resolved_scenario != "comment":
+        raise HTTPException(status_code=400, detail="scenario must be 'comment' for this endpoint")
+
+    text = request.input.strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="input is required")
+
+    if not request.prompt_key.startswith("comment_"):
+        raise HTTPException(status_code=400, detail=f"Prompt key '{request.prompt_key}' is not valid for scenario 'comment'")
+    if not request.persona_key.startswith("comment_"):
+        raise HTTPException(status_code=400, detail=f"Persona key '{request.persona_key}' is not valid for scenario 'comment'")
+
+    prompt_map = _prompt_content_map("comment")
+    persona_map = _persona_content_map("comment")
+    if request.prompt_key not in prompt_map:
+        raise HTTPException(status_code=400, detail=f"Invalid prompt key: {request.prompt_key}")
+    if request.persona_key not in persona_map:
+        raise HTTPException(status_code=400, detail=f"Invalid persona key: {request.persona_key}")
+
+    model_options, _ = _runtime_options()
+    allowed_models = {str(option.get("key", "") or "") for option in model_options if str(option.get("key", "") or "").strip()}
+    model_handle = (request.model or "").strip() or os.getenv("AGENT_PLATFORM_COMMENTING_DEFAULT_MODEL", "").strip()
+    if not model_handle and model_options:
+        model_handle = str(model_options[0].get("key", "") or "")
+    if not model_handle:
+        raise HTTPException(status_code=400, detail="No model available for commenting generation")
+
+    if allowed_models and model_handle not in allowed_models:
+        normalized_requested_model = commenting_service._resolve_provider_model(model_handle)
+        matched_model_handle = next(
+            (
+                candidate
+                for candidate in allowed_models
+                if commenting_service._resolve_provider_model(candidate) == normalized_requested_model
+            ),
+            "",
+        )
+        if matched_model_handle:
+            model_handle = matched_model_handle
+        else:
+            raise HTTPException(status_code=400, detail=f"Invalid model: {model_handle}")
+
+    persona_text = str(persona_map[request.persona_key] or "")
+    user_payload = (
+        "你正在执行新闻评论生成任务。\n"
+        "请严格使用给定persona语气写一条可直接发布的中文评论。\n\n"
+        f"[Persona]\n{persona_text}\n\n"
+        f"[用户输入]\n{text}"
+    )
+
+    try:
+        content = commenting_service.generate_comment(
+            model=model_handle,
+            system_prompt=prompt_map[request.prompt_key],
+            user_input=user_payload,
+        )
+    except Exception as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "scenario": "comment",
+        "prompt_key": request.prompt_key,
+        "persona_key": request.persona_key,
+        "model": model_handle,
+        "content": content,
+        "provider": commenting_service.provider_name,
+    }
 
 @app.post("/api/v1/chat", response_model=ApiChatResponse)
 async def api_chat(request: ChatRequest):

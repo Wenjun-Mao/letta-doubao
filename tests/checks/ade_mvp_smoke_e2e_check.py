@@ -133,11 +133,12 @@ def main() -> None:
                 "missing_required": capabilities_payload.get("missing_required", []),
             }
 
-            options_response = http.get("/api/v1/options")
+            options_response = http.get("/api/v1/options", params={"scenario": "chat"})
             options_response.raise_for_status()
             options_payload = options_response.json()
 
             create_payload = {
+                "scenario": "chat",
                 "name": f"ade-smoke-{int(time.time())}",
                 "model": _pick_model(options_payload),
                 "prompt_key": _pick_prompt_key(options_payload),

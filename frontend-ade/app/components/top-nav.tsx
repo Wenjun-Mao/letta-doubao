@@ -8,6 +8,7 @@ import { useI18n } from "../../lib/i18n";
 const NAV_ITEMS = [
   { href: "/", key: "dashboard" },
   { href: "/agent-studio", key: "agentStudio" },
+  { href: "/comment-lab", key: "commentLab" },
   { href: "/prompt-center", key: "promptCenter" },
   { href: "/tool-center", key: "toolCenter" },
   { href: "/test-center", key: "testCenter" },
@@ -22,6 +23,7 @@ const COPY = {
     releaseTag: "UI",
     dashboard: "Dashboard",
     agentStudio: "Agent Studio",
+    commentLab: "Comment Lab",
     promptCenter: "Prompt Center",
     toolCenter: "Tool Center",
     testCenter: "Test Center",
@@ -34,6 +36,7 @@ const COPY = {
     releaseTag: "版本",
     dashboard: "仪表盘",
     agentStudio: "智能体工作台",
+    commentLab: "评论实验室",
     promptCenter: "提示词中心",
     toolCenter: "工具中心",
     testCenter: "测试中心",

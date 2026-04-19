@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 from letta_client import Letta
 from prompts.persona import PERSONAS, HUMAN_TEMPLATE
-from prompts.system_prompts import CUSTOM_V2_PROMPT
+from prompts.system_prompts import CHAT_V20260418_PROMPT
 from tests.shared.config_defaults import (
     DEFAULT_EMBEDDING_HANDLE,
     DEFAULT_LETTA_BASE_URL,
@@ -20,14 +20,14 @@ def run_verification(*, model_handle: str, embedding_handle: str):
     print("--- CREATING AGENT ---")
     agent = client.agents.create(
         name="test-verification-agent",
-        system=CUSTOM_V2_PROMPT,
+        system=CHAT_V20260418_PROMPT,
         model=model_handle,
         embedding=embedding_handle,
         context_window_limit=16384,
         memory_blocks=[
             {
                 "label": "persona",
-                "value": PERSONAS["linxiaotang"],
+                "value": PERSONAS["chat_linxiaotang"],
             },
             {
                 "label": "human",

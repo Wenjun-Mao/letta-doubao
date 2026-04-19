@@ -12,7 +12,7 @@ from letta_client import Letta
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from prompts.persona import HUMAN_TEMPLATE, PERSONAS
-from prompts.system_prompts import CUSTOM_V2_PROMPT
+from prompts.system_prompts import CHAT_V20260418_PROMPT
 from tests.shared.config_defaults import (
     DEFAULT_CONTEXT_WINDOW_LIMIT,
     DEFAULT_EMBEDDING_HANDLE,
@@ -55,12 +55,12 @@ def _create_agent(
 ) -> str:
     args: dict[str, Any] = {
         "name": name,
-        "system": CUSTOM_V2_PROMPT,
+        "system": CHAT_V20260418_PROMPT,
         "model": model,
         "timezone": "Asia/Shanghai",
         "context_window_limit": context_window_limit,
         "memory_blocks": [
-            {"label": "persona", "value": PERSONAS["linxiaotang"]},
+            {"label": "persona", "value": PERSONAS["chat_linxiaotang"]},
             {"label": "human", "value": HUMAN_TEMPLATE},
         ],
     }
@@ -93,7 +93,7 @@ def test_ui_options_and_create() -> dict[str, Any]:
 
     with httpx.Client(base_url=DEV_UI_BASE_URL, timeout=30.0) as http:
         try:
-            options = http.get("/api/v1/options")
+            options = http.get("/api/v1/options", params={"scenario": "chat"})
             options.raise_for_status()
             payload = options.json()
             models = payload.get("models", [])
@@ -104,6 +104,7 @@ def test_ui_options_and_create() -> dict[str, Any]:
                 return result
 
             create_payload = {
+                "scenario": "chat",
                 "name": f"ui-test-{int(time.time())}",
                 "model": DEFAULT_TEST_MODEL_HANDLE,
                 "prompt_key": DEFAULT_PROMPT_KEY,

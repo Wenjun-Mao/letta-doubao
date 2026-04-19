@@ -17,7 +17,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..",
 
 from prompts.persona import HUMAN_TEMPLATE, PERSONAS
 from prompts.system_prompts import (
-    CUSTOM_V2_PROMPT,
+    CHAT_V20260418_PROMPT,
 )
 from tests.shared.config_defaults import (
     DEFAULT_CLIENT_TIMEOUT_SECONDS,
@@ -34,7 +34,7 @@ from tests.shared.config_defaults import (
 from utils.message_parser import chat, get_agent_memory_dict
 
 PROMPT_MAP: dict[str, str] = {
-    "custom_v2": CUSTOM_V2_PROMPT,
+    "chat_v20260418": CHAT_V20260418_PROMPT,
 }
 
 
@@ -339,7 +339,7 @@ def _run_single_config(
     if prompt_key not in PROMPT_MAP:
         raise ValueError(f"Unknown prompt_key '{prompt_key}' in {config_path}")
 
-    persona_key = str(config.get("persona_key", "linxiaotang"))
+    persona_key = str(config.get("persona_key", "chat_linxiaotang"))
     if persona_key not in PERSONAS:
         raise ValueError(f"Unknown persona_key '{persona_key}' in {config_path}")
 

@@ -15,10 +15,13 @@ type RequestOptions = {
   cacheTtlMs?: number;
 };
 
+export type Scenario = "chat" | "comment";
+
 export type OptionEntry = {
   key: string;
   label: string;
   description: string;
+  scenario?: Scenario | null;
   available?: boolean;
   is_default?: boolean;
 };
@@ -120,6 +123,15 @@ export type ChatResult = {
   };
 };
 
+export type CommentingGenerateResponse = {
+  scenario: Scenario;
+  prompt_key: string;
+  persona_key: string;
+  model: string;
+  content: string;
+  provider: string;
+};
+
 export type PlatformTool = {
   id: string;
   name: string;
@@ -138,6 +150,7 @@ export type PlatformTool = {
 
 export type PromptTemplateRecord = {
   kind: "prompt" | "persona";
+  scenario: Scenario;
   key: string;
   label: string;
   description: string;
@@ -313,19 +326,23 @@ export function fetchCapabilities() {
   }>("/api/v1/platform/capabilities", { cacheTtlMs: 15_000 });
 }
 
-export function fetchOptions() {
+export function fetchOptions(scenario: Scenario = "chat") {
+  const params = new URLSearchParams();
+  params.set("scenario", scenario);
   return requestJson<{
+    scenario: Scenario;
     models: OptionEntry[];
     embeddings: OptionEntry[];
     prompts: OptionEntry[];
     personas: OptionEntry[];
     defaults: {
+      scenario: Scenario;
       model: string;
       prompt_key: string;
       persona_key: string;
       embedding: string;
     };
-  }>("/api/v1/options", { cacheTtlMs: 60_000 });
+  }>(`/api/v1/options?${params.toString()}`, { cacheTtlMs: 60_000 });
 }
 
 export function listAgents(limit = 200, includeLastInteraction = false, includeArchived = false) {
@@ -345,6 +362,7 @@ export function listAgents(limit = 200, includeLastInteraction = false, includeA
 }
 
 export function createAgent(payload: {
+  scenario: Scenario;
   name: string;
   model: string;
   prompt_key: string;
@@ -354,6 +372,7 @@ export function createAgent(payload: {
   return requestJson<{
     id: string;
     name: string;
+    scenario: Scenario;
     model: string;
     embedding?: string | null;
     prompt_key: string;
@@ -421,13 +440,35 @@ export function sendChat(agentId: string, message: string) {
   });
 }
 
-export function fetchPromptPersonaMetadata() {
+export function generateComment(payload: {
+  input: string;
+  prompt_key: string;
+  persona_key: string;
+  model?: string;
+}) {
+  return requestJson<CommentingGenerateResponse>("/api/v1/commenting/generate", {
+    method: "POST",
+    body: {
+      scenario: "comment",
+      input: payload.input,
+      prompt_key: payload.prompt_key,
+      persona_key: payload.persona_key,
+      model: payload.model?.trim() || undefined,
+    },
+  });
+}
+
+export function fetchPromptPersonaMetadata(scenario: Scenario = "chat") {
+  const params = new URLSearchParams();
+  params.set("scenario", scenario);
   return requestJson<{
     defaults: {
+      scenario: Scenario;
       prompt_key: string;
       persona_key: string;
     };
     prompts: Array<{
+      scenario: Scenario;
       key: string;
       label: string;
       description: string;
@@ -435,11 +476,12 @@ export function fetchPromptPersonaMetadata() {
       length: number;
     }>;
     personas: Array<{
+      scenario: Scenario;
       key: string;
       preview: string;
       length: number;
     }>;
-  }>("/api/v1/platform/metadata/prompts-personas", { cacheTtlMs: 60_000 });
+  }>(`/api/v1/platform/metadata/prompts-personas?${params.toString()}`, { cacheTtlMs: 60_000 });
 }
 
 export function fetchPromptPersonaRevisions(agentId: string, field = "", limit = 80) {
@@ -543,17 +585,22 @@ export function detachTool(agentId: string, toolId: string) {
   });
 }
 
-export function listPromptTemplates(includeArchived = false) {
+export function listPromptTemplates(includeArchived = false, scenario?: Scenario) {
   const params = new URLSearchParams();
   params.set("include_archived", includeArchived ? "true" : "false");
+  if (scenario) {
+    params.set("scenario", scenario);
+  }
   return requestJson<{
     total: number;
+    scenario?: Scenario | null;
     include_archived: boolean;
     items: PromptTemplateRecord[];
   }>(`/api/v1/platform/prompt-center/prompts?${params.toString()}`, { cacheTtlMs: 10_000 });
 }
 
 export function createPromptTemplate(payload: {
+  scenario?: Scenario;
   key: string;
   label?: string;
   description?: string;
@@ -585,8 +632,12 @@ export function updatePromptTemplate(
   });
 }
 
-export function archivePromptTemplate(key: string) {
-  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/prompts/${key}/archive`, {
+export function archivePromptTemplate(key: string, scenario?: Scenario) {
+  const params = new URLSearchParams();
+  if (scenario) {
+    params.set("scenario", scenario);
+  }
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/prompts/${key}/archive?${params.toString()}`, {
     method: "POST",
   }).then((record) => {
     invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
@@ -594,8 +645,12 @@ export function archivePromptTemplate(key: string) {
   });
 }
 
-export function restorePromptTemplate(key: string) {
-  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/prompts/${key}/restore`, {
+export function restorePromptTemplate(key: string, scenario?: Scenario) {
+  const params = new URLSearchParams();
+  if (scenario) {
+    params.set("scenario", scenario);
+  }
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/prompts/${key}/restore?${params.toString()}`, {
     method: "POST",
   }).then((record) => {
     invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
@@ -603,8 +658,12 @@ export function restorePromptTemplate(key: string) {
   });
 }
 
-export function purgePromptTemplate(key: string) {
-  return requestJson<{ ok: boolean; key: string; kind: string }>(`/api/v1/platform/prompt-center/prompts/${key}/purge`, {
+export function purgePromptTemplate(key: string, scenario?: Scenario) {
+  const params = new URLSearchParams();
+  if (scenario) {
+    params.set("scenario", scenario);
+  }
+  return requestJson<{ ok: boolean; key: string; kind: string }>(`/api/v1/platform/prompt-center/prompts/${key}/purge?${params.toString()}`, {
     method: "DELETE",
   }).then((result) => {
     invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
@@ -612,17 +671,22 @@ export function purgePromptTemplate(key: string) {
   });
 }
 
-export function listPersonaTemplates(includeArchived = false) {
+export function listPersonaTemplates(includeArchived = false, scenario?: Scenario) {
   const params = new URLSearchParams();
   params.set("include_archived", includeArchived ? "true" : "false");
+  if (scenario) {
+    params.set("scenario", scenario);
+  }
   return requestJson<{
     total: number;
+    scenario?: Scenario | null;
     include_archived: boolean;
     items: PromptTemplateRecord[];
   }>(`/api/v1/platform/prompt-center/personas?${params.toString()}`, { cacheTtlMs: 10_000 });
 }
 
 export function createPersonaTemplate(payload: {
+  scenario?: Scenario;
   key: string;
   label?: string;
   description?: string;
@@ -654,8 +718,12 @@ export function updatePersonaTemplate(
   });
 }
 
-export function archivePersonaTemplate(key: string) {
-  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/personas/${key}/archive`, {
+export function archivePersonaTemplate(key: string, scenario?: Scenario) {
+  const params = new URLSearchParams();
+  if (scenario) {
+    params.set("scenario", scenario);
+  }
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/personas/${key}/archive?${params.toString()}`, {
     method: "POST",
   }).then((record) => {
     invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
@@ -663,8 +731,12 @@ export function archivePersonaTemplate(key: string) {
   });
 }
 
-export function restorePersonaTemplate(key: string) {
-  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/personas/${key}/restore`, {
+export function restorePersonaTemplate(key: string, scenario?: Scenario) {
+  const params = new URLSearchParams();
+  if (scenario) {
+    params.set("scenario", scenario);
+  }
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/personas/${key}/restore?${params.toString()}`, {
     method: "POST",
   }).then((record) => {
     invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);
@@ -672,8 +744,12 @@ export function restorePersonaTemplate(key: string) {
   });
 }
 
-export function purgePersonaTemplate(key: string) {
-  return requestJson<{ ok: boolean; key: string; kind: string }>(`/api/v1/platform/prompt-center/personas/${key}/purge`, {
+export function purgePersonaTemplate(key: string, scenario?: Scenario) {
+  const params = new URLSearchParams();
+  if (scenario) {
+    params.set("scenario", scenario);
+  }
+  return requestJson<{ ok: boolean; key: string; kind: string }>(`/api/v1/platform/prompt-center/personas/${key}/purge?${params.toString()}`, {
     method: "DELETE",
   }).then((result) => {
     invalidateApiCache(["/api/v1/platform/prompt-center", "/api/v1/options", "/api/v1/platform/metadata/prompts-personas"]);

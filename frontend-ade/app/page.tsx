@@ -38,6 +38,9 @@ const COPY = {
       agentStudioTitle: "Agent Studio",
       agentStudioDescription:
         "Runtime chat, prompt and persona editing, tool management, execution trace, and persistent state inspection.",
+      commentLabTitle: "Comment Lab",
+      commentLabDescription:
+        "Stateless comment generation workspace with independent model, prompt, and persona controls.",
       promptCenterTitle: "Prompt Center",
       promptCenterDescription: "Manage system prompts and persona templates with workspace-persisted CRUD and archive/restore.",
       toolCenterTitle: "Tool Center",
@@ -76,6 +79,8 @@ const COPY = {
     modules: {
       agentStudioTitle: "智能体工作台",
       agentStudioDescription: "支持运行时对话、提示词和 Persona 编辑、工具管理、执行轨迹及持久化状态查看。",
+      commentLabTitle: "评论实验室",
+      commentLabDescription: "独立的无状态评论生成空间，可分别控制模型、Prompt 与 Persona。",
       promptCenterTitle: "提示词中心",
       promptCenterDescription: "管理 System Prompt 与 Persona 模板，支持工作区持久化 CRUD 与归档恢复。",
       toolCenterTitle: "工具中心",
@@ -160,6 +165,11 @@ export default function DashboardPage() {
         href: "/agent-studio",
       },
       {
+        title: copy.modules.commentLabTitle,
+        description: copy.modules.commentLabDescription,
+        href: "/comment-lab",
+      },
+      {
         title: copy.modules.promptCenterTitle,
         description: copy.modules.promptCenterDescription,
         href: "/prompt-center",
@@ -180,7 +190,7 @@ export default function DashboardPage() {
         href: DOCS_HREF,
       },
     ],
-    [copy.modules.agentStudioDescription, copy.modules.agentStudioTitle, copy.modules.apiDocsDescription, copy.modules.apiDocsTitle, copy.modules.testCenterDescription, copy.modules.testCenterTitle],
+    [copy.modules],
   );
 
   return (

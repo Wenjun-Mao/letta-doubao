@@ -18,7 +18,7 @@ The current bundle works end to end with:
 
 Current development baseline defaults:
 
-- System prompt: `CUSTOM_V2_PROMPT`
+- System prompt: `CHAT_V20260418_PROMPT`
 - Test embedding: `letta/letta-free`
 
 ## Directory Contents

@@ -100,7 +100,7 @@ uv run tests/runners/persona_guardrail_runner.py --config tests/configs/suites -
 
 **Run Conversation Suite for a specific config file:**
 ```bash
-uv run tests/runners/persona_guardrail_runner.py --config tests/configs/suites/lmstudio_custom_v2.json --embedding letta/letta-free
+uv run tests/runners/persona_guardrail_runner.py --config tests/configs/suites/lmstudio_chat_v20260418.json --embedding letta/letta-free
 ```
 
 **Run Prompt Variant Comparison:**

@@ -25,13 +25,22 @@
             "type": "string"
           },
           "persona_key": {
-            "default": "linxiaotang",
+            "default": "chat_linxiaotang",
             "title": "Persona Key",
             "type": "string"
           },
           "prompt_key": {
-            "default": "custom_v2",
+            "default": "chat_v20260418",
             "title": "Prompt Key",
+            "type": "string"
+          },
+          "scenario": {
+            "default": "chat",
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
             "type": "string"
           }
         },
@@ -70,11 +79,20 @@
           "prompt_key": {
             "title": "Prompt Key",
             "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
+            "type": "string"
           }
         },
         "required": [
           "id",
           "name",
+          "scenario",
           "model",
           "prompt_key",
           "persona_key"
@@ -343,6 +361,48 @@
         "title": "ApiChatResponse",
         "type": "object"
       },
+      "ApiCommentingGenerateResponse": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "persona_key": {
+            "title": "Persona Key",
+            "type": "string"
+          },
+          "prompt_key": {
+            "title": "Prompt Key",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario",
+          "prompt_key",
+          "persona_key",
+          "model",
+          "content",
+          "provider"
+        ],
+        "title": "ApiCommentingGenerateResponse",
+        "type": "object"
+      },
       "ApiConversationHistoryItemResponse": {
         "properties": {
           "content": {
@@ -549,6 +609,21 @@
           "label": {
             "title": "Label",
             "type": "string"
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "enum": [
+                  "chat",
+                  "comment"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario"
           }
         },
         "required": [
@@ -576,9 +651,18 @@
           "prompt_key": {
             "title": "Prompt Key",
             "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
+            "type": "string"
           }
         },
         "required": [
+          "scenario",
           "model",
           "prompt_key",
           "persona_key",
@@ -619,9 +703,18 @@
             },
             "title": "Prompts",
             "type": "array"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
+            "type": "string"
           }
         },
         "required": [
+          "scenario",
           "models",
           "embeddings",
           "prompts",
@@ -803,9 +896,18 @@
           "preview": {
             "title": "Preview",
             "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
+            "type": "string"
           }
         },
         "required": [
+          "scenario",
           "key",
           "preview",
           "length"
@@ -1169,9 +1271,18 @@
           "preview": {
             "title": "Preview",
             "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
+            "type": "string"
           }
         },
         "required": [
+          "scenario",
           "key",
           "label",
           "description",
@@ -1190,9 +1301,18 @@
           "prompt_key": {
             "title": "Prompt Key",
             "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
+            "type": "string"
           }
         },
         "required": [
+          "scenario",
           "prompt_key",
           "persona_key"
         ],
@@ -1459,6 +1579,21 @@
             "title": "Items",
             "type": "array"
           },
+          "scenario": {
+            "anyOf": [
+              {
+                "enum": [
+                  "chat",
+                  "comment"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Scenario"
+          },
           "total": {
             "title": "Total",
             "type": "integer"
@@ -1506,6 +1641,14 @@
             "title": "Preview",
             "type": "string"
           },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
+            "type": "string"
+          },
           "source_path": {
             "title": "Source Path",
             "type": "string"
@@ -1517,6 +1660,7 @@
         },
         "required": [
           "kind",
+          "scenario",
           "key",
           "label",
           "description",
@@ -1925,6 +2069,49 @@
         "title": "ChatRequest",
         "type": "object"
       },
+      "CommentingGenerateRequest": {
+        "properties": {
+          "input": {
+            "title": "Input",
+            "type": "string"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model"
+          },
+          "persona_key": {
+            "default": "comment_linxiaotang",
+            "title": "Persona Key",
+            "type": "string"
+          },
+          "prompt_key": {
+            "default": "comment_v20260418",
+            "title": "Prompt Key",
+            "type": "string"
+          },
+          "scenario": {
+            "default": "comment",
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "title": "CommentingGenerateRequest",
+        "type": "object"
+      },
       "HTTPValidationError": {
         "properties": {
           "detail": {
@@ -1995,6 +2182,15 @@
           "label": {
             "default": "",
             "title": "Label",
+            "type": "string"
+          },
+          "scenario": {
+            "default": "chat",
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
             "type": "string"
           }
         },
@@ -2255,6 +2451,15 @@
           "label": {
             "default": "",
             "title": "Label",
+            "type": "string"
+          },
+          "scenario": {
+            "default": "chat",
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "Scenario",
             "type": "string"
           }
         },
@@ -2862,6 +3067,47 @@
         "summary": "Api Chat"
       }
     },
+    "/api/v1/commenting/generate": {
+      "post": {
+        "operationId": "api_commenting_generate_api_v1_commenting_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentingGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiCommentingGenerateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Generate a stateless comment for news/comment threads",
+        "tags": [
+          "commenting"
+        ]
+      }
+    },
     "/api/v1/options": {
       "get": {
         "operationId": "api_get_options_api_v1_options_get",
@@ -2874,6 +3120,16 @@
               "default": false,
               "title": "Refresh",
               "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "default": "chat",
+              "title": "Scenario",
+              "type": "string"
             }
           }
         ],
@@ -3371,6 +3627,18 @@
     "/api/v1/platform/metadata/prompts-personas": {
       "get": {
         "operationId": "api_platform_prompt_persona_metadata_api_v1_platform_metadata_prompts_personas_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "default": "chat",
+              "title": "Scenario",
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "content": {
@@ -3381,6 +3649,16 @@
               }
             },
             "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
           }
         },
         "summary": "Get prompt and persona metadata",
@@ -3477,6 +3755,22 @@
               "title": "Include Archived",
               "type": "boolean"
             }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
+            }
           }
         ],
         "responses": {
@@ -3567,6 +3861,22 @@
               "default": false,
               "title": "Archived",
               "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
             }
           }
         ],
@@ -3660,6 +3970,22 @@
               "title": "Key",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
+            }
           }
         ],
         "responses": {
@@ -3702,6 +4028,22 @@
               "title": "Key",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
+            }
           }
         ],
         "responses": {
@@ -3741,6 +4083,22 @@
             "schema": {
               "title": "Key",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
             }
           }
         ],
@@ -3784,6 +4142,22 @@
               "default": false,
               "title": "Include Archived",
               "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
             }
           }
         ],
@@ -3875,6 +4249,22 @@
               "default": false,
               "title": "Archived",
               "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
             }
           }
         ],
@@ -3968,6 +4358,22 @@
               "title": "Key",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
+            }
           }
         ],
         "responses": {
@@ -4010,6 +4416,22 @@
               "title": "Key",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
+            }
           }
         ],
         "responses": {
@@ -4049,6 +4471,22 @@
             "schema": {
               "title": "Key",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
             }
           }
         ],
