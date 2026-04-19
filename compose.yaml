@@ -75,6 +75,7 @@ services:
     volumes:
       - ./prompts:/app/prompts
       - ./tools/custom:/app/tools/custom
+      - ./data/agent_lifecycle:/app/data/agent_lifecycle
     ports:
       - "8284:8284"
     depends_on:

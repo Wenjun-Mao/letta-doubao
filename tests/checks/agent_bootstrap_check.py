@@ -1,5 +1,6 @@
 import os
 import sys
+import argparse
 
 # Add project root to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..')))
@@ -13,15 +14,15 @@ from tests.shared.config_defaults import (
     DEFAULT_TEST_MODEL_HANDLE,
 )
 
-def run_verification():
+def run_verification(*, model_handle: str, embedding_handle: str):
     client = Letta(base_url=DEFAULT_LETTA_BASE_URL)
     
     print("--- CREATING AGENT ---")
     agent = client.agents.create(
         name="test-verification-agent",
         system=CUSTOM_V2_PROMPT,
-        model=DEFAULT_TEST_MODEL_HANDLE,
-        embedding=DEFAULT_EMBEDDING_HANDLE,
+        model=model_handle,
+        embedding=embedding_handle,
         context_window_limit=16384,
         memory_blocks=[
             {
@@ -63,6 +64,22 @@ def run_verification():
     if hasattr(agent, "embedding_config"):
         print(f"  agent.embedding_config: {agent.embedding_config}")
 
+
+def _parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Validate agent bootstrap memory block descriptions and defaults")
+    parser.add_argument(
+        "--model",
+        default=DEFAULT_TEST_MODEL_HANDLE,
+        help="Model handle used for agent creation.",
+    )
+    parser.add_argument(
+        "--embedding",
+        default=DEFAULT_EMBEDDING_HANDLE,
+        help="Embedding handle used for agent creation.",
+    )
+    return parser.parse_args()
+
 if __name__ == "__main__":
-    run_verification()
+    args = _parse_args()
+    run_verification(model_handle=str(args.model), embedding_handle=str(args.embedding))
     

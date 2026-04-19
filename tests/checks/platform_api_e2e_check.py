@@ -19,6 +19,7 @@ from tests.shared.config_defaults import (
 
 LETTA_BASE_URL = os.getenv("LETTA_BASE_URL", "http://localhost:8283")
 DEV_UI_BASE_URL = os.getenv("DEV_UI_BASE_URL", "http://127.0.0.1:8284")
+DEV_UI_CLIENT_TIMEOUT_SECONDS = float(os.getenv("DEV_UI_CLIENT_TIMEOUT_SECONDS", "180"))
 
 
 def _as_json(value: Any) -> str:
@@ -48,6 +49,37 @@ def _poll_run(http: httpx.Client, run_id: str, timeout_seconds: int = 240) -> di
     raise RuntimeError(f"Timed out waiting for test run {run_id}")
 
 
+def _resolve_runtime_defaults(http: httpx.Client) -> dict[str, str]:
+    response = http.get("/api/v1/options")
+    response.raise_for_status()
+    payload = response.json()
+
+    models = list(payload.get("models", []) or [])
+    prompts = list(payload.get("prompts", []) or [])
+    defaults = dict(payload.get("defaults", {}) or {})
+
+    model = str(defaults.get("model", "") or "").strip()
+    if not model:
+        available_models = [str(item.get("key", "") or "") for item in models if bool(item.get("available", True))]
+        model = available_models[0] if available_models else str(models[0].get("key", "") or "")
+    if not model:
+        model = DEFAULT_TEST_MODEL_HANDLE
+
+    prompt_key = str(defaults.get("prompt_key", "") or "").strip()
+    if not prompt_key and prompts:
+        prompt_key = str(prompts[0].get("key", "") or "")
+    if not prompt_key:
+        prompt_key = DEFAULT_PROMPT_KEY
+
+    embedding = str(defaults.get("embedding", "") or "").strip() or DEFAULT_EMBEDDING_HANDLE
+
+    return {
+        "model": model,
+        "prompt_key": prompt_key,
+        "embedding": embedding,
+    }
+
+
 def main() -> None:
     summary: dict[str, Any] = {
         "name": "platform_api_e2e_check",
@@ -60,7 +92,7 @@ def main() -> None:
     agent_id: str | None = None
 
     try:
-        with httpx.Client(base_url=DEV_UI_BASE_URL, timeout=60.0) as http:
+        with httpx.Client(base_url=DEV_UI_BASE_URL, timeout=DEV_UI_CLIENT_TIMEOUT_SECONDS) as http:
             capabilities_response = http.get("/api/v1/platform/capabilities")
             capabilities_response.raise_for_status()
             capabilities = capabilities_response.json()
@@ -71,11 +103,16 @@ def main() -> None:
                 "control": capabilities.get("control", {}),
             }
 
+            runtime_defaults = _resolve_runtime_defaults(http)
+            resolved_model = str(runtime_defaults.get("model", "") or DEFAULT_TEST_MODEL_HANDLE)
+            resolved_prompt_key = str(runtime_defaults.get("prompt_key", "") or DEFAULT_PROMPT_KEY)
+            resolved_embedding = str(runtime_defaults.get("embedding", "") or DEFAULT_EMBEDDING_HANDLE)
+
             create_payload = {
                 "name": f"platform-e2e-{int(time.time())}",
-                "model": DEFAULT_TEST_MODEL_HANDLE,
-                "prompt_key": DEFAULT_PROMPT_KEY,
-                "embedding": DEFAULT_EMBEDDING_HANDLE,
+                "model": resolved_model,
+                "prompt_key": resolved_prompt_key,
+                "embedding": resolved_embedding,
             }
             create_response = http.post("/api/v1/agents", json=create_payload)
             create_response.raise_for_status()
@@ -133,7 +170,7 @@ def main() -> None:
 
             model_response = http.patch(
                 f"/api/v1/platform/agents/{agent_id}/model",
-                json={"model": DEFAULT_TEST_MODEL_HANDLE},
+                json={"model": resolved_model},
             )
             model_response.raise_for_status()
             summary["steps"]["update_model"] = {
@@ -206,7 +243,11 @@ def main() -> None:
 
             orchestrator_response = http.post(
                 "/api/v1/platform/test-runs",
-                json={"run_type": "agent_bootstrap_check"},
+                json={
+                    "run_type": "agent_bootstrap_check",
+                    "model": resolved_model,
+                    "embedding": resolved_embedding,
+                },
             )
             orchestrator_response.raise_for_status()
             run_id = str(orchestrator_response.json().get("run_id", "") or "")

@@ -43,7 +43,14 @@ class PlatformTestOrchestrator:
         python = sys.executable
 
         if run_type == "agent_bootstrap_check":
-            return [python, "tests/checks/agent_bootstrap_check.py"]
+            return [
+                python,
+                "tests/checks/agent_bootstrap_check.py",
+                "--model",
+                model,
+                "--embedding",
+                embedding,
+            ]
         if run_type == "provider_embedding_matrix_check":
             return [python, "tests/checks/provider_embedding_matrix_check.py"]
         if run_type == "prompt_strategy_check":

@@ -274,6 +274,13 @@ class AgentPlatformService:
         return result
 
     @retry(**_RETRY_KWARGS)
+    def delete_agent(self, *, agent_id: str) -> None:
+        resolved_agent_id = str(agent_id or "").strip()
+        if not resolved_agent_id:
+            raise ValueError("agent_id is required")
+        self._client.agents.delete(agent_id=resolved_agent_id)
+
+    @retry(**_RETRY_KWARGS)
     def update_system_prompt(self, *, agent_id: str, system_prompt: str) -> dict[str, Any]:
         before = self._client.agents.retrieve(agent_id=agent_id)
         updated = self._client.agents.update(agent_id=agent_id, system=system_prompt)

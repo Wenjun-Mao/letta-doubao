@@ -24,6 +24,11 @@
             "title": "Name",
             "type": "string"
           },
+          "persona_key": {
+            "default": "linxiaotang",
+            "title": "Persona Key",
+            "type": "string"
+          },
           "prompt_key": {
             "default": "custom_v2",
             "title": "Prompt Key",
@@ -58,6 +63,10 @@
             "title": "Name",
             "type": "string"
           },
+          "persona_key": {
+            "title": "Persona Key",
+            "type": "string"
+          },
           "prompt_key": {
             "title": "Prompt Key",
             "type": "string"
@@ -67,7 +76,8 @@
           "id",
           "name",
           "model",
-          "prompt_key"
+          "prompt_key",
+          "persona_key"
         ],
         "title": "ApiAgentCreateResponse",
         "type": "object"
@@ -178,8 +188,57 @@
         "title": "ApiAgentDetailsResponse",
         "type": "object"
       },
+      "ApiAgentLifecycleResponse": {
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "archived_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "model": {
+            "title": "Model",
+            "type": "string"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "model",
+          "archived",
+          "updated_at"
+        ],
+        "title": "ApiAgentLifecycleResponse",
+        "type": "object"
+      },
       "ApiAgentListItemResponse": {
         "properties": {
+          "archived": {
+            "default": false,
+            "title": "Archived",
+            "type": "boolean"
+          },
           "created_at": {
             "title": "Created At",
             "type": "string"
@@ -235,6 +294,29 @@
           "items"
         ],
         "title": "ApiAgentListResponse",
+        "type": "object"
+      },
+      "ApiAgentPurgeResponse": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "ok": {
+            "title": "Ok",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "id",
+          "kind"
+        ],
+        "title": "ApiAgentPurgeResponse",
         "type": "object"
       },
       "ApiChatResponse": {
@@ -487,6 +569,10 @@
             "title": "Model",
             "type": "string"
           },
+          "persona_key": {
+            "title": "Persona Key",
+            "type": "string"
+          },
           "prompt_key": {
             "title": "Prompt Key",
             "type": "string"
@@ -495,6 +581,7 @@
         "required": [
           "model",
           "prompt_key",
+          "persona_key",
           "embedding"
         ],
         "title": "ApiOptionsDefaultsResponse",
@@ -519,6 +606,13 @@
             "title": "Models",
             "type": "array"
           },
+          "personas": {
+            "items": {
+              "$ref": "#/components/schemas/ApiOptionEntryResponse"
+            },
+            "title": "Personas",
+            "type": "array"
+          },
           "prompts": {
             "items": {
               "$ref": "#/components/schemas/ApiOptionEntryResponse"
@@ -531,6 +625,7 @@
           "models",
           "embeddings",
           "prompts",
+          "personas",
           "defaults"
         ],
         "title": "ApiOptionsResponse",
@@ -893,6 +988,17 @@
       },
       "ApiPlatformToolResponse": {
         "properties": {
+          "archived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived"
+          },
           "attached_to_agent": {
             "anyOf": [
               {
@@ -920,9 +1026,42 @@
             "title": "Last Updated At",
             "type": "string"
           },
+          "managed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Managed"
+          },
           "name": {
             "title": "Name",
             "type": "string"
+          },
+          "read_only": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Read Only"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
           },
           "source_type": {
             "title": "Source Type",
@@ -1307,6 +1446,90 @@
         "title": "ApiSystemUpdateResponse",
         "type": "object"
       },
+      "ApiTemplateListResponse": {
+        "properties": {
+          "include_archived": {
+            "title": "Include Archived",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "include_archived",
+          "items"
+        ],
+        "title": "ApiTemplateListResponse",
+        "type": "object"
+      },
+      "ApiTemplateRecordResponse": {
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "kind": {
+            "title": "Kind",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "length": {
+            "title": "Length",
+            "type": "integer"
+          },
+          "preview": {
+            "title": "Preview",
+            "type": "string"
+          },
+          "source_path": {
+            "title": "Source Path",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "key",
+          "label",
+          "description",
+          "content",
+          "preview",
+          "length",
+          "archived",
+          "source_path",
+          "updated_at"
+        ],
+        "title": "ApiTemplateRecordResponse",
+        "type": "object"
+      },
       "ApiTestArtifactListResponse": {
         "properties": {
           "items": {
@@ -1533,6 +1756,157 @@
         "title": "ApiToolAttachDetachResponse",
         "type": "object"
       },
+      "ApiToolCenterItemResponse": {
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "archived_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Archived At"
+          },
+          "created_at": {
+            "default": "",
+            "title": "Created At",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "last_updated_at": {
+            "default": "",
+            "title": "Last Updated At",
+            "type": "string"
+          },
+          "managed": {
+            "title": "Managed",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "read_only": {
+            "title": "Read Only",
+            "type": "boolean"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          },
+          "source_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Code"
+          },
+          "source_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Path"
+          },
+          "source_type": {
+            "title": "Source Type",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          },
+          "tool_id": {
+            "title": "Tool Id",
+            "type": "string"
+          },
+          "tool_type": {
+            "title": "Tool Type",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          }
+        },
+        "required": [
+          "tool_id",
+          "name",
+          "description",
+          "tool_type",
+          "source_type",
+          "managed",
+          "read_only",
+          "archived"
+        ],
+        "title": "ApiToolCenterItemResponse",
+        "type": "object"
+      },
+      "ApiToolCenterListResponse": {
+        "properties": {
+          "include_archived": {
+            "title": "Include Archived",
+            "type": "boolean"
+          },
+          "include_builtin": {
+            "title": "Include Builtin",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "include_archived",
+          "include_builtin",
+          "items"
+        ],
+        "title": "ApiToolCenterListResponse",
+        "type": "object"
+      },
       "ChatRequest": {
         "properties": {
           "agent_id": {
@@ -1562,6 +1936,73 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "PersonaTemplatePatchRequest": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "title": "PersonaTemplatePatchRequest",
+        "type": "object"
+      },
+      "PersonaTemplateWriteRequest": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "content"
+        ],
+        "title": "PersonaTemplateWriteRequest",
         "type": "object"
       },
       "PlatformMemoryBlockUpdateRequest": {
@@ -1757,6 +2198,287 @@
         "title": "PlatformToolTestInvokeRequest",
         "type": "object"
       },
+      "PromptTemplatePatchRequest": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          }
+        },
+        "title": "PromptTemplatePatchRequest",
+        "type": "object"
+      },
+      "PromptTemplateWriteRequest": {
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "content"
+        ],
+        "title": "PromptTemplateWriteRequest",
+        "type": "object"
+      },
+      "ToolCenterCreateRequest": {
+        "properties": {
+          "default_requires_approval": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Requires Approval"
+          },
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "enable_parallel_execution": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Parallel Execution"
+          },
+          "npm_requirements": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npm Requirements"
+          },
+          "pip_requirements": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pip Requirements"
+          },
+          "return_char_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return Char Limit"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "source_code": {
+            "title": "Source Code",
+            "type": "string"
+          },
+          "source_type": {
+            "default": "python",
+            "title": "Source Type",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Tags",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "source_code"
+        ],
+        "title": "ToolCenterCreateRequest",
+        "type": "object"
+      },
+      "ToolCenterUpdateRequest": {
+        "properties": {
+          "default_requires_approval": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Default Requires Approval"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "enable_parallel_execution": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Enable Parallel Execution"
+          },
+          "npm_requirements": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Npm Requirements"
+          },
+          "pip_requirements": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pip Requirements"
+          },
+          "return_char_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Return Char Limit"
+          },
+          "source_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Code"
+          },
+          "source_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Type"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Tags"
+          }
+        },
+        "title": "ToolCenterUpdateRequest",
+        "type": "object"
+      },
       "ValidationError": {
         "properties": {
           "ctx": {
@@ -1849,6 +2571,16 @@
               "title": "Include Last Interaction",
               "type": "boolean"
             }
+          },
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
           }
         ],
         "responses": {
@@ -1910,6 +2642,48 @@
           }
         },
         "summary": "Api Create Agent"
+      }
+    },
+    "/api/v1/agents/{agent_id}": {
+      "delete": {
+        "operationId": "api_delete_agent_api_v1_agents__agent_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAgentPurgeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete archived agent (hard delete)",
+        "tags": [
+          "platform-control"
+        ]
       }
     },
     "/api/v1/agents/{agent_id}/details": {
@@ -2128,6 +2902,48 @@
         "summary": "Api Get Options"
       }
     },
+    "/api/v1/platform/agents/{agent_id}/archive": {
+      "post": {
+        "operationId": "api_platform_archive_agent_api_v1_platform_agents__agent_id__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAgentLifecycleResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive agent (soft delete)",
+        "tags": [
+          "platform-control"
+        ]
+      }
+    },
     "/api/v1/platform/agents/{agent_id}/core-memory/blocks/{block_label}": {
       "patch": {
         "operationId": "api_platform_update_memory_block_api_v1_platform_agents__agent_id__core_memory_blocks__block_label__patch",
@@ -2288,6 +3104,90 @@
           }
         },
         "summary": "Update persisted agent model",
+        "tags": [
+          "platform-control"
+        ]
+      }
+    },
+    "/api/v1/platform/agents/{agent_id}/purge": {
+      "delete": {
+        "operationId": "api_platform_purge_agent_api_v1_platform_agents__agent_id__purge_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAgentPurgeResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Purge archived agent (hard delete)",
+        "tags": [
+          "platform-control"
+        ]
+      }
+    },
+    "/api/v1/platform/agents/{agent_id}/restore": {
+      "post": {
+        "operationId": "api_platform_restore_agent_api_v1_platform_agents__agent_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "Agent Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAgentLifecycleResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore archived agent",
         "tags": [
           "platform-control"
         ]
@@ -2564,6 +3464,622 @@
         ]
       }
     },
+    "/api/v1/platform/prompt-center/personas": {
+      "get": {
+        "operationId": "api_prompt_center_list_personas_api_v1_platform_prompt_center_personas_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List persona templates",
+        "tags": [
+          "platform-prompts"
+        ]
+      },
+      "post": {
+        "operationId": "api_prompt_center_create_persona_api_v1_platform_prompt_center_personas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonaTemplateWriteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create persona template",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/personas/{key}": {
+      "get": {
+        "operationId": "api_prompt_center_get_persona_api_v1_platform_prompt_center_personas__key__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get persona template",
+        "tags": [
+          "platform-prompts"
+        ]
+      },
+      "patch": {
+        "operationId": "api_prompt_center_update_persona_api_v1_platform_prompt_center_personas__key__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonaTemplatePatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update persona template",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/personas/{key}/archive": {
+      "post": {
+        "operationId": "api_prompt_center_archive_persona_api_v1_platform_prompt_center_personas__key__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive persona template",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/personas/{key}/purge": {
+      "delete": {
+        "operationId": "api_prompt_center_purge_persona_api_v1_platform_prompt_center_personas__key__purge_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Purge archived persona template",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/personas/{key}/restore": {
+      "post": {
+        "operationId": "api_prompt_center_restore_persona_api_v1_platform_prompt_center_personas__key__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore archived persona template",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/prompts": {
+      "get": {
+        "operationId": "api_prompt_center_list_prompts_api_v1_platform_prompt_center_prompts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List system prompt templates",
+        "tags": [
+          "platform-prompts"
+        ]
+      },
+      "post": {
+        "operationId": "api_prompt_center_create_prompt_api_v1_platform_prompt_center_prompts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptTemplateWriteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create system prompt template",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/prompts/{key}": {
+      "get": {
+        "operationId": "api_prompt_center_get_prompt_api_v1_platform_prompt_center_prompts__key__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get system prompt template",
+        "tags": [
+          "platform-prompts"
+        ]
+      },
+      "patch": {
+        "operationId": "api_prompt_center_update_prompt_api_v1_platform_prompt_center_prompts__key__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptTemplatePatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update system prompt template",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/prompts/{key}/archive": {
+      "post": {
+        "operationId": "api_prompt_center_archive_prompt_api_v1_platform_prompt_center_prompts__key__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive system prompt template",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/prompts/{key}/purge": {
+      "delete": {
+        "operationId": "api_prompt_center_purge_prompt_api_v1_platform_prompt_center_prompts__key__purge_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Purge archived system prompt template",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/prompts/{key}/restore": {
+      "post": {
+        "operationId": "api_prompt_center_restore_prompt_api_v1_platform_prompt_center_prompts__key__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore archived system prompt template",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
     "/api/v1/platform/test-runs": {
       "get": {
         "operationId": "api_platform_list_test_runs_api_v1_platform_test_runs_get",
@@ -2808,6 +4324,344 @@
         "summary": "Cancel orchestrated test run",
         "tags": [
           "platform-tests"
+        ]
+      }
+    },
+    "/api/v1/platform/tool-center/tools": {
+      "get": {
+        "operationId": "api_tool_center_list_tools_api_v1_platform_tool_center_tools_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_builtin",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Include Builtin",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_source",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Source",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "Search",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Tool Center entries",
+        "tags": [
+          "platform-tools"
+        ]
+      },
+      "post": {
+        "operationId": "api_tool_center_create_tool_api_v1_platform_tool_center_tools_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolCenterCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create managed custom tool",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/tool-center/tools/{slug}": {
+      "get": {
+        "operationId": "api_tool_center_get_tool_api_v1_platform_tool_center_tools__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_source",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "Include Source",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Tool Center managed custom tool",
+        "tags": [
+          "platform-tools"
+        ]
+      },
+      "patch": {
+        "operationId": "api_tool_center_update_tool_api_v1_platform_tool_center_tools__slug__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolCenterUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update managed custom tool",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/tool-center/tools/{slug}/archive": {
+      "post": {
+        "operationId": "api_tool_center_archive_tool_api_v1_platform_tool_center_tools__slug__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive managed custom tool",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/tool-center/tools/{slug}/purge": {
+      "delete": {
+        "operationId": "api_tool_center_purge_tool_api_v1_platform_tool_center_tools__slug__purge_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Purge archived managed custom tool",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/tool-center/tools/{slug}/restore": {
+      "post": {
+        "operationId": "api_tool_center_restore_tool_api_v1_platform_tool_center_tools__slug__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore archived managed custom tool",
+        "tags": [
+          "platform-tools"
         ]
       }
     },

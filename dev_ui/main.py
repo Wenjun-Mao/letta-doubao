@@ -18,6 +18,7 @@ from zoneinfo import ZoneInfo
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from letta_client import Letta
+from utils.agent_lifecycle_registry import AgentLifecycleRegistry, AgentLifecycleRegistryError
 from utils.agent_platform_service import AgentPlatformService
 from utils.custom_tool_registry import CustomToolRegistry, ToolRegistryError
 from utils.platform_test_orchestrator import PlatformTestOrchestrator
@@ -138,6 +139,7 @@ class ApiAgentListItemResponse(BaseModel):
     created_at: str
     last_updated_at: str
     last_interaction_at: str
+    archived: bool = False
 
 
 class ApiAgentListResponse(BaseModel):
@@ -152,6 +154,21 @@ class ApiAgentCreateResponse(BaseModel):
     embedding: str | None = None
     prompt_key: str
     persona_key: str
+
+
+class ApiAgentLifecycleResponse(BaseModel):
+    id: str
+    name: str
+    model: str
+    archived: bool
+    archived_at: str | None = None
+    updated_at: str
+
+
+class ApiAgentPurgeResponse(BaseModel):
+    ok: bool
+    id: str
+    kind: str
 
 
 class ApiAgentDetailsResponse(BaseModel):
@@ -583,6 +600,7 @@ PROJECT_ROOT = Path(__file__).resolve().parent.parent
 test_orchestrator = PlatformTestOrchestrator(project_root=PROJECT_ROOT)
 prompt_persona_registry = PromptPersonaRegistry(PROJECT_ROOT)
 custom_tool_registry = CustomToolRegistry(PROJECT_ROOT)
+agent_lifecycle_registry = AgentLifecycleRegistry(PROJECT_ROOT)
 REVISION_LOG_DIR = PROJECT_ROOT / "diagnostics"
 REVISION_LOG_FILE = REVISION_LOG_DIR / "prompt_persona_revisions.jsonl"
 
@@ -604,6 +622,39 @@ def _ensure_platform_api_enabled() -> None:
         status_code=503,
         detail="Agent Platform API is disabled by AGENT_PLATFORM_API_ENABLED.",
     )
+
+
+def _is_not_found_error(exc: Exception) -> bool:
+    text = str(exc or "").lower()
+    return "not found" in text or "404" in text
+
+
+def _fetch_agent_or_404(agent_id: str) -> Any:
+    try:
+        return client.agents.retrieve(agent_id=agent_id)
+    except Exception as exc:
+        if _is_not_found_error(exc):
+            raise HTTPException(status_code=404, detail=f"Agent '{agent_id}' not found") from exc
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+
+def _agent_lifecycle_payload(record: dict[str, Any], *, fallback_name: str = "", fallback_model: str = "") -> dict[str, Any]:
+    return {
+        "id": str(record.get("id", "") or ""),
+        "name": str(record.get("name", "") or fallback_name),
+        "model": str(record.get("model", "") or fallback_model),
+        "archived": bool(record.get("archived", False)),
+        "archived_at": record.get("archived_at"),
+        "updated_at": str(record.get("updated_at", "") or ""),
+    }
+
+
+def _ensure_agent_not_archived(agent_id: str) -> None:
+    if agent_lifecycle_registry.is_archived(agent_id):
+        raise HTTPException(
+            status_code=409,
+            detail="Agent is archived. Restore it before runtime or control operations.",
+        )
 
 
 def _missing_platform_capabilities(capabilities: dict[str, Any]) -> list[str]:
@@ -1160,7 +1211,7 @@ async def api_get_options(refresh: bool = False):
 
 
 @app.get("/api/v1/agents", response_model=ApiAgentListResponse)
-async def api_list_agents(limit: int = 100, include_last_interaction: bool = False):
+async def api_list_agents(limit: int = 100, include_last_interaction: bool = False, include_archived: bool = False):
     """List existing agents so the UI can pull and inspect prior state."""
     _ensure_platform_api_enabled()
 
@@ -1169,10 +1220,14 @@ async def api_list_agents(limit: int = 100, include_last_interaction: bool = Fal
     if limit > 500:
         limit = 500
 
+    archived_agent_ids = agent_lifecycle_registry.archived_agent_ids()
     agents = list(client.agents.list())
     items = []
     for agent in agents:
         agent_id = str(getattr(agent, "id", ""))
+        is_archived = agent_id in archived_agent_ids
+        if is_archived and not include_archived:
+            continue
         last_updated_at = str(getattr(agent, "last_updated_at", ""))
         if include_last_interaction:
             last_interaction_at = _derive_last_interaction_at(agent_id, last_updated_at)
@@ -1186,6 +1241,7 @@ async def api_list_agents(limit: int = 100, include_last_interaction: bool = Fal
                 "created_at": str(getattr(agent, "created_at", "")),
                 "last_updated_at": last_updated_at,
                 "last_interaction_at": last_interaction_at,
+                "archived": is_archived,
             }
         )
 
@@ -1261,6 +1317,115 @@ async def api_create_agent(request: AgentCreateRequest):
         "prompt_key": request.prompt_key,
         "persona_key": request.persona_key,
     }
+
+
+@app.post(
+    "/api/v1/platform/agents/{agent_id}/archive",
+    response_model=ApiAgentLifecycleResponse,
+    tags=["platform-control"],
+    summary="Archive agent (soft delete)",
+)
+async def api_platform_archive_agent(agent_id: str):
+    _ensure_platform_api_enabled()
+
+    resolved_agent_id = agent_id.strip()
+    if not resolved_agent_id:
+        raise HTTPException(status_code=400, detail="agent_id is required")
+
+    agent = _fetch_agent_or_404(resolved_agent_id)
+    try:
+        archived = agent_lifecycle_registry.archive_agent(
+            agent_id=resolved_agent_id,
+            name=str(getattr(agent, "name", "")),
+            model=str(getattr(agent, "model", "")),
+        )
+    except AgentLifecycleRegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return _agent_lifecycle_payload(
+        archived,
+        fallback_name=str(getattr(agent, "name", "")),
+        fallback_model=str(getattr(agent, "model", "")),
+    )
+
+
+@app.post(
+    "/api/v1/platform/agents/{agent_id}/restore",
+    response_model=ApiAgentLifecycleResponse,
+    tags=["platform-control"],
+    summary="Restore archived agent",
+)
+async def api_platform_restore_agent(agent_id: str):
+    _ensure_platform_api_enabled()
+
+    resolved_agent_id = agent_id.strip()
+    if not resolved_agent_id:
+        raise HTTPException(status_code=400, detail="agent_id is required")
+
+    archived_record = agent_lifecycle_registry.get_record(resolved_agent_id)
+    if not archived_record or not bool(archived_record.get("archived", False)):
+        raise HTTPException(status_code=400, detail=f"Agent '{resolved_agent_id}' is not archived")
+
+    agent = _fetch_agent_or_404(resolved_agent_id)
+    try:
+        restored = agent_lifecycle_registry.restore_agent(resolved_agent_id)
+    except AgentLifecycleRegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return _agent_lifecycle_payload(
+        restored,
+        fallback_name=str(getattr(agent, "name", "")),
+        fallback_model=str(getattr(agent, "model", "")),
+    )
+
+
+def _purge_archived_agent(agent_id: str) -> dict[str, Any]:
+    resolved_agent_id = agent_id.strip()
+    if not resolved_agent_id:
+        raise HTTPException(status_code=400, detail="agent_id is required")
+
+    archived_record = agent_lifecycle_registry.get_record(resolved_agent_id)
+    if not archived_record or not bool(archived_record.get("archived", False)):
+        raise HTTPException(status_code=400, detail=f"Agent '{resolved_agent_id}' must be archived before purge")
+
+    try:
+        agent_platform.delete_agent(agent_id=resolved_agent_id)
+    except Exception as exc:
+        if not _is_not_found_error(exc):
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    try:
+        agent_lifecycle_registry.purge_agent(resolved_agent_id)
+    except AgentLifecycleRegistryError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {
+        "ok": True,
+        "id": resolved_agent_id,
+        "kind": "agent",
+    }
+
+
+@app.delete(
+    "/api/v1/platform/agents/{agent_id}/purge",
+    response_model=ApiAgentPurgeResponse,
+    tags=["platform-control"],
+    summary="Purge archived agent (hard delete)",
+)
+async def api_platform_purge_agent(agent_id: str):
+    _ensure_platform_api_enabled()
+    return _purge_archived_agent(agent_id)
+
+
+@app.delete(
+    "/api/v1/agents/{agent_id}",
+    response_model=ApiAgentPurgeResponse,
+    tags=["platform-control"],
+    summary="Delete archived agent (hard delete)",
+)
+async def api_delete_agent(agent_id: str):
+    _ensure_platform_api_enabled()
+    return _purge_archived_agent(agent_id)
 
 @app.get("/api/v1/agents/{agent_id}/details", response_model=ApiAgentDetailsResponse)
 async def api_get_agent_details(agent_id: str):
@@ -1473,6 +1638,8 @@ async def api_platform_tool_test_invoke(request: PlatformToolTestInvokeRequest):
         raise HTTPException(status_code=400, detail="agent_id is required")
     if not text:
         raise HTTPException(status_code=400, detail="input is required")
+
+    _ensure_agent_not_archived(agent_id)
 
     try:
         payload = agent_platform.send_runtime_message(
@@ -2225,6 +2392,7 @@ async def api_tool_center_purge_tool(slug: str):
 )
 async def api_platform_send_message(agent_id: str, request: PlatformRuntimeMessageRequest):
     _ensure_platform_api_enabled()
+    _ensure_agent_not_archived(agent_id)
 
     text = request.input.strip()
     if not text:
@@ -2249,6 +2417,7 @@ async def api_platform_send_message(agent_id: str, request: PlatformRuntimeMessa
 )
 async def api_platform_update_system(agent_id: str, request: PlatformSystemUpdateRequest):
     _ensure_platform_api_enabled()
+    _ensure_agent_not_archived(agent_id)
 
     system_text = request.system.strip()
     if not system_text:
@@ -2276,6 +2445,7 @@ async def api_platform_update_system(agent_id: str, request: PlatformSystemUpdat
 )
 async def api_platform_update_model(agent_id: str, request: PlatformModelUpdateRequest):
     _ensure_platform_api_enabled()
+    _ensure_agent_not_archived(agent_id)
 
     model_handle = request.model.strip()
     if not model_handle:
@@ -2299,6 +2469,7 @@ async def api_platform_update_memory_block(
     request: PlatformMemoryBlockUpdateRequest,
 ):
     _ensure_platform_api_enabled()
+    _ensure_agent_not_archived(agent_id)
 
     label = block_label.strip()
     if not label:
@@ -2331,6 +2502,7 @@ async def api_platform_update_memory_block(
 )
 async def api_platform_attach_tool(agent_id: str, tool_id: str):
     _ensure_platform_api_enabled()
+    _ensure_agent_not_archived(agent_id)
 
     resolved_tool_id = tool_id.strip()
     if not resolved_tool_id:
@@ -2350,6 +2522,7 @@ async def api_platform_attach_tool(agent_id: str, tool_id: str):
 )
 async def api_platform_detach_tool(agent_id: str, tool_id: str):
     _ensure_platform_api_enabled()
+    _ensure_agent_not_archived(agent_id)
 
     resolved_tool_id = tool_id.strip()
     if not resolved_tool_id:
@@ -2463,6 +2636,7 @@ async def api_platform_read_test_run_artifact(run_id: str, artifact_id: str, max
 @app.post("/api/v1/chat", response_model=ApiChatResponse)
 async def api_chat(request: ChatRequest):
     _ensure_platform_api_enabled()
+    _ensure_agent_not_archived(request.agent_id)
 
     is_datetime_turn = _is_datetime_query(request.message)
 

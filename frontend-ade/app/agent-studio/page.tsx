@@ -11,6 +11,7 @@ import {
   PersistentState,
   PlatformTool,
   attachTool,
+  archiveAgent,
   createAgent,
   fetchPromptPersonaRevisions,
   detachTool,
@@ -20,6 +21,8 @@ import {
   getRawPrompt,
   listAgents,
   listTools,
+  purgeAgent,
+  restoreAgent,
   sendChat,
   testInvokeTool,
   updateAgentModel,
@@ -35,6 +38,7 @@ type AgentItem = {
   created_at: string;
   last_updated_at: string;
   last_interaction_at: string;
+  archived: boolean;
 };
 
 type ChatEntry = {
@@ -319,6 +323,7 @@ export default function AgentStudioPage() {
 
   const [agents, setAgents] = useState<AgentItem[]>([]);
   const [selectedAgentId, setSelectedAgentId] = useState("");
+  const [includeArchivedAgents, setIncludeArchivedAgents] = useState(false);
   const [inspectorTab, setInspectorTab] = useState<InspectorTab>("model");
   const [persistentTab, setPersistentTab] = useState<PersistentTab>("summary");
   const [timelineFilter, setTimelineFilter] = useState<TimelineFilter>("all");
@@ -367,6 +372,7 @@ export default function AgentStudioPage() {
   const selectedAgentInfo = useMemo(() => {
     return agents.find((item) => item.id === selectedAgentId) || null;
   }, [agents, selectedAgentId]);
+  const selectedAgentArchived = Boolean(selectedAgentInfo?.archived);
 
   const attachedToolIds = useMemo(() => {
     const ids = new Set<string>();
@@ -450,8 +456,21 @@ export default function AgentStudioPage() {
     setChatHistory(hydrated);
   };
 
-  const refreshAgentList = async () => {
-    const payload = await listAgents(200, false);
+  const resetSelectedAgentState = () => {
+    setAgentDetails(null);
+    setPersistentState(null);
+    setChatHistory([]);
+    setLastResult(null);
+    setLastLatencyMs(null);
+    setRawPromptMessages([]);
+    setToolCatalog([]);
+    setToolProbeResult(null);
+    setRevisionHistory([]);
+    setModelEditValue("");
+  };
+
+  const refreshAgentList = async (includeArchived = includeArchivedAgents) => {
+    const payload = await listAgents(200, false, includeArchived);
     const mapped = payload.items.map((item) => ({
       id: item.id,
       name: item.name || item.id,
@@ -459,11 +478,21 @@ export default function AgentStudioPage() {
       created_at: item.created_at || "",
       last_updated_at: item.last_updated_at || "",
       last_interaction_at: item.last_interaction_at || "",
+      archived: Boolean(item.archived),
     }));
     setAgents(mapped);
 
+    const hasSelected = mapped.some((item) => item.id === selectedAgentId);
     if (!selectedAgentId && mapped.length > 0) {
       setSelectedAgentId(mapped[0].id);
+      return;
+    }
+    if (!hasSelected) {
+      const nextAgentId = mapped[0]?.id || "";
+      setSelectedAgentId(nextAgentId);
+      if (!nextAgentId) {
+        resetSelectedAgentState();
+      }
     }
   };
 
@@ -538,7 +567,7 @@ export default function AgentStudioPage() {
       setLoading(true);
       setError("");
       try {
-        const [optionsPayload, agentsPayload] = await Promise.all([fetchOptions(), listAgents(200, false)]);
+        const [optionsPayload, agentsPayload] = await Promise.all([fetchOptions(), listAgents(200, false, false)]);
         if (cancelled) {
           return;
         }
@@ -577,6 +606,7 @@ export default function AgentStudioPage() {
           created_at: item.created_at || "",
           last_updated_at: item.last_updated_at || "",
           last_interaction_at: item.last_interaction_at || "",
+          archived: Boolean(item.archived),
         }));
         setAgents(mapped);
         if (mapped.length > 0) {
@@ -610,7 +640,12 @@ export default function AgentStudioPage() {
   }, [locale]);
 
   useEffect(() => {
+    void refreshAgentList(includeArchivedAgents);
+  }, [includeArchivedAgents]);
+
+  useEffect(() => {
     if (!selectedAgentId) {
+      resetSelectedAgentState();
       return;
     }
     let cancelled = false;
@@ -703,7 +738,7 @@ export default function AgentStudioPage() {
         embedding: createEmbedding.trim() || null,
       });
 
-      await refreshAgentList();
+      await refreshAgentList(includeArchivedAgents);
       setSelectedAgentId(created.id);
       setChatHistory([]);
       setLastResult(null);
@@ -716,9 +751,83 @@ export default function AgentStudioPage() {
     }
   };
 
+  const onArchiveAgent = async () => {
+    if (!selectedAgentId || selectedAgentArchived) {
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setStatus("");
+    try {
+      await archiveAgent(selectedAgentId);
+      await refreshAgentList(includeArchivedAgents);
+      setStatus(t("Agent archived. Use Restore to make it active again.", "智能体已归档。可使用 Restore 恢复为活跃状态。"));
+    } catch (exc) {
+      setError(toErrorMessage(exc));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onRestoreAgent = async () => {
+    if (!selectedAgentId || !selectedAgentArchived) {
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setStatus("");
+    try {
+      await restoreAgent(selectedAgentId);
+      await refreshAgentList(includeArchivedAgents);
+      setStatus(t("Agent restored and active again.", "智能体已恢复并重新激活。"));
+    } catch (exc) {
+      setError(toErrorMessage(exc));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onPurgeAgent = async () => {
+    if (!selectedAgentId || !selectedAgentArchived) {
+      return;
+    }
+
+    const confirmed = window.confirm(
+      t(
+        "This will permanently delete the archived agent and cannot be undone. Continue?",
+        "这将永久删除已归档智能体且不可恢复。是否继续？",
+      ),
+    );
+    if (!confirmed) {
+      return;
+    }
+
+    const targetAgentId = selectedAgentId;
+    setBusy(true);
+    setError("");
+    setStatus("");
+    try {
+      await purgeAgent(targetAgentId);
+      setSelectedAgentId("");
+      resetSelectedAgentState();
+      await refreshAgentList(includeArchivedAgents);
+      setStatus(t("Archived agent permanently deleted.", "已永久删除归档智能体。"));
+    } catch (exc) {
+      setError(toErrorMessage(exc));
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const onSendMessage = async () => {
     if (!selectedAgentId) {
       setError(t("Select an agent first.", "请先选择智能体。"));
+      return;
+    }
+    if (selectedAgentArchived) {
+      setError(t("Archived agents cannot run chat. Restore first.", "归档智能体不可对话，请先恢复。"));
       return;
     }
     const text = chatInput.trim();
@@ -797,12 +906,16 @@ export default function AgentStudioPage() {
     if (!selectedAgentId || !modelEditValue.trim()) {
       return;
     }
+    if (selectedAgentArchived) {
+      setError(t("Archived agents cannot be mutated. Restore first.", "归档智能体不可修改，请先恢复。"));
+      return;
+    }
     setModelBusy(true);
     setError("");
     try {
       await updateAgentModel(selectedAgentId, modelEditValue.trim());
       await refreshSelectedAgent(selectedAgentId, false);
-      await refreshAgentList();
+      await refreshAgentList(includeArchivedAgents);
       setStatus(t("Agent model updated.", "智能体模型已更新。"));
     } catch (exc) {
       setError(toErrorMessage(exc));
@@ -813,6 +926,10 @@ export default function AgentStudioPage() {
 
   const onSaveEditor = async () => {
     if (!selectedAgentId || !editorKind) {
+      return;
+    }
+    if (selectedAgentArchived) {
+      setError(t("Archived agents cannot be mutated. Restore first.", "归档智能体不可修改，请先恢复。"));
       return;
     }
     const value = editorValue.trim();
@@ -856,6 +973,10 @@ export default function AgentStudioPage() {
     if (!selectedAgentId) {
       return;
     }
+    if (selectedAgentArchived) {
+      setError(t("Archived agents cannot change tools. Restore first.", "归档智能体不可变更工具，请先恢复。"));
+      return;
+    }
     setToolBusyId(tool.id);
     setError("");
     try {
@@ -887,6 +1008,10 @@ export default function AgentStudioPage() {
   const onRunToolProbe = async () => {
     if (!selectedAgentId) {
       setError(t("Select an agent first.", "请先选择智能体。"));
+      return;
+    }
+    if (selectedAgentArchived) {
+      setError(t("Archived agents cannot run tool probe. Restore first.", "归档智能体不可运行工具探测，请先恢复。"));
       return;
     }
 
@@ -1015,11 +1140,22 @@ export default function AgentStudioPage() {
 
           <label className="field">
             <span>{t("Existing agents", "已有智能体")}</span>
+            <label className="field" style={{ marginTop: 6 }}>
+              <span>
+                <input
+                  type="checkbox"
+                  checked={includeArchivedAgents}
+                  onChange={(event) => setIncludeArchivedAgents(event.target.checked)}
+                  style={{ marginRight: 8 }}
+                />
+                {t("Include archived agents", "显示已归档智能体")}
+              </span>
+            </label>
             <select className="input" value={selectedAgentId} onChange={(e) => setSelectedAgentId(e.target.value)}>
               <option value="">{t("Select agent", "选择智能体")}</option>
               {agents.map((item) => (
                 <option key={item.id} value={item.id}>
-                  {item.name} ({item.model})
+                  {item.name} ({item.model}){item.archived ? t(" [Archived]", " [已归档]") : ""}
                 </option>
               ))}
             </select>
@@ -1028,6 +1164,8 @@ export default function AgentStudioPage() {
           {selectedAgentInfo ? (
             <div className="code" style={{ marginTop: 8 }}>
               {t("ID", "ID")}: {shortId(selectedAgentInfo.id)}
+              {"\n"}
+              {t("Status", "状态")}: {selectedAgentInfo.archived ? t("Archived", "已归档") : t("Active", "活跃")}
               {"\n"}
               {t("Created", "创建时间")}: {formatTimestamp(selectedAgentInfo.created_at, locale)}
               {"\n"}
@@ -1044,8 +1182,33 @@ export default function AgentStudioPage() {
             </button>
           </div>
 
+          <div className="toolbar" style={{ marginTop: 8 }}>
+            <button
+              className="button muted"
+              onClick={() => void onArchiveAgent()}
+              disabled={!selectedAgentId || busy || selectedAgentArchived}
+            >
+              {t("Archive Agent", "归档智能体")}
+            </button>
+            <button
+              className="button muted"
+              onClick={() => void onRestoreAgent()}
+              disabled={!selectedAgentId || busy || !selectedAgentArchived}
+            >
+              {t("Restore Agent", "恢复智能体")}
+            </button>
+            <button
+              className="button danger"
+              onClick={() => void onPurgeAgent()}
+              disabled={!selectedAgentId || busy || !selectedAgentArchived}
+            >
+              {t("Purge Agent", "彻底删除")}
+            </button>
+          </div>
+
           <p className="muted" style={{ marginTop: 10 }}>
-            {t("Active", "当前")}: {selectedAgentName || t("none", "无")}
+            {t("Selected", "当前")}: {selectedAgentName || t("none", "无")}
+            {selectedAgentArchived ? t(" (archived)", "（已归档）") : ""}
           </p>
           <p className="muted">{t("Conversation rows", "对话条数")}: {historyCount}</p>
 
@@ -1075,7 +1238,7 @@ export default function AgentStudioPage() {
                         </option>
                       ))}
                     </select>
-                    <button className="button" onClick={() => void onApplyModel()} disabled={modelBusy || !selectedAgentId || !modelEditValue}>
+                    <button className="button" onClick={() => void onApplyModel()} disabled={modelBusy || !selectedAgentId || !modelEditValue || selectedAgentArchived}>
                       {modelBusy ? t("Applying...", "应用中...") : t("Apply Model", "应用模型")}
                     </button>
                   </div>
@@ -1095,13 +1258,13 @@ export default function AgentStudioPage() {
               {inspectorTab === "prompt" ? (
                 <div className="studio-stack">
                   <div className="toolbar prompt-action-row">
-                    <button className="prompt-action-button" onClick={() => openEditor("system", agentDetails.system || "")}>{t("Edit System Prompt", "编辑 System Prompt")}</button>
-                    <button className="prompt-action-button" onClick={() => openEditor("persona", personaValue)}>{t("Edit Persona", "编辑 Persona")}</button>
-                    <button className="prompt-action-button" onClick={() => openEditor("human", humanValue)}>{t("Edit Human", "编辑 Human")}</button>
+                    <button className="prompt-action-button" disabled={selectedAgentArchived} onClick={() => openEditor("system", agentDetails.system || "")}>{t("Edit System Prompt", "编辑 System Prompt")}</button>
+                    <button className="prompt-action-button" disabled={selectedAgentArchived} onClick={() => openEditor("persona", personaValue)}>{t("Edit Persona", "编辑 Persona")}</button>
+                    <button className="prompt-action-button" disabled={selectedAgentArchived} onClick={() => openEditor("human", humanValue)}>{t("Edit Human", "编辑 Human")}</button>
                     <button
                       className="prompt-action-button"
                       onClick={() => void refreshRevisionHistory(selectedAgentId)}
-                      disabled={!selectedAgentId || revisionLoading}
+                      disabled={!selectedAgentId || revisionLoading || selectedAgentArchived}
                     >
                       {revisionLoading ? t("Refreshing...", "刷新中...") : t("Refresh Timeline", "刷新时间线")}
                     </button>
@@ -1178,7 +1341,7 @@ export default function AgentStudioPage() {
                               <button
                                 className={`button tool-action-button ${isAttached ? "danger" : "success"}`}
                                 onClick={() => void onToggleTool(tool)}
-                                disabled={toolBusyId === tool.id || !selectedAgentId}
+                                disabled={toolBusyId === tool.id || !selectedAgentId || selectedAgentArchived}
                               >
                                 {toolBusyId === tool.id
                                   ? t("Working...", "处理中...")
@@ -1233,7 +1396,7 @@ export default function AgentStudioPage() {
                       <button
                         className="button"
                         onClick={() => void onRunToolProbe()}
-                        disabled={!selectedAgentId || toolProbeBusy}
+                        disabled={!selectedAgentId || toolProbeBusy || selectedAgentArchived}
                       >
                         {toolProbeBusy ? t("Running...", "运行中...") : t("Run Tool Probe", "运行工具探测")}
                       </button>
@@ -1292,7 +1455,7 @@ export default function AgentStudioPage() {
                 }
               }}
             />
-            <button className="button" onClick={() => void onSendMessage()} disabled={chatBusy || !selectedAgentId}>
+            <button className="button" onClick={() => void onSendMessage()} disabled={chatBusy || !selectedAgentId || selectedAgentArchived}>
               {chatBusy ? t("Sending...", "发送中...") : t("Send", "发送")}
             </button>
           </div>
@@ -1437,10 +1600,10 @@ export default function AgentStudioPage() {
                   <div className="toolbar" style={{ justifyContent: "space-between" }}>
                     <strong>{block.label}</strong>
                     {block.label === "persona" ? (
-                      <button className="button muted" onClick={() => openEditor("persona", block.value)}>{t("Edit", "编辑")}</button>
+                      <button className="button muted" disabled={selectedAgentArchived} onClick={() => openEditor("persona", block.value)}>{t("Edit", "编辑")}</button>
                     ) : null}
                     {block.label === "human" ? (
-                      <button className="button muted" onClick={() => openEditor("human", block.value)}>{t("Edit", "编辑")}</button>
+                      <button className="button muted" disabled={selectedAgentArchived} onClick={() => openEditor("human", block.value)}>{t("Edit", "编辑")}</button>
                     ) : null}
                   </div>
                   {block.description ? <p className="muted" style={{ marginTop: 8 }}>{block.description}</p> : null}

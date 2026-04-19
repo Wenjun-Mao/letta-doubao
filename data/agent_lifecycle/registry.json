@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "agents": {
+    "agent-86807eb4-4461-4612-b5b8-d940c108937c": {
+      "name": "test-verification-agent",
+      "model": "lmstudio_openai/gemma-4-31b-it",
+      "archived": true,
+      "archived_at": "2026-04-19T02:41:18.277455+00:00",
+      "updated_at": "2026-04-19T02:41:18.277455+00:00"
+    }
+  }
+}

@@ -30,6 +30,16 @@ export type AgentListItem = {
   created_at: string;
   last_updated_at: string;
   last_interaction_at: string;
+  archived: boolean;
+};
+
+export type AgentLifecycleRecord = {
+  id: string;
+  name: string;
+  model: string;
+  archived: boolean;
+  archived_at?: string | null;
+  updated_at: string;
 };
 
 export type AgentDetails = {
@@ -318,11 +328,14 @@ export function fetchOptions() {
   }>("/api/v1/options", { cacheTtlMs: 60_000 });
 }
 
-export function listAgents(limit = 200, includeLastInteraction = false) {
+export function listAgents(limit = 200, includeLastInteraction = false, includeArchived = false) {
   const params = new URLSearchParams();
   params.set("limit", `${limit}`);
   if (includeLastInteraction) {
     params.set("include_last_interaction", "true");
+  }
+  if (includeArchived) {
+    params.set("include_archived", "true");
   }
 
   return requestJson<{
@@ -351,6 +364,33 @@ export function createAgent(payload: {
   }).then((created) => {
     invalidateApiCache(["/api/v1/agents", "/api/v1/platform/tools", "/api/v1/options"]);
     return created;
+  });
+}
+
+export function archiveAgent(agentId: string) {
+  return requestJson<AgentLifecycleRecord>(`/api/v1/platform/agents/${agentId}/archive`, {
+    method: "POST",
+  }).then((record) => {
+    invalidateAgentScope(agentId);
+    return record;
+  });
+}
+
+export function restoreAgent(agentId: string) {
+  return requestJson<AgentLifecycleRecord>(`/api/v1/platform/agents/${agentId}/restore`, {
+    method: "POST",
+  }).then((record) => {
+    invalidateAgentScope(agentId);
+    return record;
+  });
+}
+
+export function purgeAgent(agentId: string) {
+  return requestJson<{ ok: boolean; id: string; kind: string }>(`/api/v1/platform/agents/${agentId}/purge`, {
+    method: "DELETE",
+  }).then((record) => {
+    invalidateAgentScope(agentId);
+    return record;
   });
 }
 

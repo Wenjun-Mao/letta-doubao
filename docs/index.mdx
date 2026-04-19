@@ -6,12 +6,62 @@ title: Agent Platform API
 
 This documentation tracks the local Agent Platform API used by the ADE migration.
 
+## Environment assumptions
+
+- Local development defaults:
+	- Dev UI API: `http://127.0.0.1:8284`
+	- Letta server API: `http://127.0.0.1:8283`
+- API switch:
+	- Set `AGENT_PLATFORM_API_ENABLED=1` to enable routes.
+	- Set `AGENT_PLATFORM_API_ENABLED=0` to hard-disable platform routes (returns 503).
+- The current local stack is intended for trusted internal development use. Add auth and authz before exposing beyond local or private-network contexts.
+
 ## What this includes
 
 - Runtime endpoints for agent interaction.
 - Control endpoints for prompt, model, memory block, and tool mutations.
+- Two-step safe agent deletion lifecycle (archive -> restore -> purge).
 - Test orchestration endpoints for checks and runners.
 - Migration status endpoints for dual-run rollout visibility.
+
+## Agent lifecycle (safe delete)
+
+The recommended deletion path is intentionally two-step:
+
+1. Archive agent (soft delete, hidden from default list)
+2. Optional restore if deletion was accidental
+3. Purge archived agent (hard delete)
+
+Key endpoints:
+
+- `POST /api/v1/platform/agents/{agent_id}/archive`
+- `POST /api/v1/platform/agents/{agent_id}/restore`
+- `DELETE /api/v1/platform/agents/{agent_id}/purge`
+- `DELETE /api/v1/agents/{agent_id}` (alias for purging archived agents)
+- `GET /api/v1/agents?include_archived=true`
+
+Behavior notes:
+
+- Archived agents are excluded from `GET /api/v1/agents` by default.
+- Runtime and control mutations against archived agents return `409` until restored.
+- Purge requires archived state and returns `400` for non-archived agents.
+
+## Error handling shape
+
+FastAPI returns JSON error payloads in the form:
+
+```json
+{
+	"detail": "error message"
+}
+```
+
+Common status patterns:
+
+- `400`: invalid request, invalid state transition, validation failures
+- `404`: missing resource
+- `409`: mutation attempted on archived agent
+- `503`: platform API disabled by env flag
 
 ## Source of truth
 
