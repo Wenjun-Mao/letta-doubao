@@ -32,6 +32,7 @@ This document tracks implementation progress for the stateless commenting capabi
 - [x] Add timeout and provider metadata controls.
 - [x] Normalize OpenAI-compatible response content payloads.
 - [x] Confirm provider endpoint wiring in all target environments.
+- [x] Add reasoning-compatible fallback path when provider returns empty assistant `content`.
 - [ ] Add explicit tests covering model-handle prefix normalization.
 
 ### Configuration and Runtime
@@ -52,7 +53,7 @@ This document tracks implementation progress for the stateless commenting capabi
 
 ### Verification
 
-- [ ] Run backend check with LM Studio reachable.
+- [x] Run backend check with LM Studio reachable.
 - [x] Run `npm --prefix frontend-ade run build` after UI changes.
 - [ ] Add/extend E2E checks for successful comment generation.
 
@@ -60,9 +61,16 @@ This document tracks implementation progress for the stateless commenting capabi
 
 - Should we keep optional support for LM Studio native REST endpoints in the future as a feature flag, while keeping OpenAI-compatible as default?
 - Do we want comment generation history persisted in ADE, or stay fully transient?
+- Should we add async job mode or frontend progress UX for long-running local reasoning generations (60-230s observed on `qwen3.5-27b`)?
+
+## Current Risks
+
+- With local reasoning-enabled `qwen3.5-27b`, generation latency can be high and variable.
+- During container restarts or heavy local load, occasional transient connection resets can occur; retrying the same request typically succeeds.
 
 ## Change Log
 
 - 2026-04-19: Tracker initialized and aligned with current implementation status.
 - 2026-04-19: Added Comment Lab route, navigation wiring, and commenting provider env defaults. Frontend build passed; backend runtime verification is pending LM Studio response behavior with selected Qwen preset.
 - 2026-04-19: Closed the original connection-refused gap by wiring commenting env vars into `dev_ui` container runtime; current blocker is model output behavior/timeouts (reasoning-only responses) rather than endpoint reachability.
+- 2026-04-19: Implemented reasoning-compatible generation hardening in `CommentingService` (multi-attempt payload strategy, publishable-output checks, and fallback extraction), and validated `/api/v1/commenting/generate` success against `qwen3.5-27b` with reasoning enabled.

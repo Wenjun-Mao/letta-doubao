@@ -16,6 +16,7 @@ type RequestOptions = {
 };
 
 export type Scenario = "chat" | "comment";
+export type CommentingTaskShape = "auto" | "agent_studio" | "compact";
 
 export type OptionEntry = {
   key: string;
@@ -130,6 +131,16 @@ export type CommentingGenerateResponse = {
   model: string;
   content: string;
   provider: string;
+  max_tokens: number;
+  timeout_seconds: number;
+  task_shape: CommentingTaskShape;
+  content_source?: string | null;
+  selected_attempt: string;
+  finish_reason?: string | null;
+  usage: Record<string, unknown>;
+  received_at?: string | null;
+  raw_request: Record<string, unknown>;
+  raw_reply: Record<string, unknown>;
 };
 
 export type PlatformTool = {
@@ -342,6 +353,11 @@ export function fetchOptions(scenario: Scenario = "chat") {
       persona_key: string;
       embedding: string;
     };
+    commenting?: {
+      max_tokens: number;
+      timeout_seconds: number;
+      task_shape: CommentingTaskShape;
+    };
   }>(`/api/v1/options?${params.toString()}`, { cacheTtlMs: 60_000 });
 }
 
@@ -445,6 +461,9 @@ export function generateComment(payload: {
   prompt_key: string;
   persona_key: string;
   model?: string;
+  max_tokens?: number;
+  timeout_seconds?: number;
+  task_shape?: CommentingTaskShape;
 }) {
   return requestJson<CommentingGenerateResponse>("/api/v1/commenting/generate", {
     method: "POST",
@@ -454,6 +473,9 @@ export function generateComment(payload: {
       prompt_key: payload.prompt_key,
       persona_key: payload.persona_key,
       model: payload.model?.trim() || undefined,
+      max_tokens: payload.max_tokens,
+      timeout_seconds: payload.timeout_seconds,
+      task_shape: payload.task_shape,
     },
   });
 }

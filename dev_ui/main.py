@@ -28,6 +28,7 @@ from prompts.persona import HUMAN_TEMPLATE
 
 APP_VERSION = os.getenv("AGENT_PLATFORM_API_VERSION", "0.2.0")
 ScenarioType = Literal["chat", "comment"]
+CommentingTaskShape = Literal["auto", "agent_studio", "compact"]
 
 
 @asynccontextmanager
@@ -129,6 +130,12 @@ class ApiOptionsDefaultsResponse(BaseModel):
     embedding: str
 
 
+class ApiCommentingRuntimeDefaultsResponse(BaseModel):
+    max_tokens: int
+    timeout_seconds: float
+    task_shape: CommentingTaskShape
+
+
 class ApiOptionsResponse(BaseModel):
     scenario: ScenarioType
     models: list[ApiOptionEntryResponse]
@@ -136,6 +143,7 @@ class ApiOptionsResponse(BaseModel):
     prompts: list[ApiOptionEntryResponse]
     personas: list[ApiOptionEntryResponse]
     defaults: ApiOptionsDefaultsResponse
+    commenting: ApiCommentingRuntimeDefaultsResponse | None = None
 
 
 class ApiAgentListItemResponse(BaseModel):
@@ -565,6 +573,9 @@ class CommentingGenerateRequest(BaseModel):
     prompt_key: str = "comment_v20260418"
     persona_key: str = "comment_linxiaotang"
     model: str | None = None
+    max_tokens: int | None = Field(default=None, ge=0)
+    timeout_seconds: float | None = Field(default=None, gt=0)
+    task_shape: CommentingTaskShape | None = None
 
 
 class ApiCommentingGenerateResponse(BaseModel):
@@ -574,6 +585,16 @@ class ApiCommentingGenerateResponse(BaseModel):
     model: str
     content: str
     provider: str
+    max_tokens: int
+    timeout_seconds: float
+    task_shape: CommentingTaskShape
+    content_source: str | None = None
+    selected_attempt: str
+    finish_reason: str | None = None
+    usage: dict[str, Any] = Field(default_factory=dict)
+    received_at: str | None = None
+    raw_request: dict[str, Any] = Field(default_factory=dict)
+    raw_reply: dict[str, Any] = Field(default_factory=dict)
 
 
 PREFERRED_MODEL_OPTIONS = [
@@ -861,6 +882,19 @@ def _runtime_options(force_refresh: bool = False) -> tuple[list[dict[str, Any]],
 
 def _invalidate_options_cache() -> None:
     _OPTIONS_CACHE["expires_at"] = 0.0
+
+
+def _commenting_runtime_defaults() -> ApiCommentingRuntimeDefaultsResponse:
+    defaults = commenting_service.runtime_defaults()
+    task_shape = str(defaults.get("task_shape", "auto") or "auto").strip().lower()
+    if task_shape not in {"auto", "agent_studio", "compact"}:
+        task_shape = "auto"
+
+    return ApiCommentingRuntimeDefaultsResponse(
+        max_tokens=int(defaults.get("max_tokens", 1536)),
+        timeout_seconds=float(defaults.get("timeout_seconds", 60.0)),
+        task_shape=task_shape,
+    )
 
 
 def _normalize_scenario(value: str | None, *, default: ScenarioType = "chat") -> ScenarioType:
@@ -1290,6 +1324,7 @@ async def api_get_options(refresh: bool = False, scenario: str = "chat"):
             "persona_key": default_persona_key,
             "embedding": default_embedding,
         },
+        "commenting": _commenting_runtime_defaults(),
     }
 
 
@@ -2836,13 +2871,31 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
     )
 
     try:
-        content = commenting_service.generate_comment(
+        generation_result = commenting_service.generate_comment(
             model=model_handle,
             system_prompt=prompt_map[request.prompt_key],
             user_input=user_payload,
+            max_tokens=request.max_tokens,
+            timeout_seconds=request.timeout_seconds,
+            task_shape=request.task_shape,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    content = str(generation_result.get("content", "") or "").strip()
+    if not content:
+        raise HTTPException(status_code=400, detail="Comment provider returned empty content")
+    runtime_defaults = _commenting_runtime_defaults()
+    raw_reply = generation_result.get("raw_reply", {})
+    if not isinstance(raw_reply, dict):
+        raw_reply = {}
+    usage = generation_result.get("usage", {})
+    if not isinstance(usage, dict):
+        usage = {}
+    raw_request = generation_result.get("raw_request", {})
+    if not isinstance(raw_request, dict):
+        raw_request = {}
+    selected_attempt = str(generation_result.get("selected_attempt", "") or "").strip() or "unknown"
 
     return {
         "scenario": "comment",
@@ -2851,6 +2904,16 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
         "model": model_handle,
         "content": content,
         "provider": commenting_service.provider_name,
+        "max_tokens": int(generation_result.get("max_tokens", runtime_defaults.max_tokens)),
+        "timeout_seconds": float(generation_result.get("timeout_seconds", runtime_defaults.timeout_seconds)),
+        "task_shape": str(generation_result.get("task_shape", runtime_defaults.task_shape)),
+        "content_source": str(generation_result.get("content_source", "") or "") or None,
+        "selected_attempt": selected_attempt,
+        "finish_reason": str(generation_result.get("finish_reason", "") or "") or None,
+        "usage": usage,
+        "received_at": str(generation_result.get("received_at", "") or "") or None,
+        "raw_request": raw_request,
+        "raw_reply": raw_reply,
     }
 
 @app.post("/api/v1/chat", response_model=ApiChatResponse)

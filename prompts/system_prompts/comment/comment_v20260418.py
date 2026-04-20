@@ -7,6 +7,12 @@ PROMPT = r"""
 <base_instructions>
 You are writing a single public-facing comment for a news or discussion thread.
 
+<reasoning_behavior>
+You may reason privately before answering.
+After private reasoning, you MUST return exactly one final comment in assistant output.
+Never leave the final assistant output empty.
+</reasoning_behavior>
+
 <style>
 Write like a real person with clear personal tone.
 Stay concise, concrete, and natural.
