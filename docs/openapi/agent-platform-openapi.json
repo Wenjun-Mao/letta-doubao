@@ -367,6 +367,32 @@
             "title": "Content",
             "type": "string"
           },
+          "content_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content Source"
+          },
+          "finish_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finish Reason"
+          },
+          "max_tokens": {
+            "title": "Max Tokens",
+            "type": "integer"
+          },
           "model": {
             "title": "Model",
             "type": "string"
@@ -383,6 +409,27 @@
             "title": "Provider",
             "type": "string"
           },
+          "raw_reply": {
+            "additionalProperties": true,
+            "title": "Raw Reply",
+            "type": "object"
+          },
+          "raw_request": {
+            "additionalProperties": true,
+            "title": "Raw Request",
+            "type": "object"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
           "scenario": {
             "enum": [
               "chat",
@@ -390,6 +437,28 @@
             ],
             "title": "Scenario",
             "type": "string"
+          },
+          "selected_attempt": {
+            "title": "Selected Attempt",
+            "type": "string"
+          },
+          "task_shape": {
+            "enum": [
+              "auto",
+              "agent_studio",
+              "compact"
+            ],
+            "title": "Task Shape",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "title": "Timeout Seconds",
+            "type": "number"
+          },
+          "usage": {
+            "additionalProperties": true,
+            "title": "Usage",
+            "type": "object"
           }
         },
         "required": [
@@ -398,9 +467,41 @@
           "persona_key",
           "model",
           "content",
-          "provider"
+          "provider",
+          "max_tokens",
+          "timeout_seconds",
+          "task_shape",
+          "selected_attempt"
         ],
         "title": "ApiCommentingGenerateResponse",
+        "type": "object"
+      },
+      "ApiCommentingRuntimeDefaultsResponse": {
+        "properties": {
+          "max_tokens": {
+            "title": "Max Tokens",
+            "type": "integer"
+          },
+          "task_shape": {
+            "enum": [
+              "auto",
+              "agent_studio",
+              "compact"
+            ],
+            "title": "Task Shape",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "title": "Timeout Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "max_tokens",
+          "timeout_seconds",
+          "task_shape"
+        ],
+        "title": "ApiCommentingRuntimeDefaultsResponse",
         "type": "object"
       },
       "ApiConversationHistoryItemResponse": {
@@ -673,6 +774,16 @@
       },
       "ApiOptionsResponse": {
         "properties": {
+          "commenting": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiCommentingRuntimeDefaultsResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "defaults": {
             "$ref": "#/components/schemas/ApiOptionsDefaultsResponse"
           },
@@ -2075,6 +2186,18 @@
             "title": "Input",
             "type": "string"
           },
+          "max_tokens": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Tokens"
+          },
           "model": {
             "anyOf": [
               {
@@ -2104,6 +2227,34 @@
             ],
             "title": "Scenario",
             "type": "string"
+          },
+          "task_shape": {
+            "anyOf": [
+              {
+                "enum": [
+                  "auto",
+                  "agent_studio",
+                  "compact"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Task Shape"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeout Seconds"
           }
         },
         "required": [
