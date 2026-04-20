@@ -16,7 +16,7 @@ type RequestOptions = {
 };
 
 export type Scenario = "chat" | "comment";
-export type CommentingTaskShape = "auto" | "agent_studio" | "compact";
+export type CommentingTaskShape = "compact" | "all_in_system" | "structured_output";
 
 export type OptionEntry = {
   key: string;

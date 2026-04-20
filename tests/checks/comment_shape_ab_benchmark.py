@@ -52,7 +52,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-tokens", default="0,256,512,1024")
     parser.add_argument("--timeout-seconds", type=float, default=180.0)
     parser.add_argument("--client-timeout-seconds", type=float, default=240.0)
-    parser.add_argument("--shapes", default="compact,agent_studio")
+    parser.add_argument("--shapes", default="compact,all_in_system,structured_output")
     parser.add_argument("--output-dir", default="tests/outputs")
     return parser.parse_args()
 
@@ -265,6 +265,7 @@ def benchmark(args: argparse.Namespace) -> tuple[list[RunRecord], list[dict[str,
         strict_shape_rows = [row for row in shape_rows if row.strict_success]
         selected_mismatch = [row for row in shape_rows if row.status_code == 200 and row.selected_attempt and row.selected_attempt != shape]
         extraction_rows = [row for row in shape_rows if row.content_source == "reasoning_tail_extraction"]
+        structured_reasoning_rows = [row for row in shape_rows if row.content_source == "structured_json_reasoning_content"]
         finish_stop_rows = [row for row in shape_http_200_rows if row.finish_reason == "stop"]
         shape_reasoning_ratios = [
             reasoning_ratio_pct(row.usage_reasoning_tokens, row.usage_completion_tokens)
@@ -286,6 +287,7 @@ def benchmark(args: argparse.Namespace) -> tuple[list[RunRecord], list[dict[str,
                     sum(1 for row in strict_shape_rows if row.quality_pass) / max(1, len(strict_shape_rows))
                 ),
                 "reasoning_tail_extraction_rate_pct": pct(len(extraction_rows) / len(shape_rows)) if shape_rows else 0.0,
+                "structured_json_reasoning_content_rate_pct": pct(len(structured_reasoning_rows) / len(shape_rows)) if shape_rows else 0.0,
                 "finish_reason_stop_rate_pct": pct(len(finish_stop_rows) / len(shape_http_200_rows)) if shape_http_200_rows else 0.0,
                 "avg_usage_total_tokens_http_200": mean_optional([row.usage_total_tokens for row in shape_http_200_rows]),
                 "avg_usage_reasoning_tokens_http_200": mean_optional([row.usage_reasoning_tokens for row in shape_http_200_rows]),
@@ -299,6 +301,7 @@ def benchmark(args: argparse.Namespace) -> tuple[list[RunRecord], list[dict[str,
             strict_rows = [row for row in rows if row.strict_success]
             selected_mismatch_cell = [row for row in rows if row.status_code == 200 and row.selected_attempt and row.selected_attempt != shape]
             extraction_cell = [row for row in rows if row.content_source == "reasoning_tail_extraction"]
+            structured_reasoning_cell = [row for row in rows if row.content_source == "structured_json_reasoning_content"]
             finish_stop_cell = [row for row in http_200_rows if row.finish_reason == "stop"]
             reasoning_ratios_cell = [
                 reasoning_ratio_pct(row.usage_reasoning_tokens, row.usage_completion_tokens)
@@ -321,6 +324,7 @@ def benchmark(args: argparse.Namespace) -> tuple[list[RunRecord], list[dict[str,
                         sum(1 for row in strict_rows if row.quality_pass) / max(1, len(strict_rows))
                     ),
                     "reasoning_tail_extraction_rate_pct": pct(len(extraction_cell) / len(rows)) if rows else 0.0,
+                    "structured_json_reasoning_content_rate_pct": pct(len(structured_reasoning_cell) / len(rows)) if rows else 0.0,
                     "finish_reason_stop_rate_pct": pct(len(finish_stop_cell) / len(http_200_rows)) if http_200_rows else 0.0,
                     "avg_usage_total_tokens_http_200": mean_optional([row.usage_total_tokens for row in http_200_rows]),
                     "avg_usage_reasoning_tokens_http_200": mean_optional([row.usage_reasoning_tokens for row in http_200_rows]),
@@ -377,6 +381,7 @@ def main() -> int:
         "fallback_rate_pct",
         "quality_pass_rate_on_strict_success_pct",
         "reasoning_tail_extraction_rate_pct",
+        "structured_json_reasoning_content_rate_pct",
         "finish_reason_stop_rate_pct",
         "avg_usage_total_tokens_http_200",
         "avg_usage_reasoning_tokens_http_200",
@@ -392,6 +397,7 @@ def main() -> int:
         "fallback_rate_pct",
         "quality_pass_rate_on_strict_success_pct",
         "reasoning_tail_extraction_rate_pct",
+        "structured_json_reasoning_content_rate_pct",
         "finish_reason_stop_rate_pct",
         "avg_usage_total_tokens_http_200",
         "avg_usage_reasoning_tokens_http_200",

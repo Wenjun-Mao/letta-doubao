@@ -444,9 +444,9 @@
           },
           "task_shape": {
             "enum": [
-              "auto",
-              "agent_studio",
-              "compact"
+              "compact",
+              "all_in_system",
+              "structured_output"
             ],
             "title": "Task Shape",
             "type": "string"
@@ -484,9 +484,9 @@
           },
           "task_shape": {
             "enum": [
-              "auto",
-              "agent_studio",
-              "compact"
+              "compact",
+              "all_in_system",
+              "structured_output"
             ],
             "title": "Task Shape",
             "type": "string"
@@ -2232,9 +2232,9 @@
             "anyOf": [
               {
                 "enum": [
-                  "auto",
-                  "agent_studio",
-                  "compact"
+                  "compact",
+                  "all_in_system",
+                  "structured_output"
                 ],
                 "type": "string"
               },

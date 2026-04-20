@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 import re
 from datetime import datetime, timezone
@@ -39,7 +40,11 @@ class CommentingService:
         "openai/",
         "anthropic/",
     )
-    _TASK_SHAPES = {"auto", "agent_studio", "compact"}
+    _TASK_SHAPES = {"compact", "all_in_system", "structured_output"}
+    _TASK_SHAPE_ALIASES = {
+        "auto": "compact",
+        "agent_studio": "all_in_system",
+    }
 
     def __init__(
         self,
@@ -57,7 +62,7 @@ class CommentingService:
             else os.getenv("AGENT_PLATFORM_COMMENTING_TIMEOUT_SECONDS", "60")
         )
         self.max_tokens = int(os.getenv("AGENT_PLATFORM_COMMENTING_MAX_TOKENS", "0"))
-        self.task_shape_default = self._resolve_task_shape(os.getenv("AGENT_PLATFORM_COMMENTING_TASK_SHAPE", "auto"))
+        self.task_shape_default = self._resolve_task_shape(os.getenv("AGENT_PLATFORM_COMMENTING_TASK_SHAPE", "compact"))
         self.provider_name = (
             provider_name
             or os.getenv("AGENT_PLATFORM_COMMENTING_PROVIDER")
@@ -80,7 +85,7 @@ class CommentingService:
         resolved = str(value or "").strip().lower()
         if resolved in cls._TASK_SHAPES:
             return resolved
-        return "auto"
+        return cls._TASK_SHAPE_ALIASES.get(resolved, "compact")
 
     def runtime_defaults(self) -> dict[str, Any]:
         return {
@@ -266,39 +271,91 @@ class CommentingService:
         return text
 
     @staticmethod
-    def _build_chat_shaped_user_payload(*, system_prompt: str, user_input: str) -> str:
-        """Build a chat-style task framing that better mirrors Agent Studio behavior.
-
-        This keeps reasoning enabled while making final-response intent explicit.
-        """
+    def _build_compact_user_payload(*, persona_prompt: str, news_input: str) -> str:
+        """Compact shape keeps persona and content together in the user message."""
         return (
-            "<base_instructions>\n"
-            "You are a memory-augmented conversational persona and must reply to the user directly.\n"
-            "You may reason privately first, then output the final user-facing reply.\n"
-            "Always provide a non-empty final reply in Simplified Chinese.\n"
-            "</base_instructions>\n\n"
-            "<output_formatting_rules>\n"
-            "1. Output plain dialogue only.\n"
-            "2. No bullet list, no section headers, no meta text.\n"
-            "3. Keep it concise and publishable for a public comment thread.\n"
-            "</output_formatting_rules>\n\n"
-            "[任务系统提示]\n"
-            f"{str(system_prompt or '').strip()}\n\n"
+            "你正在执行新闻评论生成任务。\n"
+            "请严格使用给定persona语气写一条可直接发布的中文评论。\n\n"
+            "[Persona]\n"
+            f"{str(persona_prompt or '').strip()}\n\n"
             "[任务输入]\n"
-            f"{str(user_input or '').strip()}"
+            f"{str(news_input or '').strip()}"
         )
 
     @staticmethod
-    def _build_direct_output_user_payload(*, system_prompt: str, user_input: str) -> str:
-        """Build a final-attempt payload that strongly prioritizes direct user output."""
+    def _build_all_in_system_prompt(*, system_prompt: str, persona_prompt: str) -> str:
+        """All-in-system shape places both global and persona guidance in system."""
         return (
-            "请直接输出一条可发布的中文评论，不要展示分析过程，不要输出步骤。\n"
-            "输出必须是 1-2 句自然中文。\n\n"
-            "[任务系统提示]\n"
             f"{str(system_prompt or '').strip()}\n\n"
-            "[任务输入]\n"
-            f"{str(user_input or '').strip()}"
+            "[Persona]\n"
+            f"{str(persona_prompt or '').strip()}"
         )
+
+    @staticmethod
+    def _build_structured_system_prompt(*, system_prompt: str, persona_prompt: str) -> str:
+        return (
+            f"{CommentingService._build_all_in_system_prompt(system_prompt=system_prompt, persona_prompt=persona_prompt)}\n\n"
+            "输出要求：\n"
+            "1. 你必须返回 JSON 对象。\n"
+            "2. JSON 仅允许一个字段: comment。\n"
+            "3. comment 必须是可发布的中文评论，不要附加解释。"
+        )
+
+    @staticmethod
+    def _structured_response_format() -> dict[str, Any]:
+        return {
+            "type": "json_schema",
+            "json_schema": {
+                "name": "comment_output",
+                "strict": True,
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "comment": {
+                            "type": "string",
+                            "minLength": 1,
+                        }
+                    },
+                    "required": ["comment"],
+                    "additionalProperties": False,
+                },
+            },
+        }
+
+    @staticmethod
+    def _extract_structured_comment(content_text: str) -> str:
+        text = str(content_text or "").strip()
+        if not text:
+            return ""
+
+        # Many providers wrap JSON in markdown fences; normalize that first.
+        fence_match = re.search(r"```(?:json)?\s*(.*?)\s*```", text, flags=re.IGNORECASE | re.DOTALL)
+        if fence_match:
+            text = str(fence_match.group(1) or "").strip()
+
+        def _comment_from_json(raw: str) -> str:
+            try:
+                parsed = json.loads(raw)
+            except Exception:
+                return ""
+            if isinstance(parsed, dict):
+                value = parsed.get("comment")
+                if isinstance(value, str):
+                    return value.strip()
+            return ""
+
+        direct = _comment_from_json(text)
+        if direct:
+            return direct
+
+        # Recover from wrappers such as: prefix ... {"comment": "..."} ... suffix
+        object_match = re.search(r"\{.*\}", text, flags=re.DOTALL)
+        if object_match:
+            nested = _comment_from_json(str(object_match.group(0) or ""))
+            if nested:
+                return nested
+
+        return ""
 
     @retry(**_RETRY_KWARGS)
     def _post_chat_completions(self, payload: dict[str, Any], *, timeout_seconds: float) -> dict[str, Any]:
@@ -330,7 +387,8 @@ class CommentingService:
         *,
         model: str,
         system_prompt: str,
-        user_input: str,
+        persona_prompt: str,
+        news_input: str,
         max_tokens: int | None = None,
         timeout_seconds: float | None = None,
         task_shape: str | None = None,
@@ -348,130 +406,155 @@ class CommentingService:
         )
         resolved_task_shape = runtime_defaults["task_shape"] if task_shape is None else self._resolve_task_shape(task_shape)
 
-        primary_payload = {
+        compact_payload = {
             "model": resolved_model,
             "messages": [
                 {"role": "system", "content": str(system_prompt or "")},
-                {"role": "user", "content": str(user_input or "")},
-            ],
-            "temperature": 0.6,
-            "max_tokens": resolved_max_tokens,
-        }
-        fallback_payload = {
-            "model": resolved_model,
-            "messages": [
-                {
-                    "role": "system",
-                    "content": "You can reason privately, but must always return a non-empty final response.",
-                },
                 {
                     "role": "user",
-                    "content": self._build_chat_shaped_user_payload(
-                        system_prompt=system_prompt,
-                        user_input=user_input,
+                    "content": self._build_compact_user_payload(
+                        persona_prompt=persona_prompt,
+                        news_input=news_input,
                     ),
                 },
             ],
             "temperature": 0.6,
             "max_tokens": resolved_max_tokens,
         }
-        direct_output_payload = {
+
+        all_in_system_payload = {
             "model": resolved_model,
             "messages": [
                 {
                     "role": "system",
-                    "content": "你可以在内部思考，但最终必须直接输出可发布评论，且输出不能为空。",
-                },
-                {
-                    "role": "user",
-                    "content": self._build_direct_output_user_payload(
+                    "content": self._build_all_in_system_prompt(
                         system_prompt=system_prompt,
-                        user_input=user_input,
+                        persona_prompt=persona_prompt,
                     ),
                 },
+                {"role": "user", "content": str(news_input or "").strip()},
             ],
             "temperature": 0.6,
             "max_tokens": resolved_max_tokens,
         }
+
+        structured_output_payload = {
+            "model": resolved_model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": self._build_structured_system_prompt(
+                        system_prompt=system_prompt,
+                        persona_prompt=persona_prompt,
+                    ),
+                },
+                {"role": "user", "content": str(news_input or "").strip()},
+            ],
+            "temperature": 0.2,
+            "max_tokens": resolved_max_tokens,
+            "response_format": self._structured_response_format(),
+        }
+
+        payload_by_shape: dict[str, dict[str, Any]] = {
+            "compact": compact_payload,
+            "all_in_system": all_in_system_payload,
+            "structured_output": structured_output_payload,
+        }
+
+        payload = payload_by_shape.get(resolved_task_shape, compact_payload)
 
         if resolved_max_tokens == 0:
-            primary_payload.pop("max_tokens", None)
-            fallback_payload.pop("max_tokens", None)
-            direct_output_payload.pop("max_tokens", None)
+            payload.pop("max_tokens", None)
 
-        compact_attempts = [
-            ("compact", primary_payload),
-            ("agent_studio", fallback_payload),
-            ("direct_output", direct_output_payload),
-        ]
-        agent_studio_attempts = [
-            ("agent_studio", fallback_payload),
-            ("compact", primary_payload),
-            ("direct_output", direct_output_payload),
-        ]
-
-        if resolved_task_shape == "compact":
-            payload_attempts = compact_attempts
-        elif resolved_task_shape == "agent_studio":
-            payload_attempts = agent_studio_attempts
-        else:
-            # Auto mode favors Agent Studio-like shape first due better final-response reliability.
-            payload_attempts = agent_studio_attempts
-
-        last_error = "Comment provider returned empty content"
-        last_finish_reason = ""
-        for attempt_name, payload in payload_attempts:
+        try:
             data = self._post_chat_completions(payload, timeout_seconds=resolved_timeout_seconds)
-            choices = data.get("choices", [])
-            if not isinstance(choices, list) or not choices:
-                last_error = "Comment provider returned no choices"
-                continue
+        except ValueError as exc:
+            # Some OpenAI-compatible runtimes reject `response_format` when strict
+            # structured decoding is disabled. Fall back to prompt-enforced JSON.
+            if resolved_task_shape != "structured_output":
+                raise
 
-            message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
-            finish_reason = str(choices[0].get("finish_reason", "") or "").strip().lower() if isinstance(choices[0], dict) else ""
-            content = self._normalize_content(message.get("content", ""))
-            if content:
-                cleaned_content = self._sanitize_comment(content)
-                if self._is_publishable_comment(cleaned_content):
-                    return {
-                        "content": cleaned_content,
-                        "content_source": "assistant_content",
-                        "selected_attempt": attempt_name,
-                        "finish_reason": finish_reason,
-                        "usage": data.get("usage", {}) if isinstance(data.get("usage", {}), dict) else {},
-                        "received_at": datetime.now(timezone.utc).isoformat(),
-                        "raw_request": payload,
-                        "raw_reply": data,
-                        "max_tokens": resolved_max_tokens,
-                        "timeout_seconds": resolved_timeout_seconds,
-                        "task_shape": resolved_task_shape,
-                    }
+            error_text = str(exc).lower()
+            if "response_format" not in error_text and "json_schema" not in error_text:
+                raise
 
-            reasoning = self._normalize_content(message.get("reasoning_content", ""))
-            recovered = self._extract_comment_from_reasoning(reasoning)
-            last_finish_reason = finish_reason
-            if recovered and attempt_name in {"compact", "agent_studio", "direct_output"}:
-                cleaned_recovered = self._sanitize_comment(recovered)
-                if self._is_publishable_comment(cleaned_recovered):
-                    return {
-                        "content": cleaned_recovered,
-                        "content_source": "reasoning_tail_extraction",
-                        "selected_attempt": attempt_name,
-                        "finish_reason": finish_reason,
-                        "usage": data.get("usage", {}) if isinstance(data.get("usage", {}), dict) else {},
-                        "received_at": datetime.now(timezone.utc).isoformat(),
-                        "raw_request": payload,
-                        "raw_reply": data,
-                        "max_tokens": resolved_max_tokens,
-                        "timeout_seconds": resolved_timeout_seconds,
-                        "task_shape": resolved_task_shape,
-                    }
+            payload = dict(payload)
+            payload.pop("response_format", None)
+            data = self._post_chat_completions(payload, timeout_seconds=resolved_timeout_seconds)
 
-            if finish_reason and finish_reason != "stop":
-                last_error = f"Comment provider finished without final content (finish_reason={finish_reason})"
-            else:
-                last_error = "Comment provider returned empty content"
+        choices = data.get("choices", [])
+        if not isinstance(choices, list) or not choices:
+            raise ValueError(
+                f"Comment provider returned no choices; task_shape={resolved_task_shape}; max_tokens={resolved_max_tokens}"
+            )
 
-        if last_finish_reason and "finish_reason=" not in last_error:
-            last_error = f"{last_error} (last_finish_reason={last_finish_reason})"
-        raise ValueError(f"{last_error}; task_shape={resolved_task_shape}; max_tokens={resolved_max_tokens}")
+        message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
+        finish_reason = str(choices[0].get("finish_reason", "") or "").strip().lower() if isinstance(choices[0], dict) else ""
+        content = self._normalize_content(message.get("content", ""))
+        reasoning = self._normalize_content(message.get("reasoning_content", ""))
+
+        if resolved_task_shape == "structured_output":
+            content = self._extract_structured_comment(content)
+            if not content:
+                reasoning_structured = self._extract_structured_comment(reasoning)
+                if reasoning_structured:
+                    cleaned_reasoning_structured = self._sanitize_comment(reasoning_structured)
+                    if self._is_publishable_comment(cleaned_reasoning_structured):
+                        return {
+                            "content": cleaned_reasoning_structured,
+                            "content_source": "structured_json_reasoning_content",
+                            "selected_attempt": resolved_task_shape,
+                            "finish_reason": finish_reason,
+                            "usage": data.get("usage", {}) if isinstance(data.get("usage", {}), dict) else {},
+                            "received_at": datetime.now(timezone.utc).isoformat(),
+                            "raw_request": payload,
+                            "raw_reply": data,
+                            "max_tokens": resolved_max_tokens,
+                            "timeout_seconds": resolved_timeout_seconds,
+                            "task_shape": resolved_task_shape,
+                        }
+
+        if content:
+            cleaned_content = self._sanitize_comment(content)
+            if self._is_publishable_comment(cleaned_content):
+                return {
+                    "content": cleaned_content,
+                    "content_source": "assistant_content",
+                    "selected_attempt": resolved_task_shape,
+                    "finish_reason": finish_reason,
+                    "usage": data.get("usage", {}) if isinstance(data.get("usage", {}), dict) else {},
+                    "received_at": datetime.now(timezone.utc).isoformat(),
+                    "raw_request": payload,
+                    "raw_reply": data,
+                    "max_tokens": resolved_max_tokens,
+                    "timeout_seconds": resolved_timeout_seconds,
+                    "task_shape": resolved_task_shape,
+                }
+
+        recovered = self._extract_comment_from_reasoning(reasoning)
+        if recovered:
+            cleaned_recovered = self._sanitize_comment(recovered)
+            if self._is_publishable_comment(cleaned_recovered):
+                return {
+                    "content": cleaned_recovered,
+                    "content_source": "reasoning_tail_extraction",
+                    "selected_attempt": resolved_task_shape,
+                    "finish_reason": finish_reason,
+                    "usage": data.get("usage", {}) if isinstance(data.get("usage", {}), dict) else {},
+                    "received_at": datetime.now(timezone.utc).isoformat(),
+                    "raw_request": payload,
+                    "raw_reply": data,
+                    "max_tokens": resolved_max_tokens,
+                    "timeout_seconds": resolved_timeout_seconds,
+                    "task_shape": resolved_task_shape,
+                }
+
+        if finish_reason and finish_reason != "stop":
+            raise ValueError(
+                "Comment provider finished without final content "
+                f"(finish_reason={finish_reason}); task_shape={resolved_task_shape}; max_tokens={resolved_max_tokens}"
+            )
+
+        raise ValueError(
+            f"Comment provider returned empty content; task_shape={resolved_task_shape}; max_tokens={resolved_max_tokens}"
+        )

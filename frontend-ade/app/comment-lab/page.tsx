@@ -10,7 +10,7 @@ const COPY = {
     kicker: "Stateless Module",
     title: "Comment Lab",
     intro:
-      "Generate one-shot comments with independent prompt/persona/model controls. This route stays stateless, while allowing Agent Studio-like task shaping for better reasoning reliability.",
+      "Generate one-shot comments with independent prompt/persona/model controls. This route stays stateless and supports three explicit task-shape strategies.",
     tuningTitle: "Tuning Settings",
     mainContentTitle: "Content Workspace",
     innerWorksTitle: "Inner Works",
@@ -22,9 +22,9 @@ const COPY = {
     maxTokensHint: "Set 0 for no max token limit.",
     timeoutSeconds: "Timeout (seconds)",
     taskShape: "Task Shape",
-    taskShapeAuto: "Auto (Agent Studio first)",
-    taskShapeAgentStudio: "Agent Studio-like",
-    taskShapeCompact: "Compact comment-first",
+    taskShapeCompact: "Classic (persona in user)",
+    taskShapeAllInSystem: "All in system",
+    taskShapeStructuredOutput: "Structured output (JSON)",
     userInput: "Input Text",
     userInputPlaceholder: "Paste a news summary, a thread excerpt, or your own draft context here...",
     generate: "Generate Comment",
@@ -38,6 +38,10 @@ const COPY = {
     maxTokensUsed: "Max Tokens Used",
     timeoutUsed: "Timeout Used",
     taskShapeUsed: "Task Shape Used",
+    runtimeMetaTitle: "Runtime",
+    timingMetaTitle: "Timing",
+    tokenMetaTitle: "Token Usage",
+    responseSeconds: "Response Time (s)",
     usagePromptTokens: "Prompt Tokens",
     usageCompletionTokens: "Completion Tokens",
     usageTotalTokens: "Total Tokens",
@@ -57,7 +61,7 @@ const COPY = {
     notesOne: "This route is stateless and does not create or modify Letta agent state.",
     notesTwo: "No embedding model is required for this commenting flow.",
     notesThree: "Provider requests are sent through an OpenAI-compatible chat completions endpoint.",
-    notesFour: "In auto mode, Agent Studio-like task shape is tried before compact shape.",
+    notesFour: "Structured output shape requests JSON and extracts the comment field.",
     selectRequired: "Please choose model, prompt, and persona before generating.",
     inputRequired: "Input text is required.",
     invalidMaxTokens: "Max tokens must be a non-negative integer (0 means no limit).",
@@ -68,7 +72,7 @@ const COPY = {
   zh: {
     kicker: "无状态模块",
     title: "评论实验室",
-    intro: "以独立模型、Prompt、Persona 控制进行单次评论生成。该页面保持无状态，同时支持更接近 Agent Studio 的任务形状以提升推理稳定性。",
+    intro: "以独立模型、Prompt、Persona 控制进行单次评论生成。该页面保持无状态，并支持三种明确的任务形状策略。",
     tuningTitle: "参数调优",
     mainContentTitle: "内容工作区",
     innerWorksTitle: "内部信息",
@@ -80,9 +84,9 @@ const COPY = {
     maxTokensHint: "设置为 0 表示不限制最大 Token。",
     timeoutSeconds: "超时时间（秒）",
     taskShape: "任务形状",
-    taskShapeAuto: "自动（优先 Agent Studio）",
-    taskShapeAgentStudio: "Agent Studio 风格",
-    taskShapeCompact: "紧凑评论优先",
+    taskShapeCompact: "经典模式（persona 放在 user）",
+    taskShapeAllInSystem: "全部放在 system",
+    taskShapeStructuredOutput: "结构化输出（JSON）",
     userInput: "输入文本",
     userInputPlaceholder: "粘贴新闻摘要、评论串内容，或你的草稿上下文...",
     generate: "生成评论",
@@ -96,6 +100,10 @@ const COPY = {
     maxTokensUsed: "实际最大 Token",
     timeoutUsed: "实际超时",
     taskShapeUsed: "实际任务形状",
+    runtimeMetaTitle: "运行参数",
+    timingMetaTitle: "时序",
+    tokenMetaTitle: "Token 使用",
+    responseSeconds: "响应耗时（秒）",
     usagePromptTokens: "输入 Token",
     usageCompletionTokens: "输出 Token",
     usageTotalTokens: "总 Token",
@@ -115,7 +123,7 @@ const COPY = {
     notesOne: "该路径为无状态，不会创建或修改 Letta 智能体状态。",
     notesTwo: "该评论流程不需要 embedding 模型。",
     notesThree: "请求通过 OpenAI 兼容的 chat completions 接口发送。",
-    notesFour: "自动模式下，会先尝试 Agent Studio 风格任务形状，再回退到紧凑形状。",
+    notesFour: "结构化输出模式会请求 JSON，并提取其中的 comment 字段。",
     selectRequired: "生成前请先选择模型、Prompt 与 Persona。",
     inputRequired: "请输入文本。",
     invalidMaxTokens: "最大 Token 必须是非负整数（0 表示不限制）。",
@@ -307,7 +315,7 @@ export default function CommentLabPage() {
   const [personaKey, setPersonaKey] = useState("");
   const [maxTokens, setMaxTokens] = useState("0");
   const [timeoutSeconds, setTimeoutSeconds] = useState("180");
-  const [taskShape, setTaskShape] = useState<CommentingTaskShape>("auto");
+  const [taskShape, setTaskShape] = useState<CommentingTaskShape>("compact");
 
   const [userInput, setUserInput] = useState("");
   const [output, setOutput] = useState("");
@@ -320,6 +328,7 @@ export default function CommentLabPage() {
   const [usageCompletionTokens, setUsageCompletionTokens] = useState("");
   const [usageTotalTokens, setUsageTotalTokens] = useState("");
   const [usageReasoningTokens, setUsageReasoningTokens] = useState("");
+  const [responseSeconds, setResponseSeconds] = useState("");
   const [receivedAt, setReceivedAt] = useState("");
   const [selectedAttempt, setSelectedAttempt] = useState("");
   const [finishReason, setFinishReason] = useState("");
@@ -368,6 +377,7 @@ export default function CommentLabPage() {
     setError("");
     setStatus("");
     setPopOutCard(null);
+    setResponseSeconds("");
 
     if (!model || !promptKey || !personaKey) {
       setError(copy.selectRequired);
@@ -392,6 +402,7 @@ export default function CommentLabPage() {
     }
 
     setSubmitting(true);
+    const startedAtMs = performance.now();
     try {
       const payload = await generateComment({
         input: userInput,
@@ -414,6 +425,7 @@ export default function CommentLabPage() {
       setUsageCompletionTokens(asIntString(usage.completion_tokens));
       setUsageTotalTokens(asIntString(usage.total_tokens));
       setUsageReasoningTokens(asIntString(completionTokensDetails.reasoning_tokens));
+      setResponseSeconds((Math.max(0, performance.now() - startedAtMs) / 1000).toFixed(2));
       setReceivedAt(payload.received_at || "");
       setSelectedAttempt(payload.selected_attempt || "");
       setFinishReason(payload.finish_reason || "");
@@ -423,6 +435,7 @@ export default function CommentLabPage() {
       setRawReplyReadable(formatRawReplyForHuman(payload.raw_reply || {}));
       setStatus(`${copy.modelUsed}: ${payload.model}`);
     } catch (exc) {
+      setResponseSeconds("");
       setError(`${copy.generateError}: ${toErrorMessage(exc)}`);
     } finally {
       setSubmitting(false);
@@ -540,9 +553,9 @@ export default function CommentLabPage() {
                 onChange={(event) => setTaskShape(event.target.value as CommentingTaskShape)}
                 disabled={submitting}
               >
-                <option value="auto">{copy.taskShapeAuto}</option>
-                <option value="agent_studio">{copy.taskShapeAgentStudio}</option>
                 <option value="compact">{copy.taskShapeCompact}</option>
+                <option value="all_in_system">{copy.taskShapeAllInSystem}</option>
+                <option value="structured_output">{copy.taskShapeStructuredOutput}</option>
               </select>
             </label>
           </div>
@@ -578,36 +591,69 @@ export default function CommentLabPage() {
           <hr className="studio-divider" />
 
           <h3>{copy.outputTitle}</h3>
-          <div className="list" style={{ marginTop: 0 }}>
-            <div>
-              {copy.provider}: {provider || "-"}
+          <div
+            style={{
+              marginTop: 10,
+              display: "grid",
+              gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
+              gap: 10,
+            }}
+          >
+            <div className="card" style={{ margin: 0, padding: "10px 12px" }}>
+              <div className="muted" style={{ fontSize: 12, fontWeight: 700 }}>
+                {copy.runtimeMetaTitle}
+              </div>
+              <div className="list" style={{ marginTop: 6 }}>
+                <div>
+                  {copy.provider}: {provider || "-"}
+                </div>
+                <div>
+                  {copy.modelUsed}: {modelUsed || "-"}
+                </div>
+                <div>
+                  {copy.taskShapeUsed}: {taskShapeUsed || "-"}
+                </div>
+                <div>
+                  {copy.maxTokensUsed}: {maxTokensUsed || "-"}
+                </div>
+                <div>
+                  {copy.timeoutUsed}: {timeoutUsed || "-"}
+                </div>
+              </div>
             </div>
-            <div>
-              {copy.modelUsed}: {modelUsed || "-"}
+
+            <div className="card" style={{ margin: 0, padding: "10px 12px" }}>
+              <div className="muted" style={{ fontSize: 12, fontWeight: 700 }}>
+                {copy.timingMetaTitle}
+              </div>
+              <div className="list" style={{ marginTop: 6 }}>
+                <div>
+                  {copy.responseSeconds}: {responseSeconds || "-"}
+                </div>
+                <div>
+                  {copy.receivedAt}: {receivedAt ? formatTimestamp(receivedAt) : "-"}
+                </div>
+              </div>
             </div>
-            <div>
-              {copy.maxTokensUsed}: {maxTokensUsed || "-"}
-            </div>
-            <div>
-              {copy.timeoutUsed}: {timeoutUsed || "-"}
-            </div>
-            <div>
-              {copy.taskShapeUsed}: {taskShapeUsed || "-"}
-            </div>
-            <div>
-              {copy.usagePromptTokens}: {usagePromptTokens || "-"}
-            </div>
-            <div>
-              {copy.usageCompletionTokens}: {usageCompletionTokens || "-"}
-            </div>
-            <div>
-              {copy.usageTotalTokens}: {usageTotalTokens || "-"}
-            </div>
-            <div>
-              {copy.usageReasoningTokens}: {usageReasoningTokens || "-"}
-            </div>
-            <div>
-              {copy.receivedAt}: {receivedAt ? formatTimestamp(receivedAt) : "-"}
+
+            <div className="card" style={{ margin: 0, padding: "10px 12px" }}>
+              <div className="muted" style={{ fontSize: 12, fontWeight: 700 }}>
+                {copy.tokenMetaTitle}
+              </div>
+              <div className="list" style={{ marginTop: 6 }}>
+                <div>
+                  {copy.usagePromptTokens}: {usagePromptTokens || "-"}
+                </div>
+                <div>
+                  {copy.usageCompletionTokens}: {usageCompletionTokens || "-"}
+                </div>
+                <div>
+                  {copy.usageReasoningTokens}: {usageReasoningTokens || "-"}
+                </div>
+                <div>
+                  {copy.usageTotalTokens}: {usageTotalTokens || "-"}
+                </div>
+              </div>
             </div>
           </div>
           <div className="code" style={{ marginTop: 10, minHeight: 280 }}>

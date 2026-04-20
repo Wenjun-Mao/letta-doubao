@@ -28,7 +28,7 @@ from prompts.persona import HUMAN_TEMPLATE
 
 APP_VERSION = os.getenv("AGENT_PLATFORM_API_VERSION", "0.2.0")
 ScenarioType = Literal["chat", "comment"]
-CommentingTaskShape = Literal["auto", "agent_studio", "compact"]
+CommentingTaskShape = Literal["compact", "all_in_system", "structured_output"]
 
 
 @asynccontextmanager
@@ -886,9 +886,9 @@ def _invalidate_options_cache() -> None:
 
 def _commenting_runtime_defaults() -> ApiCommentingRuntimeDefaultsResponse:
     defaults = commenting_service.runtime_defaults()
-    task_shape = str(defaults.get("task_shape", "auto") or "auto").strip().lower()
-    if task_shape not in {"auto", "agent_studio", "compact"}:
-        task_shape = "auto"
+    task_shape = str(defaults.get("task_shape", "compact") or "compact").strip().lower()
+    if task_shape not in {"compact", "all_in_system", "structured_output"}:
+        task_shape = "compact"
 
     return ApiCommentingRuntimeDefaultsResponse(
         max_tokens=int(defaults.get("max_tokens", 1536)),
@@ -2863,18 +2863,12 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
             raise HTTPException(status_code=400, detail=f"Invalid model: {model_handle}")
 
     persona_text = str(persona_map[request.persona_key] or "")
-    user_payload = (
-        "你正在执行新闻评论生成任务。\n"
-        "请严格使用给定persona语气写一条可直接发布的中文评论。\n\n"
-        f"[Persona]\n{persona_text}\n\n"
-        f"[用户输入]\n{text}"
-    )
-
     try:
         generation_result = commenting_service.generate_comment(
             model=model_handle,
             system_prompt=prompt_map[request.prompt_key],
-            user_input=user_payload,
+            persona_prompt=persona_text,
+            news_input=text,
             max_tokens=request.max_tokens,
             timeout_seconds=request.timeout_seconds,
             task_shape=request.task_shape,
