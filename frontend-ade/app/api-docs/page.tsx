@@ -1,62 +1,66 @@
 "use client";
 
-import Link from "next/link";
-import { useI18n } from "../../lib/i18n";
+import { ApiReferenceReact } from "@scalar/api-reference-react";
+import "@scalar/api-reference-react/style.css";
 
-const DOCS_PATH = process.env.NEXT_PUBLIC_MINTLIFY_DOCS_URL || "/docs";
+import { useI18n } from "../../lib/i18n";
 
 const COPY = {
   en: {
-    kicker: "Docs Integration",
-    title: "API Documentation",
+    kicker: "API Reference",
+    title: "Interactive API Documentation",
     description:
-      "Mintlify documentation is configured under the repository docs folder and ingests committed OpenAPI artifacts generated from the backend.",
-    config: "Config",
-    spec: "Spec",
+      "This page renders the platform OpenAPI schema directly inside ADE using Scalar. The schema switches with locale and defaults safely to English when a localized artifact is not available.",
+    locale: "Locale",
+    endpoint: "Spec endpoint",
     exporter: "Exporter",
-    openEntry: "Open docs entry",
+    chineseSpec: "Chinese OpenAPI artifact",
+    chineseDocs: "Chinese docs pages",
+    manualGenerator: "Manual zh generator",
   },
   zh: {
-    kicker: "文档集成",
-    title: "API 文档",
-    description: "Mintlify 文档位于仓库 docs 目录，并会读取后端生成并提交的 OpenAPI 产物。",
-    config: "配置",
-    spec: "规范",
+    kicker: "API 参考",
+    title: "交互式 API 文档",
+    description:
+      "该页面在 ADE 内直接渲染平台 OpenAPI 规范。规范会根据语言切换，并在中文产物缺失时安全回退到英文。",
+    locale: "语言",
+    endpoint: "规范端点",
     exporter: "导出脚本",
-    openEntry: "打开文档入口",
+    chineseSpec: "中文 OpenAPI 产物",
+    chineseDocs: "中文文档页面",
+    manualGenerator: "手工中文生成脚本",
   },
 } as const;
 
-function isExternalLink(href: string): boolean {
-  return /^https?:\/\//i.test(href);
-}
+const OPENAPI_ENDPOINT = "/api/openapi";
 
 export default function ApiDocsPage() {
   const { locale } = useI18n();
   const copy = COPY[locale];
+  const localizedSpecUrl = `${OPENAPI_ENDPOINT}?locale=${locale}`;
 
   return (
-    <section>
+    <section className="api-docs-section">
       <div className="kicker">{copy.kicker}</div>
       <h1 className="section-title">{copy.title}</h1>
       <div className="card">
         <p>{copy.description}</p>
         <ul className="list">
-          <li>{copy.config}: docs/docs.json</li>
-          <li>{copy.spec}: docs/openapi/agent-platform-openapi.json</li>
+          <li>{copy.locale}: {locale === "zh" ? "zh" : "en"}</li>
+          <li>{copy.endpoint}: {localizedSpecUrl}</li>
           <li>{copy.exporter}: scripts/export_openapi.py</li>
+          <li>{copy.chineseSpec}: docs/openapi/agent-platform-openapi-zh.json</li>
+          <li>{copy.chineseDocs}: docs/zh/index.mdx</li>
+          <li>{copy.manualGenerator}: scripts/generate_openapi_zh_manual.py</li>
         </ul>
-        <p style={{ marginTop: 14 }}>
-          {isExternalLink(DOCS_PATH) ? (
-            <a href={DOCS_PATH} className="nav-link" target="_blank" rel="noreferrer">
-              {copy.openEntry}
-            </a>
-          ) : (
-            <Link href={DOCS_PATH} className="nav-link">
-              {copy.openEntry}
-            </Link>
-          )}
-        </p>
+      </div>
+      <div className="card api-docs-reference" style={{ marginTop: 12, padding: 0, overflow: "hidden" }}>
+        <ApiReferenceReact
+          key={locale}
+          configuration={{
+            url: localizedSpecUrl,
+          }}
+        />
       </div>
     </section>
   );

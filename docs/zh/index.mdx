@@ -1,0 +1,80 @@
+---
+title: Agent Platform API（中文）
+---
+
+# Agent Platform API（中文）
+
+本文档用于跟踪 ADE 迁移过程中使用的本地 Agent Platform API。
+
+## 环境假设
+
+- 本地开发默认地址：
+  - Dev UI API: `http://127.0.0.1:8284`
+  - Letta Server API: `http://127.0.0.1:8283`
+- API 开关：
+  - 设为 `AGENT_PLATFORM_API_ENABLED=1` 以启用路由。
+  - 设为 `AGENT_PLATFORM_API_ENABLED=0` 以硬禁用平台路由（返回 503）。
+- 当前本地栈面向受信任的内部开发场景。若需要暴露到更广泛网络，请先补齐鉴权与授权。
+
+## 文档覆盖范围
+
+- 面向智能体交互的运行时接口。
+- 面向提示词、模型、记忆块与工具变更的控制接口。
+- 两阶段安全删除生命周期（归档 -> 恢复 -> 清除）。
+- 面向检查与 Runner 的测试编排接口。
+- 面向双轨发布观测的迁移状态接口。
+
+## 智能体生命周期（安全删除）
+
+建议采用以下两阶段删除路径：
+
+1. 归档智能体（软删除，默认列表隐藏）
+2. 如误操作可恢复
+3. 清除已归档智能体（硬删除）
+
+关键接口：
+
+- `POST /api/v1/platform/agents/{agent_id}/archive`
+- `POST /api/v1/platform/agents/{agent_id}/restore`
+- `DELETE /api/v1/platform/agents/{agent_id}/purge`
+- `DELETE /api/v1/agents/{agent_id}`（清除已归档智能体的别名）
+- `GET /api/v1/agents?include_archived=true`
+
+行为说明：
+
+- 默认情况下，`GET /api/v1/agents` 不返回已归档智能体。
+- 对已归档智能体进行运行时或控制类变更会返回 `409`，需先恢复。
+- 清除操作要求目标处于已归档状态，否则返回 `400`。
+
+## 错误返回格式
+
+FastAPI 返回的错误 JSON 结构如下：
+
+```json
+{
+  "detail": "error message"
+}
+```
+
+常见状态码：
+
+- `400`: 请求不合法、状态流转不合法、参数校验失败
+- `404`: 资源不存在
+- `409`: 对已归档智能体执行了不允许的变更
+- `503`: 平台 API 被环境开关禁用
+
+## 事实来源（Source of truth）
+
+- OpenAPI 英文产物：`docs/openapi/agent-platform-openapi.json`
+- OpenAPI 中文产物：`docs/openapi/agent-platform-openapi-zh.json`
+- 前端静态 OpenAPI 英文产物：`frontend-ade/public/openapi/agent-platform-openapi.json`
+- 前端静态 OpenAPI 中文产物：`frontend-ade/public/openapi/agent-platform-openapi-zh.json`
+- OpenAPI 导出脚本：`scripts/export_openapi.py`
+- 中文 OpenAPI 手工生成脚本：`scripts/generate_openapi_zh_manual.py`
+
+## 本地工作流
+
+1. 重新导出 OpenAPI 英文产物：`uv run python scripts/export_openapi.py`
+2. 重新生成 OpenAPI 中文产物（手工维护翻译）：`uv run python scripts/generate_openapi_zh_manual.py`
+3. 当有重大变更时，手工更新 `docs/zh/` 下的中文文档页面
+4. 仅检查英文 OpenAPI 漂移：`uv run python scripts/export_openapi.py --check`

@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from "react";
 import { fetchCapabilities, listAgents, listTestRuns } from "../lib/api";
 import { useI18n } from "../lib/i18n";
 
-const DOCS_HREF = process.env.NEXT_PUBLIC_MINTLIFY_DOCS_URL || "/api-docs";
+const DOCS_HREF = "/api-docs";
 
 const COPY = {
   en: {
@@ -48,7 +48,7 @@ const COPY = {
       testCenterTitle: "Test Center",
       testCenterDescription: "Create and monitor backend orchestrated checks and runners, including run artifacts.",
       apiDocsTitle: "API Docs",
-      apiDocsDescription: "OpenAPI-backed Mintlify docs for external consumers and internal operator reference.",
+      apiDocsDescription: "OpenAPI-backed interactive API documentation rendered directly inside ADE.",
     },
   },
   zh: {
@@ -88,7 +88,7 @@ const COPY = {
       testCenterTitle: "测试中心",
       testCenterDescription: "创建并监控后端编排检查与运行任务，包括产物查看。",
       apiDocsTitle: "API 文档",
-      apiDocsDescription: "基于 OpenAPI 的 Mintlify 文档，供外部调用方与内部运维参考。",
+      apiDocsDescription: "基于 OpenAPI 的交互式 API 文档，直接在 ADE 内渲染。",
     },
   },
 } as const;

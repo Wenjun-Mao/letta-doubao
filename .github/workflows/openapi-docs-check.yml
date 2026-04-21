@@ -8,8 +8,9 @@ on:
       - dev_ui/**
       - utils/**
       - scripts/export_openapi.py
-      - scripts/validate_docs_config.py
+      - scripts/generate_openapi_zh_manual.py
       - docs/**
+      - frontend-ade/public/openapi/**
       - .github/workflows/openapi-docs-check.yml
   push:
     branches:
@@ -18,8 +19,9 @@ on:
       - dev_ui/**
       - utils/**
       - scripts/export_openapi.py
-      - scripts/validate_docs_config.py
+      - scripts/generate_openapi_zh_manual.py
       - docs/**
+      - frontend-ade/public/openapi/**
       - .github/workflows/openapi-docs-check.yml
 
 jobs:
@@ -43,6 +45,3 @@ jobs:
 
       - name: Check OpenAPI artifact drift
         run: uv run python scripts/export_openapi.py --check --output docs/openapi/agent-platform-openapi.json
-
-      - name: Validate docs.json configuration
-        run: uv run python scripts/validate_docs_config.py --docs docs/docs.json

@@ -1,0 +1,29 @@
+---
+title: ADE 前端范围
+---
+
+# ADE 前端范围
+
+新的 ADE 前端是一个独立的 Next.js + TypeScript 应用，与 fallback 的 dev_ui 前端并行运行。
+
+## MVP 模块
+
+- Dashboard
+- Agent Studio
+- Prompt and Persona Lab
+- Toolbench（含工具发现）
+- Test Center
+- API Docs 入口
+
+## Phase-2 模块
+
+- 工具 Schema 浏览器与工具测试调用 UI
+- Prompt 对比与修订历史
+- 更丰富的运行产物浏览与下载能力
+- 稳定性趋势看板
+
+## 迁移行为
+
+- 在迁移窗口内保持 fallback 前端可用。
+- 使用迁移状态接口在 ADE UI 中展示当前模式。
+- 回滚路径为路由级切换，而非数据库 Schema 回滚。

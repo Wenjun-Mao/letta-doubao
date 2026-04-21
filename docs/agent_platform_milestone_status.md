@@ -4,7 +4,7 @@ Updated: 2026-04-13
 
 ## Milestone Objective
 
-Deliver a production-ready Agent Platform backbone for a new ADE frontend while keeping the current dev_ui frontend as fallback, and prepare OpenAPI-driven Mintlify docs.
+Deliver a production-ready Agent Platform backbone for a new ADE frontend while keeping the current dev_ui frontend as fallback, and prepare OpenAPI-driven self-hosted docs.
 
 ## Locked Decisions
 
@@ -14,8 +14,8 @@ Deliver a production-ready Agent Platform backbone for a new ADE frontend while 
 - Tool discovery is included in ADE MVP.
 - MVP auth posture is internal network boundary only (no new auth layer in MVP).
 - Cutover gate is backend E2E green plus ADE smoke suite green.
-- Mintlify config format is docs.json.
-- Mintlify API reference source is a committed OpenAPI artifact.
+- Self-hosted API docs are rendered in ADE with Scalar.
+- API reference source is a committed OpenAPI artifact synchronized into frontend static assets.
 
 ## Scope Checklist
 
@@ -51,7 +51,7 @@ Deliver a production-ready Agent Platform backbone for a new ADE frontend while 
 - [x] FastAPI metadata and endpoint docs quality pass.
 - [x] Deterministic OpenAPI export workflow.
 - [x] Committed canonical OpenAPI artifact.
-- [x] docs.json Mintlify config and navigation.
+- [x] Self-hosted API docs route in ADE.
 - [x] CI checks for OpenAPI validity and drift.
 
 ### Verification and Rollout
@@ -72,7 +72,7 @@ Deliver a production-ready Agent Platform backbone for a new ADE frontend while 
 - Added feature-flag gating for platform routes.
 - Unified runtime chat through AgentPlatformService shared messaging path.
 - Added deterministic OpenAPI export script and committed OpenAPI artifact.
-- Added Mintlify docs.json configuration and overview pages in docs.
+- Added self-hosted API docs pipeline and overview pages in docs.
 - Added OpenAPI/docs CI validation workflow.
 - Added separate Next.js ADE frontend scaffold and compose profile service (`ade_frontend`).
 - Implemented functional ADE MVP pages for Agent Studio, Prompt and Persona Lab, Toolbench, Test Center, and live dashboard status.

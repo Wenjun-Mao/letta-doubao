@@ -652,6 +652,15 @@ details summary {
   letter-spacing: 0.03em;
 }
 
+.api-docs-section {
+  display: grid;
+  gap: 12px;
+}
+
+.api-docs-reference {
+  min-height: 72vh;
+}
+
 .revision-item summary {
   cursor: pointer;
   color: var(--accent);

@@ -252,14 +252,17 @@ $env:DEV_UI_BASE_URL="http://127.0.0.1:8285"
 uv run tests/checks/platform_dual_run_gate.py
 ```
 
-## OpenAPI And Mintlify Docs Workflow
+## OpenAPI And Self-Hosted Docs Workflow
 
-The repository now includes a committed OpenAPI artifact and docs config for Mintlify.
+The repository now uses a self-hosted documentation workflow inside the ADE frontend.
 
-- OpenAPI artifact path: `docs/openapi/agent-platform-openapi.json`
-- Export script: `scripts/export_openapi.py`
-- Docs config: `docs/docs.json`
-- Docs config validator: `scripts/validate_docs_config.py`
+- OpenAPI source artifact: `docs/openapi/agent-platform-openapi.json`
+- Frontend OpenAPI artifact (served to Scalar): `frontend-ade/public/openapi/agent-platform-openapi.json`
+- Chinese OpenAPI artifact: `docs/openapi/agent-platform-openapi-zh.json`
+- Chinese docs pages: `docs/zh/`
+- OpenAPI export/sync script: `scripts/export_openapi.py`
+- Manual zh OpenAPI script: `scripts/generate_openapi_zh_manual.py`
+- Missing-term report: `docs/openapi/zh_openapi_missing_terms.json`
 
 Generate/update the OpenAPI artifact:
 
@@ -273,11 +276,15 @@ Check OpenAPI drift only:
 uv run python scripts/export_openapi.py --check --output docs/openapi/agent-platform-openapi.json
 ```
 
-Validate docs configuration:
+Regenerate Chinese OpenAPI artifact (manual curated labels):
 
 ```bash
-uv run python scripts/validate_docs_config.py --docs docs/docs.json
+uv run python scripts/generate_openapi_zh_manual.py
 ```
+
+The script writes `docs/openapi/zh_openapi_missing_terms.json`, so future updates are incremental: add only the newly introduced terms/mappings and rerun.
+
+Update Chinese docs pages manually under `docs/zh/` when major changes land.
 
 ## ADE Frontend (Separate Profile)
 

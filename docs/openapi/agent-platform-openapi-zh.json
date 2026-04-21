@@ -1,0 +1,5374 @@
+{
+  "components": {
+    "schemas": {
+      "AgentCreateRequest": {
+        "properties": {
+          "embedding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "向量模型"
+          },
+          "model": {
+            "default": "",
+            "title": "模型",
+            "type": "string"
+          },
+          "name": {
+            "default": "dev-agent",
+            "title": "名称",
+            "type": "string"
+          },
+          "persona_key": {
+            "default": "chat_linxiaotang",
+            "title": "Persona 键",
+            "type": "string"
+          },
+          "prompt_key": {
+            "default": "chat_v20260418",
+            "title": "提示词键",
+            "type": "string"
+          },
+          "scenario": {
+            "default": "chat",
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          }
+        },
+        "title": "智能体创建请求",
+        "type": "object"
+      },
+      "ApiAgentCreateResponse": {
+        "properties": {
+          "embedding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "向量模型"
+          },
+          "id": {
+            "title": "ID",
+            "type": "string"
+          },
+          "model": {
+            "title": "模型",
+            "type": "string"
+          },
+          "name": {
+            "title": "名称",
+            "type": "string"
+          },
+          "persona_key": {
+            "title": "Persona 键",
+            "type": "string"
+          },
+          "prompt_key": {
+            "title": "提示词键",
+            "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "scenario",
+          "model",
+          "prompt_key",
+          "persona_key"
+        ],
+        "title": "智能体创建响应",
+        "type": "object"
+      },
+      "ApiAgentDetailsResponse": {
+        "properties": {
+          "agent_type": {
+            "title": "智能体类型",
+            "type": "string"
+          },
+          "context_window_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "上下文窗口限制"
+          },
+          "created_at": {
+            "title": "创建时间",
+            "type": "string"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "描述"
+          },
+          "embedding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "向量模型"
+          },
+          "embedding_config": {
+            "title": "向量配置"
+          },
+          "id": {
+            "title": "ID",
+            "type": "string"
+          },
+          "last_interaction_at": {
+            "title": "最近交互时间",
+            "type": "string"
+          },
+          "last_updated_at": {
+            "title": "最近更新时间",
+            "type": "string"
+          },
+          "llm_config": {
+            "title": "LLM 配置"
+          },
+          "memory": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "记忆",
+            "type": "object"
+          },
+          "model": {
+            "title": "模型",
+            "type": "string"
+          },
+          "name": {
+            "title": "名称",
+            "type": "string"
+          },
+          "system": {
+            "title": "系统提示词",
+            "type": "string"
+          },
+          "tool_rules": {
+            "title": "工具规则"
+          },
+          "tools": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "工具",
+            "type": "object"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "agent_type",
+          "model",
+          "created_at",
+          "last_updated_at",
+          "last_interaction_at",
+          "tools",
+          "system",
+          "memory"
+        ],
+        "title": "智能体详情响应",
+        "type": "object"
+      },
+      "ApiAgentLifecycleResponse": {
+        "properties": {
+          "archived": {
+            "title": "已归档",
+            "type": "boolean"
+          },
+          "archived_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "归档时间"
+          },
+          "id": {
+            "title": "ID",
+            "type": "string"
+          },
+          "model": {
+            "title": "模型",
+            "type": "string"
+          },
+          "name": {
+            "title": "名称",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "更新时间",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "model",
+          "archived",
+          "updated_at"
+        ],
+        "title": "智能体生命周期响应",
+        "type": "object"
+      },
+      "ApiAgentListItemResponse": {
+        "properties": {
+          "archived": {
+            "default": false,
+            "title": "已归档",
+            "type": "boolean"
+          },
+          "created_at": {
+            "title": "创建时间",
+            "type": "string"
+          },
+          "id": {
+            "title": "ID",
+            "type": "string"
+          },
+          "last_interaction_at": {
+            "title": "最近交互时间",
+            "type": "string"
+          },
+          "last_updated_at": {
+            "title": "最近更新时间",
+            "type": "string"
+          },
+          "model": {
+            "title": "模型",
+            "type": "string"
+          },
+          "name": {
+            "title": "名称",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "model",
+          "created_at",
+          "last_updated_at",
+          "last_interaction_at"
+        ],
+        "title": "智能体列表条目响应",
+        "type": "object"
+      },
+      "ApiAgentListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiAgentListItemResponse"
+            },
+            "title": "条目",
+            "type": "array"
+          },
+          "total": {
+            "title": "总数",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "items"
+        ],
+        "title": "智能体列表响应",
+        "type": "object"
+      },
+      "ApiAgentPurgeResponse": {
+        "properties": {
+          "id": {
+            "title": "ID",
+            "type": "string"
+          },
+          "kind": {
+            "title": "类别",
+            "type": "string"
+          },
+          "ok": {
+            "title": "成功",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "ok",
+          "id",
+          "kind"
+        ],
+        "title": "智能体清除响应",
+        "type": "object"
+      },
+      "ApiChatResponse": {
+        "properties": {
+          "memory_diff": {
+            "additionalProperties": true,
+            "title": "记忆差异",
+            "type": "object"
+          },
+          "sequence": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "序号",
+            "type": "array"
+          },
+          "total_steps": {
+            "default": 0,
+            "title": "总数 Steps",
+            "type": "integer"
+          }
+        },
+        "title": "API 对话 响应",
+        "type": "object"
+      },
+      "ApiCommentingGenerateResponse": {
+        "properties": {
+          "content": {
+            "title": "内容",
+            "type": "string"
+          },
+          "content_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "内容 来源"
+          },
+          "finish_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finish Reason"
+          },
+          "max_tokens": {
+            "title": "最大 Token 数",
+            "type": "integer"
+          },
+          "model": {
+            "title": "模型",
+            "type": "string"
+          },
+          "persona_key": {
+            "title": "Persona 键",
+            "type": "string"
+          },
+          "prompt_key": {
+            "title": "提示词键",
+            "type": "string"
+          },
+          "provider": {
+            "title": "Provider",
+            "type": "string"
+          },
+          "raw_reply": {
+            "additionalProperties": true,
+            "title": "原始 Reply",
+            "type": "object"
+          },
+          "raw_request": {
+            "additionalProperties": true,
+            "title": "原始 请求",
+            "type": "object"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          },
+          "selected_attempt": {
+            "title": "Selected Attempt",
+            "type": "string"
+          },
+          "task_shape": {
+            "enum": [
+              "compact",
+              "all_in_system",
+              "structured_output"
+            ],
+            "title": "任务形态",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "title": "超时秒数",
+            "type": "number"
+          },
+          "usage": {
+            "additionalProperties": true,
+            "title": "Usage",
+            "type": "object"
+          }
+        },
+        "required": [
+          "scenario",
+          "prompt_key",
+          "persona_key",
+          "model",
+          "content",
+          "provider",
+          "max_tokens",
+          "timeout_seconds",
+          "task_shape",
+          "selected_attempt"
+        ],
+        "title": "API 评论 生成 响应",
+        "type": "object"
+      },
+      "ApiCommentingRuntimeDefaultsResponse": {
+        "properties": {
+          "max_tokens": {
+            "title": "最大 Token 数",
+            "type": "integer"
+          },
+          "task_shape": {
+            "enum": [
+              "compact",
+              "all_in_system",
+              "structured_output"
+            ],
+            "title": "任务形态",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "title": "超时秒数",
+            "type": "number"
+          }
+        },
+        "required": [
+          "max_tokens",
+          "timeout_seconds",
+          "task_shape"
+        ],
+        "title": "API 评论 运行时 默认值 响应",
+        "type": "object"
+      },
+      "ApiConversationHistoryItemResponse": {
+        "properties": {
+          "content": {
+            "title": "内容",
+            "type": "string"
+          },
+          "created_at": {
+            "title": "创建时间",
+            "type": "string"
+          },
+          "id": {
+            "title": "ID",
+            "type": "string"
+          },
+          "message_type": {
+            "title": "消息 类型",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "名称"
+          },
+          "role": {
+            "title": "角色",
+            "type": "string"
+          },
+          "status": {
+            "title": "状态",
+            "type": "string"
+          },
+          "tool_arguments": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "工具 Arguments"
+          }
+        },
+        "required": [
+          "id",
+          "created_at",
+          "message_type",
+          "role",
+          "status",
+          "content"
+        ],
+        "title": "API 会话 历史 条目 响应",
+        "type": "object"
+      },
+      "ApiConversationHistoryResponse": {
+        "properties": {
+          "counts_by_type": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "计数 按 类型",
+            "type": "object"
+          },
+          "displayed": {
+            "title": "Displayed",
+            "type": "integer"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiConversationHistoryItemResponse"
+            },
+            "title": "条目",
+            "type": "array"
+          },
+          "limit": {
+            "title": "限制",
+            "type": "integer"
+          },
+          "total_persisted": {
+            "title": "总数 Persisted",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total_persisted",
+          "displayed",
+          "limit",
+          "counts_by_type",
+          "items"
+        ],
+        "title": "API 会话 历史 响应",
+        "type": "object"
+      },
+      "ApiMemoryBlockUpdateResponse": {
+        "properties": {
+          "agent_id": {
+            "title": "智能体 ID",
+            "type": "string"
+          },
+          "block_label": {
+            "title": "记忆块标签",
+            "type": "string"
+          },
+          "description": {
+            "title": "描述",
+            "type": "string"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "限制"
+          },
+          "value_after": {
+            "title": "值 变更后",
+            "type": "string"
+          },
+          "value_before": {
+            "title": "值 变更前",
+            "type": "string"
+          }
+        },
+        "required": [
+          "agent_id",
+          "block_label",
+          "value_before",
+          "value_after",
+          "description"
+        ],
+        "title": "API 记忆 块 更新 响应",
+        "type": "object"
+      },
+      "ApiModelUpdateResponse": {
+        "properties": {
+          "agent_id": {
+            "title": "智能体 ID",
+            "type": "string"
+          },
+          "model_after": {
+            "title": "模型 变更后",
+            "type": "string"
+          },
+          "model_before": {
+            "title": "模型 变更前",
+            "type": "string"
+          },
+          "system": {
+            "title": "系统提示词",
+            "type": "string"
+          }
+        },
+        "required": [
+          "agent_id",
+          "model_before",
+          "model_after",
+          "system"
+        ],
+        "title": "API 模型 更新 响应",
+        "type": "object"
+      },
+      "ApiOptionEntryResponse": {
+        "properties": {
+          "available": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "可用"
+          },
+          "description": {
+            "title": "描述",
+            "type": "string"
+          },
+          "is_default": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Is 默认"
+          },
+          "key": {
+            "title": "键",
+            "type": "string"
+          },
+          "label": {
+            "title": "标签",
+            "type": "string"
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "enum": [
+                  "chat",
+                  "comment"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "场景"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "description"
+        ],
+        "title": "API 选项 条目 响应",
+        "type": "object"
+      },
+      "ApiOptionsDefaultsResponse": {
+        "properties": {
+          "embedding": {
+            "title": "向量模型",
+            "type": "string"
+          },
+          "model": {
+            "title": "模型",
+            "type": "string"
+          },
+          "persona_key": {
+            "title": "Persona 键",
+            "type": "string"
+          },
+          "prompt_key": {
+            "title": "提示词键",
+            "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario",
+          "model",
+          "prompt_key",
+          "persona_key",
+          "embedding"
+        ],
+        "title": "API 选项 默认值 响应",
+        "type": "object"
+      },
+      "ApiOptionsResponse": {
+        "properties": {
+          "commenting": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiCommentingRuntimeDefaultsResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "defaults": {
+            "$ref": "#/components/schemas/ApiOptionsDefaultsResponse"
+          },
+          "embeddings": {
+            "items": {
+              "$ref": "#/components/schemas/ApiOptionEntryResponse"
+            },
+            "title": "Embeddings",
+            "type": "array"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ApiOptionEntryResponse"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "personas": {
+            "items": {
+              "$ref": "#/components/schemas/ApiOptionEntryResponse"
+            },
+            "title": "Persona 列表",
+            "type": "array"
+          },
+          "prompts": {
+            "items": {
+              "$ref": "#/components/schemas/ApiOptionEntryResponse"
+            },
+            "title": "提示词列表",
+            "type": "array"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario",
+          "models",
+          "embeddings",
+          "prompts",
+          "personas",
+          "defaults"
+        ],
+        "title": "API 选项 响应",
+        "type": "object"
+      },
+      "ApiPersistentAgentSummaryResponse": {
+        "properties": {
+          "agent_type": {
+            "title": "智能体类型",
+            "type": "string"
+          },
+          "context_window_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "上下文窗口限制"
+          },
+          "created_at": {
+            "title": "创建时间",
+            "type": "string"
+          },
+          "embedding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "向量模型"
+          },
+          "id": {
+            "title": "ID",
+            "type": "string"
+          },
+          "last_updated_at": {
+            "title": "最近更新时间",
+            "type": "string"
+          },
+          "model": {
+            "title": "模型",
+            "type": "string"
+          },
+          "name": {
+            "title": "名称",
+            "type": "string"
+          },
+          "tool_rules": {
+            "title": "工具规则",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "agent_type",
+          "model",
+          "created_at",
+          "last_updated_at",
+          "tool_rules"
+        ],
+        "title": "API 持久化 智能体 摘要 响应",
+        "type": "object"
+      },
+      "ApiPersistentMemoryBlockResponse": {
+        "properties": {
+          "description": {
+            "title": "描述",
+            "type": "string"
+          },
+          "label": {
+            "title": "标签",
+            "type": "string"
+          },
+          "limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "限制"
+          },
+          "value": {
+            "title": "值",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "description",
+          "value"
+        ],
+        "title": "API 持久化 记忆 块 响应",
+        "type": "object"
+      },
+      "ApiPersistentStateResponse": {
+        "properties": {
+          "agent": {
+            "$ref": "#/components/schemas/ApiPersistentAgentSummaryResponse"
+          },
+          "conversation_history": {
+            "$ref": "#/components/schemas/ApiConversationHistoryResponse"
+          },
+          "memory_blocks": {
+            "items": {
+              "$ref": "#/components/schemas/ApiPersistentMemoryBlockResponse"
+            },
+            "title": "记忆 记忆块",
+            "type": "array"
+          },
+          "source": {
+            "title": "来源",
+            "type": "string"
+          },
+          "tools": {
+            "items": {
+              "$ref": "#/components/schemas/ApiPersistentToolResponse"
+            },
+            "title": "工具",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source",
+          "agent",
+          "memory_blocks",
+          "tools",
+          "conversation_history"
+        ],
+        "title": "API 持久化 状态 响应",
+        "type": "object"
+      },
+      "ApiPersistentToolResponse": {
+        "properties": {
+          "description": {
+            "title": "描述",
+            "type": "string"
+          },
+          "id": {
+            "title": "ID",
+            "type": "string"
+          },
+          "name": {
+            "title": "名称",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description"
+        ],
+        "title": "API 持久化 工具 响应",
+        "type": "object"
+      },
+      "ApiPersonaMetadataResponse": {
+        "properties": {
+          "key": {
+            "title": "键",
+            "type": "string"
+          },
+          "length": {
+            "title": "长度",
+            "type": "integer"
+          },
+          "preview": {
+            "title": "预览",
+            "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario",
+          "key",
+          "preview",
+          "length"
+        ],
+        "title": "API Persona 元数据 响应",
+        "type": "object"
+      },
+      "ApiPlatformCapabilitiesResponse": {
+        "properties": {
+          "control": {
+            "$ref": "#/components/schemas/ApiPlatformControlCapabilitiesResponse"
+          },
+          "enabled": {
+            "title": "Enabled",
+            "type": "boolean"
+          },
+          "missing_required": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Missing Required",
+            "type": "array"
+          },
+          "runtime": {
+            "$ref": "#/components/schemas/ApiPlatformRuntimeCapabilitiesResponse"
+          },
+          "sdk": {
+            "$ref": "#/components/schemas/ApiPlatformSdkCapabilitiesResponse"
+          },
+          "strict_mode": {
+            "title": "Strict Mode",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "enabled",
+          "strict_mode",
+          "missing_required",
+          "runtime",
+          "control",
+          "sdk"
+        ],
+        "title": "API 平台 能力 响应",
+        "type": "object"
+      },
+      "ApiPlatformControlCapabilitiesResponse": {
+        "properties": {
+          "attach_tool": {
+            "title": "挂载 工具",
+            "type": "boolean"
+          },
+          "detach_tool": {
+            "title": "卸载 工具",
+            "type": "boolean"
+          },
+          "update_agent_model": {
+            "title": "更新 智能体 模型",
+            "type": "boolean"
+          },
+          "update_core_memory_block": {
+            "title": "更新 核心 记忆 块",
+            "type": "boolean"
+          },
+          "update_system_prompt": {
+            "title": "更新 系统 提示词",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "update_system_prompt",
+          "update_agent_model",
+          "update_core_memory_block",
+          "attach_tool",
+          "detach_tool"
+        ],
+        "title": "API 平台 控制 能力 响应",
+        "type": "object"
+      },
+      "ApiPlatformRuntimeCapabilitiesResponse": {
+        "properties": {
+          "per_request_model_override": {
+            "title": "Per 请求 模型 Override",
+            "type": "boolean"
+          },
+          "per_request_model_override_via_extra_body": {
+            "title": "Per 请求 模型 Override Via Extra Body",
+            "type": "boolean"
+          },
+          "per_request_system_override": {
+            "title": "Per 请求 系统 Override",
+            "type": "boolean"
+          },
+          "per_request_system_override_via_extra_body": {
+            "title": "Per 请求 系统 Override Via Extra Body",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "per_request_model_override",
+          "per_request_model_override_via_extra_body",
+          "per_request_system_override",
+          "per_request_system_override_via_extra_body"
+        ],
+        "title": "API 平台 运行时 能力 响应",
+        "type": "object"
+      },
+      "ApiPlatformSdkCapabilitiesResponse": {
+        "properties": {
+          "agents_update_params": {
+            "items": {
+              "type": "string"
+            },
+            "title": "智能体 更新 参数",
+            "type": "array"
+          },
+          "blocks_update_params": {
+            "items": {
+              "type": "string"
+            },
+            "title": "记忆块 更新 参数",
+            "type": "array"
+          },
+          "messages_create_params": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Messages 创建 参数",
+            "type": "array"
+          }
+        },
+        "required": [
+          "messages_create_params",
+          "agents_update_params",
+          "blocks_update_params"
+        ],
+        "title": "API 平台 SDK 能力 响应",
+        "type": "object"
+      },
+      "ApiPlatformToolListResponse": {
+        "properties": {
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "智能体 ID"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiPlatformToolResponse"
+            },
+            "title": "条目",
+            "type": "array"
+          },
+          "limit": {
+            "title": "限制",
+            "type": "integer"
+          },
+          "search": {
+            "title": "搜索",
+            "type": "string"
+          },
+          "total": {
+            "title": "总数",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "search",
+          "limit",
+          "items"
+        ],
+        "title": "API 平台 工具 列表 响应",
+        "type": "object"
+      },
+      "ApiPlatformToolResponse": {
+        "properties": {
+          "archived": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "已归档"
+          },
+          "attached_to_agent": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "已挂载 到 智能体"
+          },
+          "created_at": {
+            "title": "创建时间",
+            "type": "string"
+          },
+          "description": {
+            "title": "描述",
+            "type": "string"
+          },
+          "id": {
+            "title": "ID",
+            "type": "string"
+          },
+          "last_updated_at": {
+            "title": "最近更新时间",
+            "type": "string"
+          },
+          "managed": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "受管"
+          },
+          "name": {
+            "title": "名称",
+            "type": "string"
+          },
+          "read_only": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "只读"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          },
+          "source_type": {
+            "title": "来源类型",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "标签",
+            "type": "array"
+          },
+          "tool_type": {
+            "title": "工具类型",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "tool_type",
+          "source_type",
+          "created_at",
+          "last_updated_at",
+          "tags"
+        ],
+        "title": "API 平台 工具 响应",
+        "type": "object"
+      },
+      "ApiPlatformToolTestInvokeResponse": {
+        "properties": {
+          "agent_id": {
+            "title": "智能体 ID",
+            "type": "string"
+          },
+          "expected_tool_matched": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "期望 工具 Matched"
+          },
+          "expected_tool_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "期望工具名称"
+          },
+          "input": {
+            "title": "输入",
+            "type": "string"
+          },
+          "result": {
+            "additionalProperties": true,
+            "title": "结果",
+            "type": "object"
+          },
+          "tool_call_count": {
+            "title": "工具 调用 Count",
+            "type": "integer"
+          },
+          "tool_return_count": {
+            "title": "工具 返回 Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "agent_id",
+          "input",
+          "tool_call_count",
+          "tool_return_count",
+          "result"
+        ],
+        "title": "API 平台 工具 测试 调用 响应",
+        "type": "object"
+      },
+      "ApiPromptMetadataResponse": {
+        "properties": {
+          "description": {
+            "title": "描述",
+            "type": "string"
+          },
+          "key": {
+            "title": "键",
+            "type": "string"
+          },
+          "label": {
+            "title": "标签",
+            "type": "string"
+          },
+          "length": {
+            "title": "长度",
+            "type": "integer"
+          },
+          "preview": {
+            "title": "预览",
+            "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario",
+          "key",
+          "label",
+          "description",
+          "preview",
+          "length"
+        ],
+        "title": "API 提示词 元数据 响应",
+        "type": "object"
+      },
+      "ApiPromptPersonaDefaultResponse": {
+        "properties": {
+          "persona_key": {
+            "title": "Persona 键",
+            "type": "string"
+          },
+          "prompt_key": {
+            "title": "提示词键",
+            "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scenario",
+          "prompt_key",
+          "persona_key"
+        ],
+        "title": "API 提示词 Persona 默认 响应",
+        "type": "object"
+      },
+      "ApiPromptPersonaMetadataResponse": {
+        "properties": {
+          "defaults": {
+            "$ref": "#/components/schemas/ApiPromptPersonaDefaultResponse"
+          },
+          "personas": {
+            "items": {
+              "$ref": "#/components/schemas/ApiPersonaMetadataResponse"
+            },
+            "title": "Persona 列表",
+            "type": "array"
+          },
+          "prompts": {
+            "items": {
+              "$ref": "#/components/schemas/ApiPromptMetadataResponse"
+            },
+            "title": "提示词列表",
+            "type": "array"
+          }
+        },
+        "required": [
+          "defaults",
+          "prompts",
+          "personas"
+        ],
+        "title": "提示词与 Persona 元数据响应",
+        "type": "object"
+      },
+      "ApiPromptPersonaRevisionResponse": {
+        "properties": {
+          "after": {
+            "title": "变更后",
+            "type": "string"
+          },
+          "after_length": {
+            "title": "变更后 长度",
+            "type": "integer"
+          },
+          "after_preview": {
+            "title": "变更后 预览",
+            "type": "string"
+          },
+          "agent_id": {
+            "title": "智能体 ID",
+            "type": "string"
+          },
+          "before": {
+            "title": "变更前",
+            "type": "string"
+          },
+          "before_length": {
+            "title": "变更前 长度",
+            "type": "integer"
+          },
+          "before_preview": {
+            "title": "变更前 预览",
+            "type": "string"
+          },
+          "delta_length": {
+            "title": "变化 长度",
+            "type": "integer"
+          },
+          "field": {
+            "title": "字段",
+            "type": "string"
+          },
+          "recorded_at": {
+            "title": "Recorded At",
+            "type": "string"
+          },
+          "revision_id": {
+            "title": "修订 ID",
+            "type": "string"
+          },
+          "source": {
+            "title": "来源",
+            "type": "string"
+          }
+        },
+        "required": [
+          "revision_id",
+          "recorded_at",
+          "agent_id",
+          "field",
+          "source",
+          "before",
+          "after",
+          "before_preview",
+          "after_preview",
+          "before_length",
+          "after_length",
+          "delta_length"
+        ],
+        "title": "提示词与 Persona 修订响应",
+        "type": "object"
+      },
+      "ApiPromptPersonaRevisionsResponse": {
+        "properties": {
+          "agent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "智能体 ID"
+          },
+          "field": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "字段"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiPromptPersonaRevisionResponse"
+            },
+            "title": "条目",
+            "type": "array"
+          },
+          "limit": {
+            "title": "限制",
+            "type": "integer"
+          },
+          "total": {
+            "title": "总数",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "limit",
+          "items"
+        ],
+        "title": "API 提示词 Persona 修订 响应",
+        "type": "object"
+      },
+      "ApiRawPromptMessageResponse": {
+        "properties": {
+          "content": {
+            "title": "内容",
+            "type": "string"
+          },
+          "role": {
+            "title": "角色",
+            "type": "string"
+          }
+        },
+        "required": [
+          "role",
+          "content"
+        ],
+        "title": "API 原始 提示词 消息 响应",
+        "type": "object"
+      },
+      "ApiRawPromptResponse": {
+        "properties": {
+          "messages": {
+            "items": {
+              "$ref": "#/components/schemas/ApiRawPromptMessageResponse"
+            },
+            "title": "Messages",
+            "type": "array"
+          }
+        },
+        "required": [
+          "messages"
+        ],
+        "title": "API 原始 提示词 响应",
+        "type": "object"
+      },
+      "ApiRuntimeMessageResponse": {
+        "properties": {
+          "agent_id": {
+            "title": "智能体 ID",
+            "type": "string"
+          },
+          "override_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "覆盖模型"
+          },
+          "override_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "覆盖系统提示词"
+          },
+          "result": {
+            "additionalProperties": true,
+            "title": "结果",
+            "type": "object"
+          }
+        },
+        "required": [
+          "agent_id",
+          "result"
+        ],
+        "title": "API 运行时 消息 响应",
+        "type": "object"
+      },
+      "ApiSystemUpdateResponse": {
+        "properties": {
+          "agent_id": {
+            "title": "智能体 ID",
+            "type": "string"
+          },
+          "model": {
+            "title": "模型",
+            "type": "string"
+          },
+          "system_after": {
+            "title": "系统 变更后",
+            "type": "string"
+          },
+          "system_before": {
+            "title": "系统 变更前",
+            "type": "string"
+          }
+        },
+        "required": [
+          "agent_id",
+          "model",
+          "system_before",
+          "system_after"
+        ],
+        "title": "API 系统 更新 响应",
+        "type": "object"
+      },
+      "ApiTemplateListResponse": {
+        "properties": {
+          "include_archived": {
+            "title": "包含已归档",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+            },
+            "title": "条目",
+            "type": "array"
+          },
+          "scenario": {
+            "anyOf": [
+              {
+                "enum": [
+                  "chat",
+                  "comment"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "场景"
+          },
+          "total": {
+            "title": "总数",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "include_archived",
+          "items"
+        ],
+        "title": "API 模板 列表 响应",
+        "type": "object"
+      },
+      "ApiTemplateRecordResponse": {
+        "properties": {
+          "archived": {
+            "title": "已归档",
+            "type": "boolean"
+          },
+          "content": {
+            "title": "内容",
+            "type": "string"
+          },
+          "description": {
+            "title": "描述",
+            "type": "string"
+          },
+          "key": {
+            "title": "键",
+            "type": "string"
+          },
+          "kind": {
+            "title": "类别",
+            "type": "string"
+          },
+          "label": {
+            "title": "标签",
+            "type": "string"
+          },
+          "length": {
+            "title": "长度",
+            "type": "integer"
+          },
+          "preview": {
+            "title": "预览",
+            "type": "string"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          },
+          "source_path": {
+            "title": "来源路径",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "更新时间",
+            "type": "string"
+          }
+        },
+        "required": [
+          "kind",
+          "scenario",
+          "key",
+          "label",
+          "description",
+          "content",
+          "preview",
+          "length",
+          "archived",
+          "source_path",
+          "updated_at"
+        ],
+        "title": "API 模板 记录 响应",
+        "type": "object"
+      },
+      "ApiTestArtifactListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiTestArtifactResponse"
+            },
+            "title": "条目",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "运行 ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "items"
+        ],
+        "title": "API 测试 产物 列表 响应",
+        "type": "object"
+      },
+      "ApiTestArtifactReadResponse": {
+        "properties": {
+          "artifact": {
+            "$ref": "#/components/schemas/ApiTestArtifactResponse"
+          },
+          "content": {
+            "title": "内容",
+            "type": "string"
+          },
+          "line_count": {
+            "title": "Line Count",
+            "type": "integer"
+          },
+          "run_id": {
+            "title": "运行 ID",
+            "type": "string"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "run_id",
+          "artifact",
+          "content",
+          "truncated",
+          "line_count"
+        ],
+        "title": "API 测试 产物 读取 响应",
+        "type": "object"
+      },
+      "ApiTestArtifactResponse": {
+        "properties": {
+          "artifact_id": {
+            "title": "产物 ID",
+            "type": "string"
+          },
+          "exists": {
+            "title": "Exists",
+            "type": "boolean"
+          },
+          "path": {
+            "title": "路径",
+            "type": "string"
+          },
+          "size_bytes": {
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "type": {
+            "title": "类型",
+            "type": "string"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "type",
+          "path",
+          "exists",
+          "size_bytes"
+        ],
+        "title": "API 测试 产物 响应",
+        "type": "object"
+      },
+      "ApiTestRunListResponse": {
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiTestRunRecordResponse"
+            },
+            "title": "条目",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "测试运行列表响应",
+        "type": "object"
+      },
+      "ApiTestRunRecordResponse": {
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/ApiTestArtifactResponse"
+            },
+            "title": "产物",
+            "type": "array"
+          },
+          "cancel_requested": {
+            "title": "取消 Requested",
+            "type": "boolean"
+          },
+          "command": {
+            "items": {
+              "type": "string"
+            },
+            "title": "命令",
+            "type": "array"
+          },
+          "created_at": {
+            "title": "创建时间",
+            "type": "string"
+          },
+          "error": {
+            "title": "错误",
+            "type": "string"
+          },
+          "exit_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Exit 源码"
+          },
+          "finished_at": {
+            "title": "Finished At",
+            "type": "string"
+          },
+          "log_file": {
+            "title": "Log File",
+            "type": "string"
+          },
+          "output_tail": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Output Tail",
+            "type": "array"
+          },
+          "run_id": {
+            "title": "运行 ID",
+            "type": "string"
+          },
+          "run_type": {
+            "title": "运行类型",
+            "type": "string"
+          },
+          "started_at": {
+            "title": "Started At",
+            "type": "string"
+          },
+          "status": {
+            "title": "状态",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_id",
+          "run_type",
+          "status",
+          "command",
+          "created_at",
+          "started_at",
+          "finished_at",
+          "log_file",
+          "cancel_requested",
+          "error"
+        ],
+        "title": "API 测试 运行 记录 响应",
+        "type": "object"
+      },
+      "ApiToolAttachDetachResponse": {
+        "properties": {
+          "agent_id": {
+            "title": "智能体 ID",
+            "type": "string"
+          },
+          "tool_count_after": {
+            "title": "工具 Count 变更后",
+            "type": "integer"
+          },
+          "tool_count_before": {
+            "title": "工具 Count 变更前",
+            "type": "integer"
+          },
+          "tool_id": {
+            "title": "工具 ID",
+            "type": "string"
+          },
+          "tool_is_attached": {
+            "title": "工具 Is 已挂载",
+            "type": "boolean"
+          },
+          "tool_was_attached": {
+            "title": "工具 Was 已挂载",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "agent_id",
+          "tool_id",
+          "tool_was_attached",
+          "tool_is_attached",
+          "tool_count_before",
+          "tool_count_after"
+        ],
+        "title": "API 工具 挂载 卸载 响应",
+        "type": "object"
+      },
+      "ApiToolCenterItemResponse": {
+        "properties": {
+          "archived": {
+            "title": "已归档",
+            "type": "boolean"
+          },
+          "archived_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "归档时间"
+          },
+          "created_at": {
+            "default": "",
+            "title": "创建时间",
+            "type": "string"
+          },
+          "description": {
+            "title": "描述",
+            "type": "string"
+          },
+          "last_updated_at": {
+            "default": "",
+            "title": "最近更新时间",
+            "type": "string"
+          },
+          "managed": {
+            "title": "受管",
+            "type": "boolean"
+          },
+          "name": {
+            "title": "名称",
+            "type": "string"
+          },
+          "read_only": {
+            "title": "只读",
+            "type": "boolean"
+          },
+          "slug": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Slug"
+          },
+          "source_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "源码"
+          },
+          "source_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "来源路径"
+          },
+          "source_type": {
+            "title": "来源类型",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "标签",
+            "type": "array"
+          },
+          "tool_id": {
+            "title": "工具 ID",
+            "type": "string"
+          },
+          "tool_type": {
+            "title": "工具类型",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "更新时间"
+          }
+        },
+        "required": [
+          "tool_id",
+          "name",
+          "description",
+          "tool_type",
+          "source_type",
+          "managed",
+          "read_only",
+          "archived"
+        ],
+        "title": "API 工具 中心 条目 响应",
+        "type": "object"
+      },
+      "ApiToolCenterListResponse": {
+        "properties": {
+          "include_archived": {
+            "title": "包含已归档",
+            "type": "boolean"
+          },
+          "include_builtin": {
+            "title": "包含内置",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+            },
+            "title": "条目",
+            "type": "array"
+          },
+          "total": {
+            "title": "总数",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "include_archived",
+          "include_builtin",
+          "items"
+        ],
+        "title": "API 工具 中心 列表 响应",
+        "type": "object"
+      },
+      "ChatRequest": {
+        "properties": {
+          "agent_id": {
+            "title": "智能体 ID",
+            "type": "string"
+          },
+          "message": {
+            "title": "消息",
+            "type": "string"
+          }
+        },
+        "required": [
+          "agent_id",
+          "message"
+        ],
+        "title": "对话 请求",
+        "type": "object"
+      },
+      "CommentingGenerateRequest": {
+        "properties": {
+          "input": {
+            "title": "输入",
+            "type": "string"
+          },
+          "max_tokens": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "最大 Token 数"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "模型"
+          },
+          "persona_key": {
+            "default": "comment_linxiaotang",
+            "title": "Persona 键",
+            "type": "string"
+          },
+          "prompt_key": {
+            "default": "comment_v20260418",
+            "title": "提示词键",
+            "type": "string"
+          },
+          "scenario": {
+            "default": "comment",
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          },
+          "task_shape": {
+            "anyOf": [
+              {
+                "enum": [
+                  "compact",
+                  "all_in_system",
+                  "structured_output"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "任务形态"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "超时秒数"
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "title": "评论 生成 请求",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTP 校验错误",
+        "type": "object"
+      },
+      "PersonaTemplatePatchRequest": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "内容"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "描述"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "标签"
+          }
+        },
+        "title": "Persona 模板 Patch 请求",
+        "type": "object"
+      },
+      "PersonaTemplateWriteRequest": {
+        "properties": {
+          "content": {
+            "title": "内容",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "描述",
+            "type": "string"
+          },
+          "key": {
+            "title": "键",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "title": "标签",
+            "type": "string"
+          },
+          "scenario": {
+            "default": "chat",
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "content"
+        ],
+        "title": "Persona 模板 Write 请求",
+        "type": "object"
+      },
+      "PlatformMemoryBlockUpdateRequest": {
+        "properties": {
+          "value": {
+            "title": "值",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "平台 记忆 块 更新 请求",
+        "type": "object"
+      },
+      "PlatformModelUpdateRequest": {
+        "properties": {
+          "model": {
+            "title": "模型",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model"
+        ],
+        "title": "平台 模型 更新 请求",
+        "type": "object"
+      },
+      "PlatformRuntimeMessageRequest": {
+        "properties": {
+          "input": {
+            "title": "输入",
+            "type": "string"
+          },
+          "override_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "覆盖模型"
+          },
+          "override_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "覆盖系统提示词"
+          }
+        },
+        "required": [
+          "input"
+        ],
+        "title": "平台 运行时 消息 请求",
+        "type": "object"
+      },
+      "PlatformSystemUpdateRequest": {
+        "properties": {
+          "system": {
+            "title": "系统提示词",
+            "type": "string"
+          }
+        },
+        "required": [
+          "system"
+        ],
+        "title": "平台 系统 更新 请求",
+        "type": "object"
+      },
+      "PlatformTestRunRequest": {
+        "properties": {
+          "config_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "配置 路径"
+          },
+          "embedding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "向量模型"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "模型"
+          },
+          "rounds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rounds"
+          },
+          "run_type": {
+            "enum": [
+              "agent_bootstrap_check",
+              "provider_embedding_matrix_check",
+              "prompt_strategy_check",
+              "platform_api_e2e_check",
+              "ade_mvp_smoke_e2e_check",
+              "platform_flag_gate_check",
+              "platform_dual_run_gate",
+              "persona_guardrail_runner",
+              "memory_update_runner"
+            ],
+            "title": "运行类型",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_type"
+        ],
+        "title": "平台 测试 运行 请求",
+        "type": "object"
+      },
+      "PlatformToolTestInvokeRequest": {
+        "properties": {
+          "agent_id": {
+            "title": "智能体 ID",
+            "type": "string"
+          },
+          "expected_tool_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "期望工具名称"
+          },
+          "input": {
+            "title": "输入",
+            "type": "string"
+          },
+          "override_model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "覆盖模型"
+          },
+          "override_system": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "覆盖系统提示词"
+          }
+        },
+        "required": [
+          "agent_id",
+          "input"
+        ],
+        "title": "平台 工具 测试 调用 请求",
+        "type": "object"
+      },
+      "PromptTemplatePatchRequest": {
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "内容"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "描述"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "标签"
+          }
+        },
+        "title": "提示词 模板 Patch 请求",
+        "type": "object"
+      },
+      "PromptTemplateWriteRequest": {
+        "properties": {
+          "content": {
+            "title": "内容",
+            "type": "string"
+          },
+          "description": {
+            "default": "",
+            "title": "描述",
+            "type": "string"
+          },
+          "key": {
+            "title": "键",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "title": "标签",
+            "type": "string"
+          },
+          "scenario": {
+            "default": "chat",
+            "enum": [
+              "chat",
+              "comment"
+            ],
+            "title": "场景",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "content"
+        ],
+        "title": "提示词 模板 Write 请求",
+        "type": "object"
+      },
+      "ToolCenterCreateRequest": {
+        "properties": {
+          "default_requires_approval": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "默认需要审批"
+          },
+          "description": {
+            "default": "",
+            "title": "描述",
+            "type": "string"
+          },
+          "enable_parallel_execution": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "启用并行执行"
+          },
+          "npm_requirements": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "NPM 依赖"
+          },
+          "pip_requirements": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pip 依赖"
+          },
+          "return_char_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "返回字符上限"
+          },
+          "slug": {
+            "title": "Slug",
+            "type": "string"
+          },
+          "source_code": {
+            "title": "源码",
+            "type": "string"
+          },
+          "source_type": {
+            "default": "python",
+            "title": "来源类型",
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "title": "标签",
+            "type": "array"
+          }
+        },
+        "required": [
+          "slug",
+          "source_code"
+        ],
+        "title": "工具 中心 创建 请求",
+        "type": "object"
+      },
+      "ToolCenterUpdateRequest": {
+        "properties": {
+          "default_requires_approval": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "默认需要审批"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "描述"
+          },
+          "enable_parallel_execution": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "启用并行执行"
+          },
+          "npm_requirements": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "NPM 依赖"
+          },
+          "pip_requirements": {
+            "anyOf": [
+              {
+                "items": {
+                  "additionalProperties": true,
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pip 依赖"
+          },
+          "return_char_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "返回字符上限"
+          },
+          "source_code": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "源码"
+          },
+          "source_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "来源类型"
+          },
+          "tags": {
+            "anyOf": [
+              {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "标签"
+          }
+        },
+        "title": "工具 中心 更新 请求",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "上下文",
+            "type": "object"
+          },
+          "input": {
+            "title": "输入"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "消息",
+            "type": "string"
+          },
+          "type": {
+            "title": "错误 类型",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "校验错误",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "提供用于 Agent Platform 运行时/控制/测试编排的版本化 Dev API 路由。面向后端优先的 API 调用，并用于 ADE 前端集成。",
+    "summary": "本地 Agent Platform 开发的运行时与控制 API",
+    "title": "Agent Platform 开发 API",
+    "version": "0.2.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "read_index__get",
+        "responses": {
+          "200": {
+            "content": {
+              "text/html": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "description": "成功响应"
+          }
+        },
+        "summary": "读取索引"
+      }
+    },
+    "/api/v1/agents": {
+      "get": {
+        "description": "列出已有智能体，供 UI 拉取并检查历史状态。",
+        "operationId": "api_list_agents_api_v1_agents_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "title": "限制",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_last_interaction",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "包含 最近 交互",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "包含已归档",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAgentListResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "API 列出智能体"
+      },
+      "post": {
+        "operationId": "api_create_agent_api_v1_agents_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAgentCreateResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "API 创建智能体"
+      }
+    },
+    "/api/v1/agents/{agent_id}": {
+      "delete": {
+        "operationId": "api_delete_agent_api_v1_agents__agent_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAgentPurgeResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "删除已归档智能体（硬删除）",
+        "tags": [
+          "platform-control"
+        ]
+      }
+    },
+    "/api/v1/agents/{agent_id}/details": {
+      "get": {
+        "operationId": "api_get_agent_details_api_v1_agents__agent_id__details_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAgentDetailsResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "API 获取智能体详情"
+      }
+    },
+    "/api/v1/agents/{agent_id}/persistent_state": {
+      "get": {
+        "description": "返回 Letta 后端存储（通过 Letta API 访问 Postgres/pgvector）中的持久化状态：\n- 智能体元数据\n- 记忆块\n- 已挂载工具\n- 持久化会话历史",
+        "operationId": "api_get_agent_persistent_state_api_v1_agents__agent_id__persistent_state_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 120,
+              "title": "限制",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_system",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "包含 系统",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiPersistentStateResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "API 获取智能体持久化状态"
+      }
+    },
+    "/api/v1/agents/{agent_id}/raw_prompt": {
+      "get": {
+        "operationId": "api_get_raw_prompt_api_v1_agents__agent_id__raw_prompt_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiRawPromptResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "API 获取原始提示词"
+      }
+    },
+    "/api/v1/chat": {
+      "post": {
+        "operationId": "api_chat_api_v1_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiChatResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "API 对话"
+      }
+    },
+    "/api/v1/commenting/generate": {
+      "post": {
+        "operationId": "api_commenting_generate_api_v1_commenting_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CommentingGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiCommentingGenerateResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "生成用于新闻/评论线程的无状态评论",
+        "tags": [
+          "commenting"
+        ]
+      }
+    },
+    "/api/v1/options": {
+      "get": {
+        "operationId": "api_get_options_api_v1_options_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Refresh",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "default": "chat",
+              "title": "场景",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiOptionsResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "API 获取选项"
+      }
+    },
+    "/api/v1/platform/agents/{agent_id}/archive": {
+      "post": {
+        "operationId": "api_platform_archive_agent_api_v1_platform_agents__agent_id__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAgentLifecycleResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "归档智能体（软删除）",
+        "tags": [
+          "platform-control"
+        ]
+      }
+    },
+    "/api/v1/platform/agents/{agent_id}/core-memory/blocks/{block_label}": {
+      "patch": {
+        "operationId": "api_platform_update_memory_block_api_v1_platform_agents__agent_id__core_memory_blocks__block_label__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "block_label",
+            "required": true,
+            "schema": {
+              "title": "记忆块标签",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformMemoryBlockUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiMemoryBlockUpdateResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "更新核心记忆块值",
+        "tags": [
+          "platform-control"
+        ]
+      }
+    },
+    "/api/v1/platform/agents/{agent_id}/messages": {
+      "post": {
+        "operationId": "api_platform_send_message_api_v1_platform_agents__agent_id__messages_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformRuntimeMessageRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiRuntimeMessageResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "发送运行时消息（支持可选覆盖参数）",
+        "tags": [
+          "platform-runtime"
+        ]
+      }
+    },
+    "/api/v1/platform/agents/{agent_id}/model": {
+      "patch": {
+        "operationId": "api_platform_update_model_api_v1_platform_agents__agent_id__model_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformModelUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiModelUpdateResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "更新已持久化智能体模型",
+        "tags": [
+          "platform-control"
+        ]
+      }
+    },
+    "/api/v1/platform/agents/{agent_id}/purge": {
+      "delete": {
+        "operationId": "api_platform_purge_agent_api_v1_platform_agents__agent_id__purge_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAgentPurgeResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "清除已归档智能体（硬删除）",
+        "tags": [
+          "platform-control"
+        ]
+      }
+    },
+    "/api/v1/platform/agents/{agent_id}/restore": {
+      "post": {
+        "operationId": "api_platform_restore_agent_api_v1_platform_agents__agent_id__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiAgentLifecycleResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "恢复已归档智能体",
+        "tags": [
+          "platform-control"
+        ]
+      }
+    },
+    "/api/v1/platform/agents/{agent_id}/system": {
+      "patch": {
+        "operationId": "api_platform_update_system_api_v1_platform_agents__agent_id__system_patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformSystemUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiSystemUpdateResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "更新已持久化系统提示词",
+        "tags": [
+          "platform-control"
+        ]
+      }
+    },
+    "/api/v1/platform/agents/{agent_id}/tools/attach/{tool_id}": {
+      "patch": {
+        "operationId": "api_platform_attach_tool_api_v1_platform_agents__agent_id__tools_attach__tool_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tool_id",
+            "required": true,
+            "schema": {
+              "title": "工具 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolAttachDetachResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "为智能体挂载工具",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/agents/{agent_id}/tools/detach/{tool_id}": {
+      "patch": {
+        "operationId": "api_platform_detach_tool_api_v1_platform_agents__agent_id__tools_detach__tool_id__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "agent_id",
+            "required": true,
+            "schema": {
+              "title": "智能体 ID",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "tool_id",
+            "required": true,
+            "schema": {
+              "title": "工具 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolAttachDetachResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "从智能体卸载工具",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/capabilities": {
+      "get": {
+        "operationId": "api_platform_capabilities_api_v1_platform_capabilities_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiPlatformCapabilitiesResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          }
+        },
+        "summary": "获取平台能力矩阵",
+        "tags": [
+          "platform-meta"
+        ]
+      }
+    },
+    "/api/v1/platform/metadata/prompts-personas": {
+      "get": {
+        "operationId": "api_platform_prompt_persona_metadata_api_v1_platform_metadata_prompts_personas_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "default": "chat",
+              "title": "场景",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiPromptPersonaMetadataResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "获取提示词与 Persona 元数据",
+        "tags": [
+          "platform-meta"
+        ]
+      }
+    },
+    "/api/v1/platform/metadata/prompts-personas/revisions": {
+      "get": {
+        "operationId": "api_platform_prompt_persona_revisions_api_v1_platform_metadata_prompts_personas_revisions_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "agent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "智能体 ID"
+            }
+          },
+          {
+            "in": "query",
+            "name": "field",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "字段"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 80,
+              "title": "限制",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiPromptPersonaRevisionsResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "获取提示词/Persona 修订历史时间线",
+        "tags": [
+          "platform-meta"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/personas": {
+      "get": {
+        "operationId": "api_prompt_center_list_personas_api_v1_platform_prompt_center_personas_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "包含已归档",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateListResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "列出 Persona 模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      },
+      "post": {
+        "operationId": "api_prompt_center_create_persona_api_v1_platform_prompt_center_personas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonaTemplateWriteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "创建 Persona 模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/personas/{key}": {
+      "get": {
+        "operationId": "api_prompt_center_get_persona_api_v1_platform_prompt_center_personas__key__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "键",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "已归档",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "获取 Persona 模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      },
+      "patch": {
+        "operationId": "api_prompt_center_update_persona_api_v1_platform_prompt_center_personas__key__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "键",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PersonaTemplatePatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "更新 Persona 模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/personas/{key}/archive": {
+      "post": {
+        "operationId": "api_prompt_center_archive_persona_api_v1_platform_prompt_center_personas__key__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "键",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "归档 Persona 模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/personas/{key}/purge": {
+      "delete": {
+        "operationId": "api_prompt_center_purge_persona_api_v1_platform_prompt_center_personas__key__purge_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "键",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "清除已归档 Persona 模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/personas/{key}/restore": {
+      "post": {
+        "operationId": "api_prompt_center_restore_persona_api_v1_platform_prompt_center_personas__key__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "键",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "恢复已归档 Persona 模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/prompts": {
+      "get": {
+        "operationId": "api_prompt_center_list_prompts_api_v1_platform_prompt_center_prompts_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "包含已归档",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateListResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "列出系统提示词模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      },
+      "post": {
+        "operationId": "api_prompt_center_create_prompt_api_v1_platform_prompt_center_prompts_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptTemplateWriteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "创建系统提示词模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/prompts/{key}": {
+      "get": {
+        "operationId": "api_prompt_center_get_prompt_api_v1_platform_prompt_center_prompts__key__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "键",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "已归档",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "获取系统提示词模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      },
+      "patch": {
+        "operationId": "api_prompt_center_update_prompt_api_v1_platform_prompt_center_prompts__key__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "键",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PromptTemplatePatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "更新系统提示词模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/prompts/{key}/archive": {
+      "post": {
+        "operationId": "api_prompt_center_archive_prompt_api_v1_platform_prompt_center_prompts__key__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "键",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "归档系统提示词模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/prompts/{key}/purge": {
+      "delete": {
+        "operationId": "api_prompt_center_purge_prompt_api_v1_platform_prompt_center_prompts__key__purge_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "键",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "清除已归档系统提示词模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/prompt-center/prompts/{key}/restore": {
+      "post": {
+        "operationId": "api_prompt_center_restore_prompt_api_v1_platform_prompt_center_prompts__key__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "键",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTemplateRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "恢复已归档系统提示词模板",
+        "tags": [
+          "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/test-runs": {
+      "get": {
+        "operationId": "api_platform_list_test_runs_api_v1_platform_test_runs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTestRunListResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          }
+        },
+        "summary": "列出编排测试运行",
+        "tags": [
+          "platform-tests"
+        ]
+      },
+      "post": {
+        "operationId": "api_platform_create_test_run_api_v1_platform_test_runs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformTestRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTestRunRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "创建编排测试运行",
+        "tags": [
+          "platform-tests"
+        ]
+      }
+    },
+    "/api/v1/platform/test-runs/{run_id}": {
+      "get": {
+        "operationId": "api_platform_get_test_run_api_v1_platform_test_runs__run_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "运行 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTestRunRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "获取编排测试运行",
+        "tags": [
+          "platform-tests"
+        ]
+      }
+    },
+    "/api/v1/platform/test-runs/{run_id}/artifacts": {
+      "get": {
+        "operationId": "api_platform_list_test_run_artifacts_api_v1_platform_test_runs__run_id__artifacts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "运行 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTestArtifactListResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "列出测试运行产物",
+        "tags": [
+          "platform-tests"
+        ]
+      }
+    },
+    "/api/v1/platform/test-runs/{run_id}/artifacts/{artifact_id}": {
+      "get": {
+        "operationId": "api_platform_read_test_run_artifact_api_v1_platform_test_runs__run_id__artifacts__artifact_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "运行 ID",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "产物 ID",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "max_lines",
+            "required": false,
+            "schema": {
+              "default": 400,
+              "title": "最大 Lines",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTestArtifactReadResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "读取测试运行产物内容",
+        "tags": [
+          "platform-tests"
+        ]
+      }
+    },
+    "/api/v1/platform/test-runs/{run_id}/cancel": {
+      "post": {
+        "operationId": "api_platform_cancel_test_run_api_v1_platform_test_runs__run_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_id",
+            "required": true,
+            "schema": {
+              "title": "运行 ID",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiTestRunRecordResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "取消编排测试运行",
+        "tags": [
+          "platform-tests"
+        ]
+      }
+    },
+    "/api/v1/platform/tool-center/tools": {
+      "get": {
+        "operationId": "api_tool_center_list_tools_api_v1_platform_tool_center_tools_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "包含已归档",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_builtin",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "包含内置",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_source",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "包含源码",
+              "type": "boolean"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "搜索",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterListResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "列出工具中心条目",
+        "tags": [
+          "platform-tools"
+        ]
+      },
+      "post": {
+        "operationId": "api_tool_center_create_tool_api_v1_platform_tool_center_tools_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolCenterCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "创建受管自定义工具",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/tool-center/tools/{slug}": {
+      "get": {
+        "operationId": "api_tool_center_get_tool_api_v1_platform_tool_center_tools__slug__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_source",
+            "required": false,
+            "schema": {
+              "default": true,
+              "title": "包含源码",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "获取工具中心受管自定义工具",
+        "tags": [
+          "platform-tools"
+        ]
+      },
+      "patch": {
+        "operationId": "api_tool_center_update_tool_api_v1_platform_tool_center_tools__slug__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ToolCenterUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "更新受管自定义工具",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/tool-center/tools/{slug}/archive": {
+      "post": {
+        "operationId": "api_tool_center_archive_tool_api_v1_platform_tool_center_tools__slug__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "归档受管自定义工具",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/tool-center/tools/{slug}/purge": {
+      "delete": {
+        "operationId": "api_tool_center_purge_tool_api_v1_platform_tool_center_tools__slug__purge_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "清除已归档受管自定义工具",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/tool-center/tools/{slug}/restore": {
+      "post": {
+        "operationId": "api_tool_center_restore_tool_api_v1_platform_tool_center_tools__slug__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "slug",
+            "required": true,
+            "schema": {
+              "title": "Slug",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiToolCenterItemResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "恢复已归档受管自定义工具",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/tools": {
+      "get": {
+        "operationId": "api_platform_list_tools_api_v1_platform_tools_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "default": "",
+              "title": "搜索",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 100,
+              "title": "限制",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "agent_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "智能体 ID"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiPlatformToolListResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "列出用于 Toolbench 发现的工具",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    },
+    "/api/v1/platform/tools/test-invoke": {
+      "post": {
+        "operationId": "api_platform_tool_test_invoke_api_v1_platform_tools_test_invoke_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PlatformToolTestInvokeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiPlatformToolTestInvokeResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "发送运行时消息以验证工具调用行为",
+        "tags": [
+          "platform-tools"
+        ]
+      }
+    }
+  },
+  "servers": [
+    {
+      "description": "Dev UI 本地服务",
+      "url": "http://127.0.0.1:8284"
+    }
+  ]
+}

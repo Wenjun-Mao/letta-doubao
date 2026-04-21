@@ -66,11 +66,17 @@ Common status patterns:
 ## Source of truth
 
 - OpenAPI artifact: `docs/openapi/agent-platform-openapi.json`
+- Frontend artifact: `frontend-ade/public/openapi/agent-platform-openapi.json`
+- Chinese OpenAPI artifact: `docs/openapi/agent-platform-openapi-zh.json`
+- Chinese docs pages: `docs/zh/`
 - Export script: `scripts/export_openapi.py`
-- Validation script: `scripts/validate_docs_config.py`
+- Manual zh script: `scripts/generate_openapi_zh_manual.py`
 
 ## Local workflow
 
 1. Regenerate OpenAPI artifact: `uv run python scripts/export_openapi.py`
-2. Validate docs config: `uv run python scripts/validate_docs_config.py --docs docs/docs.json`
-3. Validate drift only: `uv run python scripts/export_openapi.py --check`
+2. Regenerate Chinese OpenAPI artifact (manual curated): `uv run python scripts/generate_openapi_zh_manual.py`
+3. Review missing-term report: `docs/openapi/zh_openapi_missing_terms.json`
+4. Add only new/marginal mappings in `scripts/generate_openapi_zh_manual.py` and re-run step 2
+5. Update Chinese docs pages manually under `docs/zh/`
+6. Validate drift only: `uv run python scripts/export_openapi.py --check`

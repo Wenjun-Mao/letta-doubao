@@ -27,12 +27,37 @@ def _build_openapi_schema(project_root: Path) -> dict:
     return schema
 
 
+def _check_artifact(path: Path, rendered: str) -> bool:
+    if not path.exists():
+        print(f"[FAIL] Missing OpenAPI artifact: {path}")
+        return False
+
+    existing = path.read_text(encoding="utf-8")
+    if existing != rendered:
+        print(f"[FAIL] OpenAPI artifact is out of date: {path}")
+        return False
+
+    print(f"[OK] OpenAPI artifact is current: {path}")
+    return True
+
+
+def _write_artifact(path: Path, rendered: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(rendered, encoding="utf-8")
+    print(f"[OK] OpenAPI artifact written: {path}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Export canonical OpenAPI artifact for Agent Platform API.")
     parser.add_argument(
         "--output",
         default="docs/openapi/agent-platform-openapi.json",
         help="Output OpenAPI JSON file path.",
+    )
+    parser.add_argument(
+        "--frontend-output",
+        default="frontend-ade/public/openapi/agent-platform-openapi.json",
+        help="Secondary OpenAPI JSON path used by the ADE frontend.",
     )
     parser.add_argument(
         "--check",
@@ -43,29 +68,23 @@ def main() -> int:
 
     project_root = Path(__file__).resolve().parents[1]
     output_path = (project_root / args.output).resolve()
+    frontend_output_path = (project_root / args.frontend_output).resolve()
+    output_paths = [output_path, frontend_output_path]
 
     schema = _build_openapi_schema(project_root)
     rendered = _canonical_json(schema)
 
     if args.check:
-        if not output_path.exists():
-            print(f"[FAIL] Missing OpenAPI artifact: {output_path}")
+        results = [_check_artifact(path, rendered) for path in output_paths]
+        if not all(results):
             print("Run: uv run python scripts/export_openapi.py")
             return 1
 
-        existing = output_path.read_text(encoding="utf-8")
-        if existing != rendered:
-            print(f"[FAIL] OpenAPI artifact is out of date: {output_path}")
-            print("Run: uv run python scripts/export_openapi.py")
-            return 1
-
-        print(f"[OK] OpenAPI artifact is current: {output_path}")
         return 0
 
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(rendered, encoding="utf-8")
+    for path in output_paths:
+        _write_artifact(path, rendered)
 
-    print(f"[OK] OpenAPI artifact written: {output_path}")
     print(f"[INFO] paths={len(schema.get('paths', {}))} schemas={len(schema.get('components', {}).get('schemas', {}))}")
     return 0
 
