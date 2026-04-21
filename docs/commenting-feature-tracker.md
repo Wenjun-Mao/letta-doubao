@@ -72,5 +72,5 @@ This document tracks implementation progress for the stateless commenting capabi
 
 - 2026-04-19: Tracker initialized and aligned with current implementation status.
 - 2026-04-19: Added Comment Lab route, navigation wiring, and commenting provider env defaults. Frontend build passed; backend runtime verification is pending LM Studio response behavior with selected Qwen preset.
-- 2026-04-19: Closed the original connection-refused gap by wiring commenting env vars into `dev_ui` container runtime; current blocker is model output behavior/timeouts (reasoning-only responses) rather than endpoint reachability.
+- 2026-04-19: Closed the original connection-refused gap by wiring commenting env vars into `agent_platform_api` container runtime; current blocker is model output behavior/timeouts (reasoning-only responses) rather than endpoint reachability.
 - 2026-04-19: Implemented reasoning-compatible generation hardening in `CommentingService` (multi-attempt payload strategy, publishable-output checks, and fallback extraction), and validated `/api/v1/commenting/generate` success against `qwen3.5-27b` with reasoning enabled.

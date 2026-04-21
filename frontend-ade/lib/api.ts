@@ -1,4 +1,4 @@
-export const DEV_UI_BASE_URL = process.env.NEXT_PUBLIC_DEV_UI_BASE_URL || "http://127.0.0.1:8284";
+export const AGENT_PLATFORM_API_BASE_URL = process.env.NEXT_PUBLIC_AGENT_PLATFORM_API_BASE_URL || "http://127.0.0.1:8284";
 const DEFAULT_GET_CACHE_TTL_MS = 45_000;
 
 type CacheEntry = {
@@ -297,7 +297,7 @@ async function requestJson<T>(path: string, options: RequestOptions = {}): Promi
     }
   }
 
-  const response = await fetch(`${DEV_UI_BASE_URL}${path}`, {
+  const response = await fetch(`${AGENT_PLATFORM_API_BASE_URL}${path}`, {
     method,
     cache: "no-store",
     headers: {
@@ -337,9 +337,28 @@ export function fetchCapabilities() {
   }>("/api/v1/platform/capabilities", { cacheTtlMs: 15_000 });
 }
 
-export function fetchOptions(scenario: Scenario = "chat") {
+export function fetchOptions(
+  scenario: Scenario = "chat",
+  options?: {
+    refresh?: boolean;
+    bypassCache?: boolean;
+  },
+) {
   const params = new URLSearchParams();
   params.set("scenario", scenario);
+  if (options?.refresh) {
+    params.set("refresh", "true");
+  }
+
+  const requestOptions: RequestOptions = {
+    cacheTtlMs: 60_000,
+  };
+  if (options?.refresh) {
+    requestOptions.bypassCache = options.bypassCache ?? true;
+  } else if (options?.bypassCache !== undefined) {
+    requestOptions.bypassCache = options.bypassCache;
+  }
+
   return requestJson<{
     scenario: Scenario;
     models: OptionEntry[];
@@ -358,7 +377,7 @@ export function fetchOptions(scenario: Scenario = "chat") {
       timeout_seconds: number;
       task_shape: CommentingTaskShape;
     };
-  }>(`/api/v1/options?${params.toString()}`, { cacheTtlMs: 60_000 });
+  }>(`/api/v1/options?${params.toString()}`, requestOptions);
 }
 
 export function listAgents(limit = 200, includeLastInteraction = false, includeArchived = false) {
@@ -929,3 +948,4 @@ export function readRunArtifact(runId: string, artifactId: string, maxLines = 40
     line_count: number;
   }>(`/api/v1/platform/test-runs/${runId}/artifacts/${artifactId}?max_lines=${maxLines}`, { cacheTtlMs: 5_000 });
 }
+

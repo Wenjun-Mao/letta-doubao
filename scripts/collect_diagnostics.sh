@@ -123,7 +123,7 @@ run_cmd "compose_config_redacted" "cd '${PROJECT_ROOT}' && ${COMPOSE_CMD} --env-
 
 mapfile -t SERVICES < <(cd "${PROJECT_ROOT}" && ${COMPOSE_CMD} --env-file "${ENV_FILE}" config --services 2>/dev/null || true)
 if [[ ${#SERVICES[@]} -eq 0 ]]; then
-  SERVICES=(letta_server letta_db redis dev_ui)
+  SERVICES=(letta_server letta_db redis agent_platform_api)
 fi
 
 log "Services discovered: ${SERVICES[*]}"

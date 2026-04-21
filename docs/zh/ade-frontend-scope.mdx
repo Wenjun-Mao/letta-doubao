@@ -4,7 +4,7 @@ title: ADE 前端范围
 
 # ADE 前端范围
 
-新的 ADE 前端是一个独立的 Next.js + TypeScript 应用，与 fallback 的 dev_ui 前端并行运行。
+新的 ADE 前端是一个独立的 Next.js + TypeScript 应用，通过共享的 `/api/v1/...` 接口访问 `agent_platform_api` 后端。
 
 ## MVP 模块
 
@@ -24,6 +24,6 @@ title: ADE 前端范围
 
 ## 迁移行为
 
-- 在迁移窗口内保持 fallback 前端可用。
+- 在前端切换期间保持后端 API 接口稳定。
 - 使用迁移状态接口在 ADE UI 中展示当前模式。
-- 回滚路径为路由级切换，而非数据库 Schema 回滚。
+- 回滚路径是前端部署/配置级，而不是数据库 Schema 回滚。

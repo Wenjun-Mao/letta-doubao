@@ -9,7 +9,7 @@ This directory is self-contained. You can copy `standalone/letta-doubao` anywher
 - `redis:7-alpine` for an explicit external Redis dependency
 - Doubao Ark through Letta's OpenAI-compatible provider path
 - Letta's built-in `letta/letta-free` embedding handle for agent memory
-- prebuilt Web UI image from GHCR (`DEV_UI_IMAGE`)
+- prebuilt Agent Platform API image from GHCR (`AGENT_PLATFORM_API_IMAGE`)
 
 ## Why Redis Is Explicit In Compose
 
@@ -80,11 +80,11 @@ uv run marimo run notebooks\02_letta_e2e.py --headless
 This repo now supports a pull-first deployment model:
 
 - `letta_server` uses a pinned upstream image (`LETTA_SERVER_IMAGE`)
-- `dev_ui` uses a prebuilt image (`DEV_UI_IMAGE`)
+- `agent_platform_api` uses a prebuilt image (`AGENT_PLATFORM_API_IMAGE`)
 
-The GitHub Actions workflow that publishes `dev_ui` to GHCR is:
+The GitHub Actions workflow that publishes `agent_platform_api` to GHCR is:
 
-- `.github/workflows/publish-dev-ui-ghcr.yml`
+- `.github/workflows/publish-agent-platform-api-ghcr.yml`
 
 Workflow behavior:
 
@@ -95,7 +95,7 @@ Workflow behavior:
 Remote Ubuntu run sequence (no local build required):
 
 ```bash
-docker compose pull letta_server dev_ui
+docker compose pull letta_server agent_platform_api
 docker compose up -d
 ```
 
@@ -104,7 +104,7 @@ For this pull-first model, avoid `--build` on remote unless you intentionally wa
 Set these in `.env` (or copy from `.env.example`) for image control:
 
 - `LETTA_SERVER_IMAGE=letta/letta:0.16.7`
-- `DEV_UI_IMAGE=ghcr.io/wenjun-mao/letta-doubao-dev-ui:latest`
+- `AGENT_PLATFORM_API_IMAGE=ghcr.io/wenjun-mao/agent-platform-api:latest`
 
 If you keep the GHCR package public, remote hosts can pull without registry credentials.
 
@@ -134,14 +134,14 @@ docker compose up -d --force-recreate letta_server
 
 `compose.yaml` mounts `data/nltk_data` into the Letta container and enables a startup patch that prefers local `punkt_tab` data instead of network download.
 
-If `dev_ui` logs show runtime dependency install lines like `Creating virtual environment at: /opt/venv` or `Downloading pydantic-core`, pull the latest prebuilt image and recreate `dev_ui`:
+If `agent_platform_api` logs show runtime dependency install lines like `Creating virtual environment at: /opt/venv` or `Downloading pydantic-core`, pull the latest prebuilt image and recreate `agent_platform_api`:
 
 ```bash
-docker compose pull dev_ui
-docker compose up -d --force-recreate dev_ui
+docker compose pull agent_platform_api
+docker compose up -d --force-recreate agent_platform_api
 ```
 
-After this, `dev_ui` should start directly with Uvicorn and no startup-time package download.
+After this, `agent_platform_api` should start directly with Uvicorn and no startup-time package download.
 
 ## Files
 
@@ -187,7 +187,7 @@ This avoids mixing different test semantics in one shared index.
 
 ## Agent Platform API (Initial Slice)
 
-`dev_ui/main.py` now exposes an initial control/runtime surface under `/api/v1/platform`.
+`agent_platform_api/main.py` now exposes the control/runtime surface under `/api/v1/platform`.
 
 - `GET /api/v1/platform/capabilities`
 	- Reports whether the connected Letta SDK/server supports key mutable features.
@@ -245,10 +245,10 @@ Dual-run cutover gate (backend E2E + ADE smoke):
 uv run tests/checks/platform_dual_run_gate.py
 ```
 
-If your running `dev_ui` service is on an older image, run checks against a source-backed instance:
+If your running `agent_platform_api` service is on an older image, run checks against a source-backed instance:
 
 ```bash
-$env:DEV_UI_BASE_URL="http://127.0.0.1:8285"
+$env:AGENT_PLATFORM_API_BASE_URL="http://127.0.0.1:8285"
 uv run tests/checks/platform_dual_run_gate.py
 ```
 
@@ -288,7 +288,7 @@ Update Chinese docs pages manually under `docs/zh/` when major changes land.
 
 ## ADE Frontend (Separate Profile)
 
-Current `dev_ui` frontend remains the fallback path. The new Next.js ADE frontend runs as an opt-in compose profile.
+The legacy in-package frontend has been removed. The Next.js ADE app is now the active UI and talks to `agent_platform_api` as its backend.
 
 Start ADE frontend profile:
 

@@ -2878,31 +2878,13 @@
     }
   },
   "info": {
-    "description": "Provides versioned Dev API routes for Agent Platform runtime/control/test orchestration. Designed for backend-first API consumption and ADE frontend integration.",
-    "summary": "Runtime and control APIs for local Agent Platform development",
-    "title": "Agent Platform Dev API",
+    "description": "Provides versioned API routes for Agent Platform runtime/control/test orchestration. Designed for backend-first API consumption and ADE frontend integration.",
+    "summary": "Runtime and control APIs for ADE and local Agent Platform workflows",
+    "title": "Agent Platform API",
     "version": "0.2.0"
   },
   "openapi": "3.1.0",
   "paths": {
-    "/": {
-      "get": {
-        "operationId": "read_index__get",
-        "responses": {
-          "200": {
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "description": "Successful Response"
-          }
-        },
-        "summary": "Read Index"
-      }
-    },
     "/api/v1/agents": {
       "get": {
         "description": "List existing agents so the UI can pull and inspect prior state.",
@@ -5367,7 +5349,7 @@
   },
   "servers": [
     {
-      "description": "Dev UI local",
+      "description": "Agent Platform API local",
       "url": "http://127.0.0.1:8284"
     }
   ]

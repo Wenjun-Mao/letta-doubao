@@ -4,7 +4,7 @@ import os
 
 # Test/runtime defaults used by suites and validation scripts.
 DEFAULT_LETTA_BASE_URL = os.getenv("LETTA_BASE_URL", "http://localhost:8283")
-DEFAULT_DEV_UI_BASE_URL = os.getenv("DEV_UI_BASE_URL", "http://127.0.0.1:8284")
+DEFAULT_AGENT_PLATFORM_API_BASE_URL = os.getenv("AGENT_PLATFORM_API_BASE_URL", "http://127.0.0.1:8284")
 DEFAULT_TIMEZONE = "Asia/Shanghai"
 DEFAULT_CONTEXT_WINDOW_LIMIT = 16384
 DEFAULT_CLIENT_TIMEOUT_SECONDS = 300.0
@@ -51,3 +51,4 @@ RUN_INDEX_FIELDS = [
     "output_file",
     "error",
 ]
+

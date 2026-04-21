@@ -1,4 +1,4 @@
-name: Publish Dev UI To GHCR
+name: Publish Agent Platform API To GHCR
 
 on:
   push:
@@ -7,13 +7,13 @@ on:
     tags:
       - v*
     paths:
-      - docker/dev_ui.Dockerfile
-      - dev_ui/**
+      - docker/agent_platform_api.Dockerfile
+      - agent_platform_api/**
       - prompts/**
       - utils/**
       - pyproject.toml
       - uv.lock
-      - .github/workflows/publish-dev-ui-ghcr.yml
+      - .github/workflows/publish-agent-platform-api-ghcr.yml
   workflow_dispatch:
 
 permissions:
@@ -24,7 +24,7 @@ jobs:
   build-and-push:
     runs-on: ubuntu-latest
     env:
-      IMAGE_NAME: letta-doubao-dev-ui
+      IMAGE_NAME: agent-platform-api
 
     steps:
       - name: Checkout
@@ -71,10 +71,11 @@ jobs:
         uses: docker/build-push-action@v7
         with:
           context: .
-          file: docker/dev_ui.Dockerfile
+          file: docker/agent_platform_api.Dockerfile
           platforms: linux/amd64
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+

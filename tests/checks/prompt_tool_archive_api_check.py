@@ -10,9 +10,9 @@ import httpx
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from tests.shared.config_defaults import DEFAULT_DEV_UI_BASE_URL
+from tests.shared.config_defaults import DEFAULT_AGENT_PLATFORM_API_BASE_URL
 
-DEV_UI_BASE_URL = os.getenv("DEV_UI_BASE_URL", DEFAULT_DEV_UI_BASE_URL)
+AGENT_PLATFORM_API_BASE_URL = os.getenv("AGENT_PLATFORM_API_BASE_URL", DEFAULT_AGENT_PLATFORM_API_BASE_URL)
 
 
 def _as_json(value: Any) -> str:
@@ -307,12 +307,12 @@ def main() -> None:
     }
 
     stamp = int(time.time())
-    prompt_key = f"tmp_prompt_arc_{stamp}"
-    persona_key = f"tmp_persona_arc_{stamp}"
+    prompt_key = f"chat_tmp_prompt_arc_{stamp}"
+    persona_key = f"chat_tmp_persona_arc_{stamp}"
     tool_slug = f"tmp_tool_arc_{stamp}"
 
     try:
-        with httpx.Client(base_url=DEV_UI_BASE_URL, timeout=90.0) as http:
+        with httpx.Client(base_url=AGENT_PLATFORM_API_BASE_URL, timeout=90.0) as http:
             capabilities = http.get("/api/v1/platform/capabilities")
             _require_status(capabilities, allowed=(200,), action="capabilities")
             if not bool(capabilities.json().get("enabled", False)):
@@ -340,7 +340,7 @@ def main() -> None:
 
     finally:
         try:
-            with httpx.Client(base_url=DEV_UI_BASE_URL, timeout=30.0) as cleanup_http:
+            with httpx.Client(base_url=AGENT_PLATFORM_API_BASE_URL, timeout=30.0) as cleanup_http:
                 _cleanup_template(cleanup_http, kind="prompts", key=prompt_key)
                 _cleanup_template(cleanup_http, kind="prompts", key=f"{prompt_key}_na")
                 _cleanup_template(cleanup_http, kind="personas", key=persona_key)
@@ -359,3 +359,4 @@ if __name__ == "__main__":
     except Exception as exc:
         print(f"[FAIL] prompt_tool_archive_api_check: {exc}")
         raise
+

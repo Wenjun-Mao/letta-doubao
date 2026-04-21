@@ -302,6 +302,15 @@ function stepMatchesFilter(stepType: string, filter: TimelineFilter): boolean {
 export default function AgentStudioPage() {
   const { locale } = useI18n();
   const t = (en: string, zh: string) => (locale === "zh" ? zh : en);
+  const modelOptionLabel = (option: OptionEntry): string => {
+    const rawKey = String(option.key || "").trim();
+    const rawLabel = String(option.label || "").trim();
+    const base = rawLabel && rawLabel !== rawKey ? `${rawLabel} (${rawKey})` : rawKey;
+    if (option.available === false) {
+      return `${base}${t(" [Unavailable]", " [不可用]")}`;
+    }
+    return base;
+  };
 
   const chatScrollRef = useRef<HTMLDivElement | null>(null);
 
@@ -497,6 +506,40 @@ export default function AgentStudioPage() {
     }
   };
 
+  const refreshCreationOptions = async (forceRefresh = false) => {
+    const optionsPayload = await fetchOptions(AGENT_CREATE_SCENARIO, forceRefresh ? { refresh: true } : undefined);
+
+    const nextModels = optionsPayload.models || [];
+    const nextEmbeddings = optionsPayload.embeddings || [];
+    const nextPrompts = optionsPayload.prompts || [];
+    const nextPersonas = optionsPayload.personas || [];
+
+    setModels(nextModels);
+    setEmbeddings(nextEmbeddings);
+    setPrompts(nextPrompts);
+    setPersonas(nextPersonas);
+
+    setCreateModel((current) => (current && nextModels.some((item) => item.key === current) ? current : ""));
+    setCreatePromptKey((current) => {
+      if (current && nextPrompts.some((item) => item.key === current)) {
+        return current;
+      }
+      return optionsPayload.defaults?.prompt_key || nextPrompts[0]?.key || "chat_v20260418";
+    });
+    setCreatePersonaKey((current) => {
+      if (current && nextPersonas.some((item) => item.key === current)) {
+        return current;
+      }
+      return optionsPayload.defaults?.persona_key || nextPersonas[0]?.key || "chat_linxiaotang";
+    });
+    setCreateEmbedding((current) => {
+      if (current && nextEmbeddings.some((item) => item.key === current)) {
+        return current;
+      }
+      return optionsPayload.defaults?.embedding || "";
+    });
+  };
+
   const refreshToolCatalog = async (agentId: string, searchValue = toolSearch) => {
     if (!agentId) {
       setToolCatalog([]);
@@ -598,7 +641,7 @@ export default function AgentStudioPage() {
             ? requestedPersonaKey
             : optionsPayload.defaults?.persona_key || optionsPayload.personas?.[0]?.key || "chat_linxiaotang";
 
-        setCreateModel(optionsPayload.defaults?.model || optionsPayload.models?.[0]?.key || "");
+        setCreateModel("");
         setCreatePromptKey(resolvedPromptKey);
         setCreatePersonaKey(resolvedPersonaKey);
         setCreateEmbedding(optionsPayload.defaults?.embedding || "");
@@ -749,6 +792,19 @@ export default function AgentStudioPage() {
       setLastResult(null);
       setRawPromptMessages([]);
       setStatus(t(`Created agent ${created.name} (${created.id})`, `已创建智能体 ${created.name} (${created.id})`));
+    } catch (exc) {
+      setError(toErrorMessage(exc));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onReloadModels = async () => {
+    setBusy(true);
+    setError("");
+    try {
+      await refreshCreationOptions(true);
+      setStatus(t("Model options reloaded from backend.", "模型选项已从后端重新加载。"));
     } catch (exc) {
       setError(toErrorMessage(exc));
     } finally {
@@ -1094,7 +1150,7 @@ export default function AgentStudioPage() {
                 <option value="">{t("Select model", "选择模型")}</option>
                 {models.map((item) => (
                   <option key={item.key} value={item.key}>
-                    {item.label}
+                    {modelOptionLabel(item)}
                   </option>
                 ))}
               </select>
@@ -1138,6 +1194,9 @@ export default function AgentStudioPage() {
             </button>
             <button className="button muted" onClick={() => void refreshAgentList()} disabled={busy || loading}>
               {t("Refresh Agents", "刷新智能体列表")}
+            </button>
+            <button className="button muted" onClick={() => void onReloadModels()} disabled={busy || loading}>
+              {t("Reload Models", "重新加载模型")}
             </button>
           </div>
 
@@ -1239,7 +1298,7 @@ export default function AgentStudioPage() {
                       <option value="">{t("Select model", "选择模型")}</option>
                       {models.map((item) => (
                         <option key={item.key} value={item.key}>
-                          {item.label}
+                          {modelOptionLabel(item)}
                         </option>
                       ))}
                     </select>

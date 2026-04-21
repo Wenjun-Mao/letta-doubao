@@ -167,29 +167,29 @@ Decision:
 - Add a minimal `.dockerignore`.
 
 Why:
-- It keeps CI Docker build context small for `dev_ui` image publishing.
+- It keeps CI Docker build context small for Agent Platform API image publishing.
 - It avoids shipping local artifacts (for example `data/`, `.tmp/`, diagnostics outputs) into image builds.
 
 Consequence:
 - `.dockerignore` is part of active CI/CD performance and reproducibility.
 - It reduces build time and accidental context bloat.
 
-### 9. Option A Deployment Model (Pinned Letta + Prebuilt Web UI)
+### 9. Option A Deployment Model (Pinned Letta + Prebuilt Agent Platform API)
 
 Decision:
 - Use pinned upstream Letta image for `letta_server`.
-- Use prebuilt GHCR image for `dev_ui`.
+- Use prebuilt GHCR image for `agent_platform_api`.
 
 Why:
 - Keeps Letta maintenance burden low (no custom forked server image lifecycle).
-- Delivers deterministic remote startup for Web UI without runtime dependency installs.
+- Delivers deterministic remote startup for the backend API without runtime dependency installs.
 - Supports pull-first deployment on remote Ubuntu (`docker compose pull` + `up -d`).
 
 Consequence:
 - Image controls are environment-driven:
   - `LETTA_SERVER_IMAGE` (default `letta/letta:0.16.7`)
-  - `DEV_UI_IMAGE` (default `ghcr.io/wenjun-mao/letta-doubao-dev-ui:latest`)
-- CI publishes `dev_ui` via `.github/workflows/publish-dev-ui-ghcr.yml`.
+  - `AGENT_PLATFORM_API_IMAGE` (default `ghcr.io/wenjun-mao/agent-platform-api:latest`)
+- CI publishes `agent_platform_api` via `.github/workflows/publish-agent-platform-api-ghcr.yml`.
 - Remote operators should avoid `--build` for routine deploys.
 
 ## Verified Findings
@@ -240,21 +240,21 @@ Validation:
 - Internal no-egress simulation reached healthy state.
 - In-network curl health probe succeeded.
 
-### dev_ui Cold-Start Delay Root Cause
+### agent_platform_api Cold-Start Delay Root Cause
 
 Observed:
-- `dev_ui` startup logs showed runtime env creation and package download (for example `Downloading pydantic-core`), causing slow first response.
+- `agent_platform_api` startup logs showed runtime env creation and package download (for example `Downloading pydantic-core`), causing slow first response.
 
 Root cause:
-- `dev_ui` previously ran `uv run ...` directly in container startup, which performs dependency sync at runtime.
+- `agent_platform_api` previously ran `uv run ...` directly in container startup, which performs dependency sync at runtime.
 
 Implemented fix in this bundle:
-- Added `docker/dev_ui.Dockerfile`.
+- Added `docker/agent_platform_api.Dockerfile`.
 - Moved dependency installation to image build (`uv sync --frozen --no-dev --no-install-project`).
-- Published/pulled `dev_ui` as a prebuilt GHCR image in Option A while keeping Uvicorn runtime entrypoint from `/opt/venv/bin/uvicorn`.
+- Published/pulled `agent_platform_api` as a prebuilt GHCR image in Option A while keeping Uvicorn runtime entrypoint from `/opt/venv/bin/uvicorn`.
 
 Expected result:
-- After build, `dev_ui` boots directly to Uvicorn without startup-time dependency download.
+- After build, `agent_platform_api` boots directly to Uvicorn without startup-time dependency download.
 
 ## Runtime Details That Matter
 

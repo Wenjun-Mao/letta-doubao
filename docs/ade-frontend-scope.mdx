@@ -4,7 +4,7 @@ title: ADE Frontend Scope
 
 # ADE Frontend Scope
 
-The new ADE frontend is a separate Next.js + TypeScript app that runs in parallel with the fallback dev_ui frontend.
+The ADE frontend is a separate Next.js + TypeScript app that talks to the `agent_platform_api` backend over the shared `/api/v1/...` surface.
 
 ## MVP modules
 
@@ -24,6 +24,6 @@ The new ADE frontend is a separate Next.js + TypeScript app that runs in paralle
 
 ## Migration behavior
 
-- Keep fallback frontend enabled during migration window.
+- Keep the backend API surface stable during frontend rollout.
 - Use migration status endpoint to expose active mode in ADE UI.
-- Rollback path is route-level, not schema rollback.
+- Rollback path is frontend deployment/config level, not schema rollback.

@@ -12,7 +12,7 @@ from letta_client import Letta
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
 from tests.shared.config_defaults import (
-    DEFAULT_DEV_UI_BASE_URL,
+    DEFAULT_AGENT_PLATFORM_API_BASE_URL,
     DEFAULT_EMBEDDING_HANDLE,
     DEFAULT_LETTA_BASE_URL,
     DEFAULT_PROMPT_KEY,
@@ -20,7 +20,7 @@ from tests.shared.config_defaults import (
 )
 
 LETTA_BASE_URL = os.getenv("LETTA_BASE_URL", DEFAULT_LETTA_BASE_URL)
-DEV_UI_BASE_URL = os.getenv("DEV_UI_BASE_URL", DEFAULT_DEV_UI_BASE_URL)
+AGENT_PLATFORM_API_BASE_URL = os.getenv("AGENT_PLATFORM_API_BASE_URL", DEFAULT_AGENT_PLATFORM_API_BASE_URL)
 
 
 def _as_json(value: Any) -> str:
@@ -119,7 +119,7 @@ def main() -> None:
     agent_id: str | None = None
 
     try:
-        with httpx.Client(base_url=DEV_UI_BASE_URL, timeout=120.0) as http:
+        with httpx.Client(base_url=AGENT_PLATFORM_API_BASE_URL, timeout=120.0) as http:
             capabilities_response = http.get("/api/v1/platform/capabilities")
             capabilities_response.raise_for_status()
             capabilities_payload = capabilities_response.json()
@@ -356,3 +356,4 @@ if __name__ == "__main__":
     except Exception as exc:
         print(f"[FAIL] ade_mvp_smoke_e2e_check: {exc}")
         raise
+

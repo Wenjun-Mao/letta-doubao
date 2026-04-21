@@ -60,10 +60,11 @@ services:
       timeout: ${LETTA_HEALTHCHECK_TIMEOUT:-10s}
       retries: ${LETTA_HEALTHCHECK_RETRIES:-30}
       start_period: ${LETTA_HEALTHCHECK_START_PERIOD:-180s}
-  dev_ui:
+  agent_platform_api:
+    image: ${AGENT_PLATFORM_API_IMAGE:-ghcr.io/wenjun-mao/agent-platform-api:latest}
     build:
       context: .
-      dockerfile: dev_ui/Dockerfile
+      dockerfile: docker/agent_platform_api.Dockerfile
     # profiles:
     #   - ui
     restart: unless-stopped
@@ -104,10 +105,11 @@ services:
         NEXT_PUBLIC_ADE_UI_BUILD: ${ADE_UI_BUILD:-}
     restart: unless-stopped
     environment:
-      - NEXT_PUBLIC_DEV_UI_BASE_URL=${ADE_DEV_UI_BASE_URL:-http://127.0.0.1:8284}
+      - NEXT_PUBLIC_AGENT_PLATFORM_API_BASE_URL=${ADE_AGENT_PLATFORM_API_BASE_URL:-http://127.0.0.1:8284}
       - PORT=3000
     ports:
       - "3000:3000"
     depends_on:
-      dev_ui:
+      agent_platform_api:
         condition: service_started
+

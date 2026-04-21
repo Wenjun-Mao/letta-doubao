@@ -10,7 +10,7 @@ from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from dev_ui.main import app
+from agent_platform_api.main import app
 
 
 @contextmanager
@@ -136,3 +136,4 @@ if __name__ == "__main__":
     except Exception as exc:
         print(f"[FAIL] platform_flag_gate_check: {exc}")
         raise
+

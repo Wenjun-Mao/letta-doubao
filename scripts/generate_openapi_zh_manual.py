@@ -12,7 +12,7 @@ def _canonical_json(payload: dict[str, Any]) -> str:
 
 
 SUMMARY_TRANSLATIONS = {
-    "Runtime and control APIs for local Agent Platform development": "本地 Agent Platform 开发的运行时与控制 API",
+    "Runtime and control APIs for ADE and local Agent Platform workflows": "面向 ADE 与本地 Agent Platform 工作流的运行时与控制 API",
     "Api Chat": "API 对话",
     "Api Create Agent": "API 创建智能体",
     "Api Get Agent Details": "API 获取智能体详情",
@@ -69,8 +69,8 @@ SUMMARY_TRANSLATIONS = {
 DESCRIPTION_TRANSLATIONS = {
     "Successful Response": "成功响应",
     "Validation Error": "校验错误",
-    "Dev UI local": "Dev UI 本地服务",
-    "Provides versioned Dev API routes for Agent Platform runtime/control/test orchestration. Designed for backend-first API consumption and ADE frontend integration.": "提供用于 Agent Platform 运行时/控制/测试编排的版本化 Dev API 路由。面向后端优先的 API 调用，并用于 ADE 前端集成。",
+    "Agent Platform API local": "Agent Platform API 本地服务",
+    "Provides versioned API routes for Agent Platform runtime/control/test orchestration. Designed for backend-first API consumption and ADE frontend integration.": "提供用于 Agent Platform 运行时/控制/测试编排的版本化 API 路由。面向后端优先的 API 调用，并用于 ADE 前端集成。",
     "List existing agents so the UI can pull and inspect prior state.": "列出已有智能体，供 UI 拉取并检查历史状态。",
     "Returns persisted state from Letta backend storage (Postgres/pgvector via Letta API):\n- agent metadata\n- memory blocks\n- attached tools\n- persisted conversation history": "返回 Letta 后端存储（通过 Letta API 访问 Postgres/pgvector）中的持久化状态：\n- 智能体元数据\n- 记忆块\n- 已挂载工具\n- 持久化会话历史",
 }
@@ -452,12 +452,12 @@ def _apply_top_level_translations(openapi_payload: dict[str, Any]) -> None:
     info = openapi_payload.get("info")
     if isinstance(info, dict):
         if isinstance(info.get("title"), str):
-            info["title"] = "Agent Platform 开发 API"
+            info["title"] = "Agent Platform API"
         if isinstance(info.get("summary"), str):
-            info["summary"] = "本地 Agent Platform 开发的运行时与控制 API"
+            info["summary"] = "面向 ADE 与本地 Agent Platform 工作流的运行时与控制 API"
         if isinstance(info.get("description"), str):
             info["description"] = (
-                "提供用于 Agent Platform 运行时/控制/测试编排的版本化 Dev API 路由。"
+                "提供用于 Agent Platform 运行时/控制/测试编排的版本化 API 路由。"
                 "面向后端优先的 API 调用，并用于 ADE 前端集成。"
             )
 
@@ -465,8 +465,8 @@ def _apply_top_level_translations(openapi_payload: dict[str, Any]) -> None:
     if isinstance(servers, list):
         for server in servers:
             if isinstance(server, dict) and isinstance(server.get("description"), str):
-                if server["description"] == "Dev UI local":
-                    server["description"] = "Dev UI 本地服务"
+                if server["description"] == "Agent Platform API local":
+                    server["description"] = "Agent Platform API 本地服务"
 
 
 def _write_missing_report(

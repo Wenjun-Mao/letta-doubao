@@ -18,8 +18,8 @@ from tests.shared.config_defaults import (
 )
 
 LETTA_BASE_URL = os.getenv("LETTA_BASE_URL", "http://localhost:8283")
-DEV_UI_BASE_URL = os.getenv("DEV_UI_BASE_URL", "http://127.0.0.1:8284")
-DEV_UI_CLIENT_TIMEOUT_SECONDS = float(os.getenv("DEV_UI_CLIENT_TIMEOUT_SECONDS", "180"))
+AGENT_PLATFORM_API_BASE_URL = os.getenv("AGENT_PLATFORM_API_BASE_URL", "http://127.0.0.1:8284")
+AGENT_PLATFORM_API_CLIENT_TIMEOUT_SECONDS = float(os.getenv("AGENT_PLATFORM_API_CLIENT_TIMEOUT_SECONDS", "180"))
 
 
 def _as_json(value: Any) -> str:
@@ -105,7 +105,7 @@ def main() -> None:
     agent_id: str | None = None
 
     try:
-        with httpx.Client(base_url=DEV_UI_BASE_URL, timeout=DEV_UI_CLIENT_TIMEOUT_SECONDS) as http:
+        with httpx.Client(base_url=AGENT_PLATFORM_API_BASE_URL, timeout=AGENT_PLATFORM_API_CLIENT_TIMEOUT_SECONDS) as http:
             capabilities_response = http.get("/api/v1/platform/capabilities")
             capabilities_response.raise_for_status()
             capabilities = capabilities_response.json()
@@ -323,3 +323,4 @@ if __name__ == "__main__":
     except Exception as exc:
         print(f"[FAIL] platform_api_e2e_check: {exc}")
         raise
+

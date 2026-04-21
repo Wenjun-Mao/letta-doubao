@@ -20,7 +20,7 @@ This directory uses a role-based structure:
   - Writes per-run artifacts to tests/outputs/memory_update/
   - Appends run index to tests/outputs/memory_update/run_index.{csv,jsonl}
 - tests/checks/provider_embedding_matrix_check.py
-  - Smoke checks dev_ui options/create and embedding combos
+  - Smoke checks Agent Platform API options/create and embedding combos
 - tests/checks/prompt_strategy_check.py
   - Compares prompt strategy behavior on memory updates
 - tests/checks/agent_bootstrap_check.py
@@ -48,10 +48,10 @@ uv run tests/checks/platform_flag_gate_check.py
 uv run tests/checks/platform_dual_run_gate.py
 ```
 
-If `dev_ui` routes in your running container lag behind source changes, point checks at a source-backed dev_ui server:
+If `agent_platform_api` routes in your running container lag behind source changes, point checks at a source-backed API server:
 
 ```bash
-$env:DEV_UI_BASE_URL="http://127.0.0.1:8285"
+$env:AGENT_PLATFORM_API_BASE_URL="http://127.0.0.1:8285"
 uv run tests/checks/platform_dual_run_gate.py
 ```
 

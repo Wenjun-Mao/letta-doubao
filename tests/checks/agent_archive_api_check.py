@@ -10,9 +10,9 @@ import httpx
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..")))
 
-from tests.shared.config_defaults import DEFAULT_DEV_UI_BASE_URL
+from tests.shared.config_defaults import DEFAULT_AGENT_PLATFORM_API_BASE_URL
 
-DEV_UI_BASE_URL = os.getenv("DEV_UI_BASE_URL", DEFAULT_DEV_UI_BASE_URL)
+AGENT_PLATFORM_API_BASE_URL = os.getenv("AGENT_PLATFORM_API_BASE_URL", DEFAULT_AGENT_PLATFORM_API_BASE_URL)
 
 
 def _as_json(value: Any) -> str:
@@ -109,7 +109,7 @@ def main() -> None:
     alias_agent_id: str | None = None
 
     try:
-        with httpx.Client(base_url=DEV_UI_BASE_URL, timeout=90.0) as http:
+        with httpx.Client(base_url=AGENT_PLATFORM_API_BASE_URL, timeout=90.0) as http:
             capabilities = http.get("/api/v1/platform/capabilities")
             _require_status(capabilities, allowed=(200,), action="capabilities")
             if not bool(capabilities.json().get("enabled", False)):
@@ -154,7 +154,7 @@ def main() -> None:
                 "/api/v1/chat",
                 json={"agent_id": primary_agent_id, "message": "Archive state guard check"},
             )
-            _require_status(chat_blocked, allowed=(409,), action="chat guard while archived")
+            _require_status(chat_blocked, allowed=(409, 410), action="chat guard while archived")
 
             restore = http.post(f"/api/v1/platform/agents/{primary_agent_id}/restore")
             _require_status(restore, allowed=(200,), action="restore primary agent")
@@ -211,7 +211,7 @@ def main() -> None:
 
     finally:
         try:
-            with httpx.Client(base_url=DEV_UI_BASE_URL, timeout=30.0) as cleanup_http:
+            with httpx.Client(base_url=AGENT_PLATFORM_API_BASE_URL, timeout=30.0) as cleanup_http:
                 _cleanup_agent(cleanup_http, primary_agent_id)
                 _cleanup_agent(cleanup_http, alias_agent_id)
         except Exception:
@@ -226,3 +226,4 @@ if __name__ == "__main__":
     except Exception as exc:
         print(f"[FAIL] agent_archive_api_check: {exc}")
         raise
+

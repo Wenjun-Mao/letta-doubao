@@ -2878,31 +2878,13 @@
     }
   },
   "info": {
-    "description": "提供用于 Agent Platform 运行时/控制/测试编排的版本化 Dev API 路由。面向后端优先的 API 调用，并用于 ADE 前端集成。",
-    "summary": "本地 Agent Platform 开发的运行时与控制 API",
-    "title": "Agent Platform 开发 API",
+    "description": "提供用于 Agent Platform 运行时/控制/测试编排的版本化 API 路由。面向后端优先的 API 调用，并用于 ADE 前端集成。",
+    "summary": "面向 ADE 与本地 Agent Platform 工作流的运行时与控制 API",
+    "title": "Agent Platform API",
     "version": "0.2.0"
   },
   "openapi": "3.1.0",
   "paths": {
-    "/": {
-      "get": {
-        "operationId": "read_index__get",
-        "responses": {
-          "200": {
-            "content": {
-              "text/html": {
-                "schema": {
-                  "type": "string"
-                }
-              }
-            },
-            "description": "成功响应"
-          }
-        },
-        "summary": "读取索引"
-      }
-    },
     "/api/v1/agents": {
       "get": {
         "description": "列出已有智能体，供 UI 拉取并检查历史状态。",
@@ -5367,7 +5349,7 @@
   },
   "servers": [
     {
-      "description": "Dev UI 本地服务",
+      "description": "Agent Platform API 本地服务",
       "url": "http://127.0.0.1:8284"
     }
   ]

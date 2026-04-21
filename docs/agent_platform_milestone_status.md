@@ -4,12 +4,12 @@ Updated: 2026-04-13
 
 ## Milestone Objective
 
-Deliver a production-ready Agent Platform backbone for a new ADE frontend while keeping the current dev_ui frontend as fallback, and prepare OpenAPI-driven self-hosted docs.
+Deliver a production-ready Agent Platform backbone for ADE, retire the legacy in-package frontend, and prepare OpenAPI-driven self-hosted docs.
 
 ## Locked Decisions
 
 - API name remains Agent Platform API.
-- Keep current dev_ui frontend as fallback.
+- Keep the backend API surface stable while ADE becomes the primary UI.
 - Build new ADE frontend as a separate Next.js + TypeScript app.
 - Tool discovery is included in ADE MVP.
 - MVP auth posture is internal network boundary only (no new auth layer in MVP).

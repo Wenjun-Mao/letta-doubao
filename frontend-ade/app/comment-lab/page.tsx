@@ -16,6 +16,7 @@ const COPY = {
     innerWorksTitle: "Inner Works",
     defaultsFromEnv: "Defaults are loaded from runtime environment and can be overridden per request.",
     model: "Model",
+    selectModel: "Select model",
     prompt: "Prompt",
     persona: "Persona",
     maxTokens: "Max Tokens",
@@ -78,6 +79,7 @@ const COPY = {
     innerWorksTitle: "内部信息",
     defaultsFromEnv: "默认值来自运行环境，可在每次请求中覆盖。",
     model: "模型",
+    selectModel: "选择模型",
     prompt: "Prompt",
     persona: "Persona",
     maxTokens: "最大 Token",
@@ -138,8 +140,12 @@ function toErrorMessage(exc: unknown): string {
 }
 
 function optionLabel(option: OptionEntry): string {
+  const key = (option.key || "").trim();
   const label = (option.label || "").trim();
-  return label ? `${label} (${option.key})` : option.key;
+  if (label && label !== key) {
+    return `${label} (${key})`;
+  }
+  return key;
 }
 
 function pickSelectedKey(current: string, options: OptionEntry[], fallback: string): string {
@@ -338,12 +344,12 @@ export default function CommentLabPage() {
   const [rawReplyReadable, setRawReplyReadable] = useState("");
   const [popOutCard, setPopOutCard] = useState<{ title: string; readable: string; raw: string } | null>(null);
 
-  const loadOptions = async () => {
+  const loadOptions = async (forceRefresh = false) => {
     setLoadingOptions(true);
     setError("");
 
     try {
-      const payload = await fetchOptions("comment");
+      const payload = await fetchOptions("comment", forceRefresh ? { refresh: true } : undefined);
       const nextModels = Array.isArray(payload.models) ? payload.models : [];
       const nextPrompts = Array.isArray(payload.prompts) ? payload.prompts : [];
       const nextPersonas = Array.isArray(payload.personas) ? payload.personas : [];
@@ -352,7 +358,7 @@ export default function CommentLabPage() {
       setPrompts(nextPrompts);
       setPersonas(nextPersonas);
 
-      setModel((current) => pickSelectedKey(current, nextModels, payload.defaults.model || ""));
+      setModel((current) => (current && nextModels.some((option) => option.key === current) ? current : ""));
       setPromptKey((current) => pickSelectedKey(current, nextPrompts, payload.defaults.prompt_key || ""));
       setPersonaKey((current) => pickSelectedKey(current, nextPersonas, payload.defaults.persona_key || ""));
       if (payload.commenting) {
@@ -474,6 +480,7 @@ export default function CommentLabPage() {
                 onChange={(event) => setModel(event.target.value)}
                 disabled={loadingOptions || submitting}
               >
+                <option value="">{copy.selectModel}</option>
                 {models.map((item) => (
                   <option key={item.key} value={item.key}>
                     {optionLabel(item)}
@@ -564,7 +571,7 @@ export default function CommentLabPage() {
             <button className="button" onClick={() => void onGenerate()} disabled={loadingOptions || submitting}>
               {submitting ? copy.generating : copy.generate}
             </button>
-            <button className="button muted" onClick={() => void loadOptions()} disabled={submitting}>
+            <button className="button muted" onClick={() => void loadOptions(true)} disabled={submitting}>
               {copy.refreshOptions}
             </button>
           </div>

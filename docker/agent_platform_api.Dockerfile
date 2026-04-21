@@ -10,10 +10,11 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-project
 
-# Copy runtime source required by dev_ui.
-COPY dev_ui ./dev_ui
+# Copy runtime source required by the Agent Platform API service.
+COPY agent_platform_api ./agent_platform_api
 COPY utils ./utils
 COPY prompts ./prompts
 COPY tests ./tests
 
-CMD ["/opt/venv/bin/uvicorn", "dev_ui.main:app", "--host", "0.0.0.0", "--port", "8284"]
+CMD ["/opt/venv/bin/uvicorn", "agent_platform_api.main:app", "--host", "0.0.0.0", "--port", "8284"]
+

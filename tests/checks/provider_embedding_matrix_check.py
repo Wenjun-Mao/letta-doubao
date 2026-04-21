@@ -22,7 +22,7 @@ from tests.shared.config_defaults import (
 from utils.message_parser import chat
 
 LETTA_BASE_URL = os.getenv("LETTA_BASE_URL", "http://localhost:8283")
-DEV_UI_BASE_URL = os.getenv("DEV_UI_BASE_URL", "http://127.0.0.1:8284")
+AGENT_PLATFORM_API_BASE_URL = os.getenv("AGENT_PLATFORM_API_BASE_URL", "http://127.0.0.1:8284")
 
 
 def _target_embeddings() -> list[str]:
@@ -44,6 +44,56 @@ def _safe_delete_agent(client: Letta, agent_id: str | None) -> None:
         client.agents.delete(agent_id=agent_id)
     except Exception:
         pass
+
+
+def _resolve_runtime_defaults(
+    http: httpx.Client,
+    llm_handles: list[str],
+    embedding_handles: list[str],
+) -> dict[str, Any]:
+    response = http.get("/api/v1/options", params={"scenario": "chat"})
+    response.raise_for_status()
+    payload = response.json()
+
+    models = list(payload.get("models", []) or [])
+    prompts = list(payload.get("prompts", []) or [])
+    embeddings = list(payload.get("embeddings", []) or [])
+    defaults = dict(payload.get("defaults", {}) or {})
+
+    available_models = [
+        str(item.get("key", "") or "")
+        for item in models
+        if bool(item.get("available", True)) and str(item.get("key", "") or "") in llm_handles
+    ]
+    model = available_models[0] if available_models else str(defaults.get("model", "") or "").strip()
+    if not model and DEFAULT_TEST_MODEL_HANDLE in llm_handles:
+        model = DEFAULT_TEST_MODEL_HANDLE
+    if not model and llm_handles:
+        model = llm_handles[0]
+
+    prompt_key = str(defaults.get("prompt_key", "") or "").strip()
+    if not prompt_key and prompts:
+        prompt_key = str(prompts[0].get("key", "") or "")
+    if not prompt_key:
+        prompt_key = DEFAULT_PROMPT_KEY
+
+    available_embeddings = [
+        str(item.get("key", "") or "")
+        for item in embeddings
+        if bool(item.get("available", True)) and str(item.get("key", "") or "") in embedding_handles
+    ]
+    embedding = available_embeddings[0] if available_embeddings else str(defaults.get("embedding", "") or "").strip()
+    if not embedding and DEFAULT_EMBEDDING_HANDLE in embedding_handles:
+        embedding = DEFAULT_EMBEDDING_HANDLE
+
+    return {
+        "model": model,
+        "prompt_key": prompt_key,
+        "embedding": embedding,
+        "models_count": len(models),
+        "prompts_count": len(prompts),
+        "embeddings_count": len(embeddings),
+    }
 
 
 def _create_agent(
@@ -84,14 +134,14 @@ def _is_passage_unsupported_error(exc: Exception) -> bool:
     )
 
 
-def test_ui_options_and_create() -> dict[str, Any]:
+def test_ui_options_and_create(llm_handles: list[str], embedding_handles: list[str]) -> dict[str, Any]:
     result: dict[str, Any] = {
-        "name": "dev_ui_endpoints",
+        "name": "agent_platform_api_endpoints",
         "ok": False,
         "detail": "",
     }
 
-    with httpx.Client(base_url=DEV_UI_BASE_URL, timeout=30.0) as http:
+    with httpx.Client(base_url=AGENT_PLATFORM_API_BASE_URL, timeout=30.0) as http:
         try:
             options = http.get("/api/v1/options", params={"scenario": "chat"})
             options.raise_for_status()
@@ -103,13 +153,19 @@ def test_ui_options_and_create() -> dict[str, Any]:
                 result["detail"] = "options endpoint missing models/prompts"
                 return result
 
+            resolved = _resolve_runtime_defaults(http, llm_handles, embedding_handles)
+            if not resolved["model"]:
+                result["detail"] = "no model handle is available for agent creation"
+                return result
+
             create_payload = {
                 "scenario": "chat",
                 "name": f"ui-test-{int(time.time())}",
-                "model": DEFAULT_TEST_MODEL_HANDLE,
-                "prompt_key": DEFAULT_PROMPT_KEY,
-                "embedding": DEFAULT_EMBEDDING_HANDLE,
+                "model": resolved["model"],
+                "prompt_key": resolved["prompt_key"],
             }
+            if resolved["embedding"]:
+                create_payload["embedding"] = resolved["embedding"]
             created = http.post("/api/v1/agents", json=create_payload)
             created.raise_for_status()
             created_payload = created.json()
@@ -120,9 +176,11 @@ def test_ui_options_and_create() -> dict[str, Any]:
 
             result["ok"] = True
             result["detail"] = "options + create endpoint ok"
-            result["models_count"] = len(models)
-            result["prompts_count"] = len(prompts)
-            result["embeddings_count"] = len(embeddings)
+            result["model"] = resolved["model"]
+            result["embedding"] = resolved["embedding"]
+            result["models_count"] = resolved["models_count"]
+            result["prompts_count"] = resolved["prompts_count"]
+            result["embeddings_count"] = resolved["embeddings_count"]
 
             # Cleanup via Letta API directly.
             client = Letta(base_url=LETTA_BASE_URL)
@@ -217,9 +275,12 @@ def main() -> None:
     embedding_handles = [m.handle for m in client.models.embeddings.list()]
 
     reports: list[dict[str, Any]] = []
-    reports.append(test_ui_options_and_create())
+    reports.append(test_ui_options_and_create(llm_handles, embedding_handles))
 
-    base_model = DEFAULT_TEST_MODEL_HANDLE
+    with httpx.Client(base_url=AGENT_PLATFORM_API_BASE_URL, timeout=30.0) as http:
+        resolved_defaults = _resolve_runtime_defaults(http, llm_handles, embedding_handles)
+
+    base_model = resolved_defaults["model"] or DEFAULT_TEST_MODEL_HANDLE
     if base_model in llm_handles:
         for embedding in _target_embeddings():
             if embedding in embedding_handles:
@@ -235,7 +296,7 @@ def main() -> None:
 
     summary = {
         "letta_base_url": LETTA_BASE_URL,
-        "dev_ui_base_url": DEV_UI_BASE_URL,
+        "agent_platform_api_base_url": AGENT_PLATFORM_API_BASE_URL,
         "llm_handles": llm_handles,
         "embedding_handles": embedding_handles,
         "reports": reports,
@@ -246,3 +307,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+

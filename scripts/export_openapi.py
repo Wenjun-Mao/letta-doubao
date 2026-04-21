@@ -12,7 +12,7 @@ def _canonical_json(payload: dict) -> str:
 
 def _build_openapi_schema(project_root: Path) -> dict:
     sys.path.insert(0, str(project_root))
-    from dev_ui.main import app  # Imported lazily so script can run from any cwd.
+    from agent_platform_api.main import app  # Imported lazily so script can run from any cwd.
 
     schema = app.openapi()
 
@@ -20,7 +20,7 @@ def _build_openapi_schema(project_root: Path) -> dict:
         schema["servers"] = [
             {
                 "url": "http://127.0.0.1:8284",
-                "description": "Dev UI local",
+                "description": "Agent Platform API local",
             }
         ]
 
@@ -91,3 +91,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+
