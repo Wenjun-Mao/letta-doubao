@@ -32,6 +32,7 @@ The same key did not expose a usable text embedding model through the tested Ope
 ## Quick Start
 
 1. Review `.env` or copy `.env.example` to `.env` and update values.
+   `AGENT_PLATFORM_MODEL_SOURCES` is the shared ADE model catalog used by both Agent Studio and Comment Lab, while the Letta bootstrap variables remain dedicated to the upstream `letta_server`.
 2. Start the stack:
 
 ```powershell

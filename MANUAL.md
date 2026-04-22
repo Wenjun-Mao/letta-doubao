@@ -258,6 +258,17 @@ Expected result:
 
 ## Runtime Details That Matter
 
+### Shared ADE Model Catalog
+
+Important:
+- `agent_platform_api` now uses `AGENT_PLATFORM_MODEL_SOURCES` as the shared source of truth for Agent Studio and Comment Lab model discovery.
+
+Notes:
+- Each source entry declares the base URL, enabled scenarios, Letta handle prefix, and auth lookup fields.
+- Auth resolution order is `/run/secrets/<api_key_secret>` first, then the env var named by `api_key_env`.
+- Agent Studio only surfaces models whose derived Letta handles are actually registered in Letta.
+- Comment Lab uses source-scoped model keys in the form `<source-id>::<provider-model-id>` so duplicate model names remain distinct across providers.
+
 ### Model Handle Naming
 
 Important:
@@ -366,6 +377,12 @@ Recommended procedure:
 2. Update `LETTA_MODEL_HANDLE` to match.
 3. Run direct smoke notebook first.
 4. Then run the Letta e2e notebook.
+
+If you change ADE provider discovery later:
+
+Update:
+- `AGENT_PLATFORM_MODEL_SOURCES`
+- any referenced source auth env vars such as `UNSLOTH_API_KEY` or `OPENAI_API_KEY`
 
 ## If You Want Pure Doubao Embeddings Later
 

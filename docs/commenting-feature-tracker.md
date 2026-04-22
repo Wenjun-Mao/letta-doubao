@@ -37,10 +37,10 @@ This document tracks implementation progress for the stateless commenting capabi
 
 ### Configuration and Runtime
 
-- [x] Add dedicated commenting env controls (`AGENT_PLATFORM_COMMENTING_*`).
-- [x] Default commenting model target to `qwen3.5-27b`.
+- [x] Keep dedicated comment runtime tuning env controls (`AGENT_PLATFORM_COMMENTING_TIMEOUT_SECONDS`, `AGENT_PLATFORM_COMMENTING_MAX_TOKENS`, `AGENT_PLATFORM_COMMENTING_TASK_SHAPE`).
+- [x] Move model/base-url/provider selection to shared `AGENT_PLATFORM_MODEL_SOURCES`.
 - [x] Validate connectivity in local LM Studio runtime.
-- [ ] Validate fallback behavior when commenting env vars are absent.
+- [x] Require explicit user model selection instead of backend default-model fallback.
 
 ### Frontend ADE
 
@@ -74,3 +74,4 @@ This document tracks implementation progress for the stateless commenting capabi
 - 2026-04-19: Added Comment Lab route, navigation wiring, and commenting provider env defaults. Frontend build passed; backend runtime verification is pending LM Studio response behavior with selected Qwen preset.
 - 2026-04-19: Closed the original connection-refused gap by wiring commenting env vars into `agent_platform_api` container runtime; current blocker is model output behavior/timeouts (reasoning-only responses) rather than endpoint reachability.
 - 2026-04-19: Implemented reasoning-compatible generation hardening in `CommentingService` (multi-attempt payload strategy, publishable-output checks, and fallback extraction), and validated `/api/v1/commenting/generate` success against `qwen3.5-27b` with reasoning enabled.
+- 2026-04-22: Replaced split commenting/backend model discovery with shared `AGENT_PLATFORM_MODEL_SOURCES`, removed single-provider commenting model defaults, and added source-scoped model selection for Comment Lab.

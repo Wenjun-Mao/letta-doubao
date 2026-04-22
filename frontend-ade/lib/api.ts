@@ -25,6 +25,9 @@ export type OptionEntry = {
   scenario?: Scenario | null;
   available?: boolean;
   is_default?: boolean;
+  source_id?: string | null;
+  source_label?: string | null;
+  provider_model_id?: string | null;
 };
 
 export type AgentListItem = {
@@ -126,6 +129,10 @@ export type ChatResult = {
 
 export type CommentingGenerateResponse = {
   scenario: Scenario;
+  model_key: string;
+  source_id: string;
+  source_label: string;
+  provider_model_id: string;
   prompt_key: string;
   persona_key: string;
   model: string;
@@ -488,6 +495,7 @@ export function generateComment(payload: {
   input: string;
   prompt_key: string;
   persona_key: string;
+  model_key?: string;
   model?: string;
   max_tokens?: number;
   timeout_seconds?: number;
@@ -501,6 +509,7 @@ export function generateComment(payload: {
       input: payload.input,
       prompt_key: payload.prompt_key,
       persona_key: payload.persona_key,
+      model_key: payload.model_key?.trim() || undefined,
       model: payload.model?.trim() || undefined,
       max_tokens: payload.max_tokens,
       timeout_seconds: payload.timeout_seconds,

@@ -1,7 +1,8 @@
 opencollection: 1.0.0
 
 info:
-  name: letta-doubao
+  name: letta-open-ade
+  description: A collection of tools and resources for the Letta Open ADE project.
 bundled: false
 extensions:
   bruno:

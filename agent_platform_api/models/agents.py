@@ -31,6 +31,9 @@ class ApiOptionEntryResponse(BaseModel):
     scenario: ScenarioType | None = None
     available: bool | None = None
     is_default: bool | None = None
+    source_id: str | None = None
+    source_label: str | None = None
+    provider_model_id: str | None = None
 
 
 class ApiOptionsDefaultsResponse(BaseModel):

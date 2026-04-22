@@ -397,6 +397,10 @@
             "title": "模型",
             "type": "string"
           },
+          "model_key": {
+            "title": "模型 键",
+            "type": "string"
+          },
           "persona_key": {
             "title": "Persona 键",
             "type": "string"
@@ -407,6 +411,10 @@
           },
           "provider": {
             "title": "Provider",
+            "type": "string"
+          },
+          "provider_model_id": {
+            "title": "Provider 模型 ID",
             "type": "string"
           },
           "raw_reply": {
@@ -442,6 +450,14 @@
             "title": "Selected Attempt",
             "type": "string"
           },
+          "source_id": {
+            "title": "来源 ID",
+            "type": "string"
+          },
+          "source_label": {
+            "title": "来源 标签",
+            "type": "string"
+          },
           "task_shape": {
             "enum": [
               "compact",
@@ -463,6 +479,10 @@
         },
         "required": [
           "scenario",
+          "model_key",
+          "source_id",
+          "source_label",
+          "provider_model_id",
           "prompt_key",
           "persona_key",
           "model",
@@ -711,6 +731,17 @@
             "title": "标签",
             "type": "string"
           },
+          "provider_model_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Provider 模型 ID"
+          },
           "scenario": {
             "anyOf": [
               {
@@ -725,6 +756,28 @@
               }
             ],
             "title": "场景"
+          },
+          "source_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "来源 ID"
+          },
+          "source_label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "来源 标签"
           }
         },
         "required": [
@@ -1095,6 +1148,168 @@
           "detach_tool"
         ],
         "title": "API 平台 控制 能力 响应",
+        "type": "object"
+      },
+      "ApiPlatformModelCatalogEntryResponse": {
+        "properties": {
+          "agent_studio_available": {
+            "title": "智能体 Studio 可用",
+            "type": "boolean"
+          },
+          "comment_lab_available": {
+            "title": "评论 Lab 可用",
+            "type": "boolean"
+          },
+          "letta_handle": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Letta Handle"
+          },
+          "model_key": {
+            "title": "模型 键",
+            "type": "string"
+          },
+          "model_type": {
+            "title": "模型 类型",
+            "type": "string"
+          },
+          "provider_model_id": {
+            "title": "Provider 模型 ID",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "来源 ID",
+            "type": "string"
+          },
+          "source_kind": {
+            "title": "来源 类别",
+            "type": "string"
+          },
+          "source_label": {
+            "title": "来源 标签",
+            "type": "string"
+          }
+        },
+        "required": [
+          "model_key",
+          "source_id",
+          "source_label",
+          "source_kind",
+          "provider_model_id",
+          "model_type",
+          "agent_studio_available",
+          "comment_lab_available"
+        ],
+        "title": "API 平台 模型 Catalog 条目 响应",
+        "type": "object"
+      },
+      "ApiPlatformModelCatalogResponse": {
+        "properties": {
+          "generated_at": {
+            "title": "已生成 At",
+            "type": "number"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiPlatformModelCatalogEntryResponse"
+            },
+            "title": "条目",
+            "type": "array"
+          },
+          "sources": {
+            "items": {
+              "$ref": "#/components/schemas/ApiPlatformModelCatalogSourceResponse"
+            },
+            "title": "Sources",
+            "type": "array"
+          }
+        },
+        "required": [
+          "generated_at"
+        ],
+        "title": "API 平台 模型 Catalog 响应",
+        "type": "object"
+      },
+      "ApiPlatformModelCatalogSourceModelResponse": {
+        "properties": {
+          "model_type": {
+            "title": "模型 类型",
+            "type": "string"
+          },
+          "provider_model_id": {
+            "title": "Provider 模型 ID",
+            "type": "string"
+          }
+        },
+        "required": [
+          "provider_model_id",
+          "model_type"
+        ],
+        "title": "API 平台 模型 Catalog 来源 模型 响应",
+        "type": "object"
+      },
+      "ApiPlatformModelCatalogSourceResponse": {
+        "properties": {
+          "base_url": {
+            "title": "Base Url",
+            "type": "string"
+          },
+          "detail": {
+            "title": "Detail",
+            "type": "string"
+          },
+          "enabled_for": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Enabled For",
+            "type": "array"
+          },
+          "id": {
+            "title": "ID",
+            "type": "string"
+          },
+          "kind": {
+            "title": "类别",
+            "type": "string"
+          },
+          "label": {
+            "title": "标签",
+            "type": "string"
+          },
+          "letta_handle_prefix": {
+            "title": "Letta Handle Prefix",
+            "type": "string"
+          },
+          "models": {
+            "items": {
+              "$ref": "#/components/schemas/ApiPlatformModelCatalogSourceModelResponse"
+            },
+            "title": "Models",
+            "type": "array"
+          },
+          "status": {
+            "title": "状态",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "label",
+          "kind",
+          "base_url",
+          "enabled_for",
+          "letta_handle_prefix",
+          "status",
+          "detail"
+        ],
+        "title": "API 平台 模型 Catalog 来源 响应",
         "type": "object"
       },
       "ApiPlatformRuntimeCapabilitiesResponse": {
@@ -2171,6 +2386,32 @@
           "message": {
             "title": "消息",
             "type": "string"
+          },
+          "retry_count": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry Count"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 600.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "超时秒数"
           }
         },
         "required": [
@@ -2209,6 +2450,17 @@
             ],
             "title": "模型"
           },
+          "model_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "模型 键"
+          },
           "persona_key": {
             "default": "comment_linxiaotang",
             "title": "Persona 键",
@@ -2218,6 +2470,19 @@
             "default": "comment_v20260418",
             "title": "提示词键",
             "type": "string"
+          },
+          "retry_count": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry Count"
           },
           "scenario": {
             "default": "comment",
@@ -2336,13 +2601,19 @@
             "type": "string"
           },
           "scenario": {
-            "default": "chat",
-            "enum": [
-              "chat",
-              "comment"
+            "anyOf": [
+              {
+                "enum": [
+                  "chat",
+                  "comment"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "场景",
-            "type": "string"
+            "title": "场景"
           }
         },
         "required": [
@@ -2405,6 +2676,32 @@
               }
             ],
             "title": "覆盖系统提示词"
+          },
+          "retry_count": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry Count"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 600.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "超时秒数"
           }
         },
         "required": [
@@ -2536,6 +2833,32 @@
               }
             ],
             "title": "覆盖系统提示词"
+          },
+          "retry_count": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Retry Count"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 600.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "超时秒数"
           }
         },
         "required": [
@@ -2605,13 +2928,19 @@
             "type": "string"
           },
           "scenario": {
-            "default": "chat",
-            "enum": [
-              "chat",
-              "comment"
+            "anyOf": [
+              {
+                "enum": [
+                  "chat",
+                  "comment"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
             ],
-            "title": "场景",
-            "type": "string"
+            "title": "场景"
           }
         },
         "required": [
@@ -3870,6 +4199,49 @@
           }
         },
         "summary": "获取提示词/Persona 修订历史时间线",
+        "tags": [
+          "platform-meta"
+        ]
+      }
+    },
+    "/api/v1/platform/model-catalog": {
+      "get": {
+        "operationId": "api_platform_model_catalog_api_v1_platform_model_catalog_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "refresh",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Refresh",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiPlatformModelCatalogResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "Get unified model-catalog diagnostics",
         "tags": [
           "platform-meta"
         ]

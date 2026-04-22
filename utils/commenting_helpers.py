@@ -99,6 +99,8 @@ def is_publishable_comment(value: str) -> bool:
         "assistant：",
         "system:",
         "system：",
+        "<think>",
+        "</think>",
     )
     if any(marker in lowered for marker in obvious_reasoning_markers):
         return False
@@ -115,6 +117,10 @@ def is_publishable_comment(value: str) -> bool:
 
 def sanitize_comment(value: str) -> str:
     text = str(value or "").strip()
+    if not text:
+        return ""
+
+    text = re.sub(r"<think>.*?</think>", "", text, flags=re.IGNORECASE | re.DOTALL).strip()
     if not text:
         return ""
 

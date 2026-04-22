@@ -31,7 +31,7 @@ async def api_get_options(refresh: bool = False, scenario: str = "chat"):
     ensure_platform_api_enabled()
     resolved_scenario = normalize_scenario(scenario)
 
-    model_options, embedding_options = runtime_options(force_refresh=refresh)
+    model_options, embedding_options = runtime_options(resolved_scenario, force_refresh=refresh)
     prompt_options = prompt_option_entries(resolved_scenario)
     persona_options = persona_option_entries(resolved_scenario)
     default_model = ""

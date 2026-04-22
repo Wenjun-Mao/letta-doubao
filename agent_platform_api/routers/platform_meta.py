@@ -17,6 +17,7 @@ from agent_platform_api.helpers import (
 )
 from agent_platform_api.models.platform import (
     ApiPlatformCapabilitiesResponse,
+    ApiPlatformModelCatalogResponse,
     ApiPlatformToolListResponse,
     ApiPlatformToolTestInvokeResponse,
     PlatformToolTestInvokeRequest,
@@ -32,6 +33,7 @@ from agent_platform_api.runtime import (
     ensure_agent_not_archived,
     ensure_platform_api_enabled,
     is_truthy,
+    model_catalog,
     missing_platform_capabilities,
     platform_api_enabled,
 )
@@ -53,6 +55,17 @@ async def api_platform_capabilities():
         "missing_required": missing_platform_capabilities(capabilities),
         **capabilities,
     }
+
+
+@router.get(
+    "/api/v1/platform/model-catalog",
+    response_model=ApiPlatformModelCatalogResponse,
+    tags=["platform-meta"],
+    summary="Get unified model-catalog diagnostics",
+)
+async def api_platform_model_catalog(refresh: bool = False):
+    ensure_platform_api_enabled()
+    return model_catalog(force_refresh=refresh)
 
 
 @router.get(

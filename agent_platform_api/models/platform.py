@@ -195,3 +195,38 @@ class ApiTestArtifactReadResponse(BaseModel):
     content: str
     truncated: bool
     line_count: int
+
+
+class ApiPlatformModelCatalogSourceModelResponse(BaseModel):
+    provider_model_id: str
+    model_type: str
+
+
+class ApiPlatformModelCatalogSourceResponse(BaseModel):
+    id: str
+    label: str
+    kind: str
+    base_url: str
+    enabled_for: list[str]
+    letta_handle_prefix: str
+    status: str
+    detail: str
+    models: list[ApiPlatformModelCatalogSourceModelResponse] = Field(default_factory=list)
+
+
+class ApiPlatformModelCatalogEntryResponse(BaseModel):
+    model_key: str
+    source_id: str
+    source_label: str
+    source_kind: str
+    provider_model_id: str
+    model_type: str
+    letta_handle: str | None = None
+    agent_studio_available: bool
+    comment_lab_available: bool
+
+
+class ApiPlatformModelCatalogResponse(BaseModel):
+    generated_at: float
+    sources: list[ApiPlatformModelCatalogSourceResponse] = Field(default_factory=list)
+    items: list[ApiPlatformModelCatalogEntryResponse] = Field(default_factory=list)

@@ -562,6 +562,7 @@ dependencies = [
     { name = "fastapi" },
     { name = "httpx" },
     { name = "letta-client" },
+    { name = "pydantic-settings" },
     { name = "python-dotenv" },
     { name = "tenacity" },
     { name = "uvicorn" },
@@ -580,6 +581,7 @@ requires-dist = [
     { name = "fastapi", specifier = ">=0.135.2" },
     { name = "httpx", specifier = ">=0.28.1" },
     { name = "letta-client", specifier = ">=1.8.0" },
+    { name = "pydantic-settings", specifier = ">=2.11.0" },
     { name = "python-dotenv", specifier = ">=1.2.2" },
     { name = "tenacity", specifier = ">=9.1.2" },
     { name = "uvicorn", specifier = ">=0.42.0" },
@@ -1018,6 +1020,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/46/c6/943a366322ae9472fa9effbef2f34e82ed9f9a2a674202902a7b52f906d6/pydantic_graph-1.72.0.tar.gz", hash = "sha256:8970cc4cd4ba396976d4b4aa0ba5dcc9a0efeeac01a1a9253c7a8d90a4590046", size = 58716, upload-time = "2026-03-26T01:42:40.531Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/61/0d/2b57296d0b3cec320a13bdd65bc04680f70ab64212495a91d8d10f83d9e4/pydantic_graph-1.72.0-py3-none-any.whl", hash = "sha256:d1c953d7395ff53b74c3e3b8b4cfac8d8ba06d32fc656ebae9363b2ade8598b0", size = 72502, upload-time = "2026-03-26T01:42:33.336Z" },
+]
+
+[[package]]
+name = "pydantic-settings"
+version = "2.14.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "pydantic" },
+    { name = "python-dotenv" },
+    { name = "typing-inspection" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/42/98/c8345dccdc31de4228c039a98f6467a941e39558da41c1744fbe29fa5666/pydantic_settings-2.14.0.tar.gz", hash = "sha256:24285fd4b0e0c06507dd9fdfd331ee23794305352aaec8fc4eb92d4047aeb67d", size = 235709, upload-time = "2026-04-20T13:37:40.293Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/01/dd/bebff3040138f00ae8a102d426b27349b9a49acc310fcae7f92112d867e3/pydantic_settings-2.14.0-py3-none-any.whl", hash = "sha256:fc8d5d692eb7092e43c8647c1c35a3ecd00e040fcf02ed86f4cb5458ca62182e", size = 60940, upload-time = "2026-04-20T13:37:38.586Z" },
 ]
 
 [[package]]

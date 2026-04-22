@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import os
-
 from fastapi import APIRouter, HTTPException
 
 from agent_platform_api.helpers import normalize_scenario, persona_content_map, prompt_content_map
@@ -10,7 +8,7 @@ from agent_platform_api.runtime import (
     commenting_runtime_defaults,
     commenting_service,
     ensure_platform_api_enabled,
-    runtime_options,
+    resolve_comment_model_selection,
 )
 
 router = APIRouter()
@@ -51,40 +49,23 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
     if request.persona_key not in persona_map:
         raise HTTPException(status_code=400, detail=f"Invalid persona key: {request.persona_key}")
 
-    model_options, _ = runtime_options()
-    allowed_models = {
-        str(option.get("key", "") or "")
-        for option in model_options
-        if str(option.get("key", "") or "").strip()
-    }
-    model_handle = (request.model or "").strip() or os.getenv("AGENT_PLATFORM_COMMENTING_DEFAULT_MODEL", "").strip()
-    if not model_handle and model_options:
-        model_handle = str(model_options[0].get("key", "") or "")
-    if not model_handle:
-        raise HTTPException(status_code=400, detail="No model available for commenting generation")
-
-    if allowed_models and model_handle not in allowed_models:
-        normalized_requested_model = commenting_service._resolve_provider_model(model_handle)
-        matched_model_handle = next(
-            (
-                candidate
-                for candidate in allowed_models
-                if commenting_service._resolve_provider_model(candidate) == normalized_requested_model
-            ),
-            "",
+    try:
+        model_selection = resolve_comment_model_selection(
+            model_key=(request.model_key or "").strip() or None,
+            legacy_model=(request.model or "").strip() or None,
         )
-        if matched_model_handle:
-            model_handle = matched_model_handle
-        else:
-            raise HTTPException(status_code=400, detail=f"Invalid model: {model_handle}")
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
 
     persona_text = str(persona_map[request.persona_key] or "")
     try:
         generation_result = commenting_service.generate_comment(
-            model=model_handle,
+            base_url=str(model_selection.get("base_url", "") or ""),
+            model=str(model_selection.get("provider_model_id", "") or ""),
             system_prompt=prompt_map[request.prompt_key],
             persona_prompt=persona_text,
             news_input=text,
+            api_key=str(model_selection.get("api_key", "") or ""),
             max_tokens=request.max_tokens,
             timeout_seconds=request.timeout_seconds,
             retry_count=request.retry_count,
@@ -111,11 +92,15 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
 
     return {
         "scenario": "comment",
+        "model_key": str(model_selection.get("model_key", "") or ""),
+        "source_id": str(model_selection.get("source_id", "") or ""),
+        "source_label": str(model_selection.get("source_label", "") or ""),
+        "provider_model_id": str(model_selection.get("provider_model_id", "") or ""),
         "prompt_key": request.prompt_key,
         "persona_key": request.persona_key,
-        "model": model_handle,
+        "model": str(model_selection.get("provider_model_id", "") or ""),
         "content": content,
-        "provider": commenting_service.provider_name,
+        "provider": str(model_selection.get("source_label", "") or ""),
         "max_tokens": int(generation_result.get("max_tokens", runtime_defaults.max_tokens)),
         "timeout_seconds": float(generation_result.get("timeout_seconds", runtime_defaults.timeout_seconds)),
         "task_shape": str(generation_result.get("task_shape", runtime_defaults.task_shape)),

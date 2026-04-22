@@ -1,0 +1,27 @@
+info:
+  name: unsloth hello
+  type: http
+  seq: 2
+
+http:
+  method: POST
+  url: http://100.81.194.12:1234/v1/chat/completions
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+          "messages": [{"role":"user", "content": "Hello"}],
+          "stream": false
+      }
+  auth:
+    type: bearer
+    token: sk-unsloth-99fcd6804fa732c38f8b51879da0038f
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

@@ -96,7 +96,7 @@ async def api_create_agent(request: AgentCreateRequest):
             detail="/api/v1/agents supports only scenario='chat'. Use /api/v1/commenting/generate for stateless comments.",
         )
 
-    model_options, embedding_options = runtime_options()
+    model_options, embedding_options = runtime_options("chat")
     prompt_map = prompt_content_map("chat")
     persona_map = persona_content_map("chat")
     allowed_models = {option["key"] for option in model_options}

@@ -18,6 +18,7 @@ class CommentingGenerateRequest(BaseModel):
     input: str
     prompt_key: str = "comment_v20260418"
     persona_key: str = "comment_linxiaotang"
+    model_key: str | None = None
     model: str | None = None
     max_tokens: int | None = Field(default=None, ge=0)
     timeout_seconds: float | None = Field(default=None, gt=0)
@@ -27,6 +28,10 @@ class CommentingGenerateRequest(BaseModel):
 
 class ApiCommentingGenerateResponse(BaseModel):
     scenario: ScenarioType
+    model_key: str
+    source_id: str
+    source_label: str
+    provider_model_id: str
     prompt_key: str
     persona_key: str
     model: str

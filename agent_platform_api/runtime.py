@@ -1,43 +1,66 @@
 from __future__ import annotations
 
 import os
-import time
 from pathlib import Path
 from typing import Any, cast
 
-import httpx
 from fastapi import HTTPException
 from letta_client import Letta
-from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from agent_platform_api.models.commenting import ApiCommentingRuntimeDefaultsResponse
 from agent_platform_api.models.common import CommentingTaskShape, ScenarioType
+from agent_platform_api.settings import get_settings
 from utils.agent_lifecycle_registry import AgentLifecycleRegistry
 from utils.agent_platform_service import AgentPlatformService
 from utils.commenting_service import CommentingService
 from utils.custom_tool_registry import CustomToolRegistry
+from utils.model_catalog import ModelCatalogService
 from utils.platform_test_orchestrator import PlatformTestOrchestrator
 from utils.prompt_persona_registry import PromptPersonaRegistry
 
 APP_VERSION = os.getenv("AGENT_PLATFORM_API_VERSION", "0.2.0")
 
-PREFERRED_MODEL_OPTIONS = [
-    {
-        "key": "lmstudio_openai/qwen3.5-27b",
+MODEL_OPTION_OVERRIDES: dict[str, dict[str, str]] = {
+    "lmstudio_openai/gemma-4-31b-it": {
+        "label": "Gemma 4 31B IT",
+        "description": "Local model discovered from Unsloth Studio.",
+    },
+    "lmstudio_openai/qwen3.5-27b": {
         "label": "Qwen 3.5 27B",
         "description": "Recommended default for local development.",
     },
-    {
-        "key": "lmstudio_openai/qwen/qwen3.5-35b-a3b",
+    "lmstudio_openai/qwen/qwen3.5-35b-a3b": {
         "label": "Qwen 3.5 35B A3B",
         "description": "Higher quality but heavier VRAM usage.",
     },
-    {
-        "key": "openai-proxy/doubao-seed-1-8-251228",
+    "openai-proxy/doubao-seed-1-8-251228": {
         "label": "Doubao Seed 1.8 (ARK)",
         "description": "Requires OpenAI-compatible ARK provider configured in Letta server.",
     },
-]
+}
+
+PROVIDER_MODEL_OPTION_OVERRIDES: dict[str, dict[str, str]] = {
+    "gemma-4-31b-it": {
+        "label": "Gemma 4 31B IT",
+        "description": "Local model discovered from Unsloth Studio.",
+    },
+    "qwen3.5-27b": {
+        "label": "Qwen 3.5 27B",
+        "description": "Recommended default for local development.",
+    },
+    "qwen/qwen3.5-35b-a3b": {
+        "label": "Qwen 3.5 35B A3B",
+        "description": "Higher quality but heavier VRAM usage.",
+    },
+    "doubao-seed-1-8-251228": {
+        "label": "Doubao Seed 1.8 (ARK)",
+        "description": "OpenAI-compatible ARK provider model.",
+    },
+}
+MODEL_OPTION_PRIORITY = {key: index for index, key in enumerate(MODEL_OPTION_OVERRIDES)}
+PROVIDER_MODEL_OPTION_PRIORITY = {
+    key: index for index, key in enumerate(PROVIDER_MODEL_OPTION_OVERRIDES)
+}
 
 PREFERRED_EMBEDDING_OPTIONS = [
     {
@@ -74,18 +97,6 @@ SCENARIO_DEFAULTS: dict[ScenarioType, dict[str, str]] = {
     },
 }
 MANAGED_TOOL_TAG = "ade:managed"
-OPTIONS_CACHE_TTL_SECONDS = max(1, int(os.getenv("AGENT_PLATFORM_OPTIONS_CACHE_TTL_SECONDS", "30")))
-MODEL_DISCOVERY_TIMEOUT_SECONDS = max(1.0, float(os.getenv("AGENT_PLATFORM_MODEL_DISCOVERY_TIMEOUT_SECONDS", "5")))
-OPTIONS_CACHE: dict[str, Any] = {
-    "expires_at": 0.0,
-    "models": [],
-    "embeddings": [],
-}
-
-
-class RetryableModelDiscoveryError(RuntimeError):
-    """Raised for transient failures while querying upstream model catalogs."""
-
 
 client = Letta(base_url=os.getenv("LETTA_BASE_URL", "http://localhost:8283"))
 agent_platform = AgentPlatformService(client)
@@ -94,6 +105,7 @@ test_orchestrator = PlatformTestOrchestrator(project_root=PROJECT_ROOT)
 prompt_persona_registry = PromptPersonaRegistry(PROJECT_ROOT)
 custom_tool_registry = CustomToolRegistry(PROJECT_ROOT)
 agent_lifecycle_registry = AgentLifecycleRegistry(PROJECT_ROOT)
+model_catalog_service = ModelCatalogService()
 commenting_service = CommentingService()
 REVISION_LOG_DIR = PROJECT_ROOT / "diagnostics"
 REVISION_LOG_FILE = REVISION_LOG_DIR / "prompt_persona_revisions.jsonl"
@@ -180,7 +192,7 @@ def dedupe_options(options: list[dict[str, Any]]) -> list[dict[str, Any]]:
     seen: set[str] = set()
     out: list[dict[str, Any]] = []
     for option in options:
-        key = option.get("key", "")
+        key = str(option.get("key", "") or "")
         if not key or key in seen:
             continue
         seen.add(key)
@@ -188,109 +200,30 @@ def dedupe_options(options: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return out
 
 
-def resolve_models_endpoint(base_url: str | None) -> str:
-    base = str(base_url or "").strip().rstrip("/")
-    if not base:
-        return ""
-    if base.endswith("/models"):
-        return base
-    if base.endswith("/chat/completions"):
-        return f"{base[:-len('/chat/completions')]}/models"
-    if base.endswith("/v1"):
-        return f"{base}/models"
-    return f"{base}/v1/models"
+def invalidate_options_cache() -> None:
+    model_catalog_service.invalidate()
 
 
-def ensure_lmstudio_handle(model_id: str) -> str:
-    resolved = str(model_id or "").strip().strip("/")
-    if not resolved:
-        return ""
-
-    lowered = resolved.lower()
-    if lowered.startswith(("lmstudio_openai/", "openai-proxy/", "openai/", "anthropic/")):
-        return resolved
-    return f"lmstudio_openai/{resolved}"
+def _looks_like_embedding_handle(handle: str) -> bool:
+    lowered = str(handle or "").strip().lower()
+    return "embedding" in lowered or "embed" in lowered
 
 
-@retry(
-    stop=stop_after_attempt(2),
-    wait=wait_exponential(multiplier=1, min=1, max=4),
-    retry=retry_if_exception_type(
-        (
-            RetryableModelDiscoveryError,
-            httpx.TimeoutException,
-            httpx.ConnectError,
-            httpx.ReadError,
-            httpx.RemoteProtocolError,
-            httpx.WriteError,
-        )
-    ),
-    reraise=True,
-)
-def discover_lmstudio_model_ids(models_endpoint: str) -> set[str]:
-    if not models_endpoint:
-        return set()
-
-    with httpx.Client(timeout=MODEL_DISCOVERY_TIMEOUT_SECONDS) as http_client:
-        response = http_client.get(models_endpoint)
-        if response.status_code in {429, 500, 502, 503, 504}:
-            raise RetryableModelDiscoveryError(
-                f"Model discovery temporary failure ({response.status_code})"
-            )
-        response.raise_for_status()
-        payload = response.json()
-
-    if not isinstance(payload, dict):
-        return set()
-
-    items = payload.get("data")
-    if not isinstance(items, list):
-        return set()
-
-    discovered: set[str] = set()
-    for item in items:
-        if not isinstance(item, dict):
-            continue
-        model_id = str(item.get("id") or item.get("model") or item.get("name") or "").strip()
-        if model_id:
-            discovered.add(model_id)
-    return discovered
+def _resolve_model_handle(model_obj: Any) -> str:
+    for attr in ("handle", "id", "model", "name"):
+        value = str(getattr(model_obj, attr, "") or "").strip()
+        if value:
+            return value
+    return ""
 
 
-def runtime_options(force_refresh: bool = False) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
-    cache_expires_at = float(OPTIONS_CACHE.get("expires_at", 0.0) or 0.0)
-    cached_models = OPTIONS_CACHE.get("models")
-    cached_embeddings = OPTIONS_CACHE.get("embeddings")
-    if (
-        not force_refresh
-        and time.monotonic() < cache_expires_at
-        and isinstance(cached_models, list)
-        and isinstance(cached_embeddings, list)
-        and cached_models
-    ):
-        return [dict(option) for option in cached_models], [dict(option) for option in cached_embeddings]
-
-    model_options = [dict(option) for option in PREFERRED_MODEL_OPTIONS]
-    embedding_options = [dict(option) for option in PREFERRED_EMBEDDING_OPTIONS]
-    known_embedding_keys = {option["key"] for option in embedding_options}
-
+def _resolve_letta_catalog_handles() -> tuple[set[str], set[str]]:
     discovered_model_handles: set[str] = set()
     discovered_embedding_handles: set[str] = set()
 
-    def looks_like_embedding_handle(handle: str) -> bool:
-        lowered = handle.lower()
-        return "embedding" in lowered or "embed" in lowered
-
-    def resolve_model_handle(model_obj: Any) -> str:
-        for attr in ("handle", "id", "model", "name"):
-            value = str(getattr(model_obj, attr, "") or "").strip()
-            if value:
-                return value
-        return ""
-
     try:
         for embedding in list(client.models.embeddings.list()):
-            handle = resolve_model_handle(embedding)
+            handle = _resolve_model_handle(embedding)
             if handle:
                 discovered_embedding_handles.add(handle)
     except Exception:
@@ -298,51 +231,96 @@ def runtime_options(force_refresh: bool = False) -> tuple[list[dict[str, Any]], 
 
     try:
         for model in list(client.models.list()):
-            handle = resolve_model_handle(model)
+            handle = _resolve_model_handle(model)
             model_type = str(
                 getattr(model, "api_model_type", "") or getattr(model, "model_type", "") or ""
             ).strip().lower()
             if not handle:
                 continue
-            if looks_like_embedding_handle(handle):
-                discovered_embedding_handles.add(handle)
-                continue
-            if model_type in {"embedding", "embeddings"}:
+            if _looks_like_embedding_handle(handle) or model_type in {"embedding", "embeddings"}:
                 discovered_embedding_handles.add(handle)
                 continue
             discovered_model_handles.add(handle)
     except Exception:
         pass
 
-    lmstudio_base_url = (
-        os.getenv("AGENT_PLATFORM_COMMENTING_BASE_URL")
-        or os.getenv("LMSTUDIO_BASE_URL")
-        or os.getenv("OPENAI_BASE_URL")
-        or os.getenv("OPENAI_API_BASE")
-    )
-    try:
-        models_endpoint = resolve_models_endpoint(lmstudio_base_url)
-        for model_id in discover_lmstudio_model_ids(models_endpoint):
-            handle = ensure_lmstudio_handle(model_id)
-            if not handle:
-                continue
-            if looks_like_embedding_handle(handle):
-                discovered_embedding_handles.add(handle)
-                continue
-            discovered_model_handles.add(handle)
-    except Exception:
-        pass
+    return discovered_model_handles, discovered_embedding_handles
 
-    for handle in sorted(discovered_model_handles):
-        if any(option["key"] == handle for option in model_options):
-            continue
-        model_options.append(
+
+def _enriched_catalog_items(force_refresh: bool = False) -> list[dict[str, Any]]:
+    snapshot = model_catalog_service.snapshot(force_refresh=force_refresh)
+    letta_model_handles, _ = _resolve_letta_catalog_handles()
+    items: list[dict[str, Any]] = []
+    for entry in model_catalog_service.flatten(snapshot):
+        is_embedding = entry.model_type == "embedding"
+        letta_handle = entry.letta_handle
+        agent_studio_available = (
+            (not is_embedding)
+            and ("chat" in entry.enabled_for)
+            and bool(letta_handle)
+            and letta_handle in letta_model_handles
+        )
+        comment_lab_available = (not is_embedding) and ("comment" in entry.enabled_for)
+        items.append(
             {
-                "key": handle,
-                "label": handle.split("/", 1)[-1],
-                "description": "Discovered from Letta or OpenAI-compatible model catalog.",
+                "model_key": entry.model_key,
+                "source_id": entry.source_id,
+                "source_label": entry.source_label,
+                "source_kind": entry.source_kind,
+                "base_url": entry.base_url,
+                "enabled_for": list(entry.enabled_for),
+                "provider_model_id": entry.provider_model_id,
+                "model_type": entry.model_type,
+                "letta_handle": letta_handle,
+                "agent_studio_available": agent_studio_available,
+                "comment_lab_available": comment_lab_available,
             }
         )
+    return items
+
+
+def model_catalog(force_refresh: bool = False) -> dict[str, Any]:
+    snapshot = model_catalog_service.snapshot(force_refresh=force_refresh)
+    return {
+        "generated_at": snapshot.generated_at,
+        "sources": [
+            {
+                "id": source.id,
+                "label": source.label,
+                "kind": source.kind,
+                "base_url": source.base_url,
+                "enabled_for": list(source.enabled_for),
+                "letta_handle_prefix": source.letta_handle_prefix,
+                "status": source.status,
+                "detail": source.detail,
+                "models": [
+                    {
+                        "provider_model_id": model.provider_model_id,
+                        "model_type": model.model_type,
+                    }
+                    for model in source.models
+                ],
+            }
+            for source in snapshot.sources
+        ],
+        "items": _enriched_catalog_items(force_refresh=force_refresh),
+    }
+
+
+def _model_option_metadata(item: dict[str, Any], *, chat_key: str | None = None) -> tuple[str, str]:
+    resolved_key = str(chat_key or item.get("letta_handle", "") or "").strip()
+    provider_model_id = str(item.get("provider_model_id", "") or "").strip()
+    override = MODEL_OPTION_OVERRIDES.get(resolved_key) or PROVIDER_MODEL_OPTION_OVERRIDES.get(provider_model_id)
+    if override:
+        return override["label"], override["description"]
+    source_label = str(item.get("source_label", "") or "").strip()
+    return provider_model_id or resolved_key, f"Discovered from {source_label}."
+
+
+def _embedding_options() -> list[dict[str, Any]]:
+    _, discovered_embedding_handles = _resolve_letta_catalog_handles()
+    embedding_options = [dict(option) for option in PREFERRED_EMBEDDING_OPTIONS]
+    known_embedding_keys = {option["key"] for option in embedding_options}
 
     for handle in sorted(discovered_embedding_handles):
         if handle in known_embedding_keys:
@@ -356,23 +334,117 @@ def runtime_options(force_refresh: bool = False) -> tuple[list[dict[str, Any]], 
             }
         )
 
-    model_options = dedupe_options(model_options)
     embedding_options = dedupe_options(embedding_options)
-    model_catalog_known = bool(discovered_model_handles)
     embedding_catalog_known = bool(discovered_embedding_handles)
-    for option in model_options:
-        option["available"] = (not model_catalog_known) or option["key"] in discovered_model_handles
     for option in embedding_options:
         option["available"] = (not embedding_catalog_known) or option["key"] in discovered_embedding_handles
-
-    OPTIONS_CACHE["expires_at"] = time.monotonic() + OPTIONS_CACHE_TTL_SECONDS
-    OPTIONS_CACHE["models"] = [dict(option) for option in model_options]
-    OPTIONS_CACHE["embeddings"] = [dict(option) for option in embedding_options]
-    return model_options, embedding_options
+    return embedding_options
 
 
-def invalidate_options_cache() -> None:
-    OPTIONS_CACHE["expires_at"] = 0.0
+def _model_option_sort_key(option: dict[str, Any]) -> tuple[int, int, str, str]:
+    key = str(option.get("key", "") or "").strip()
+    provider_model_id = str(option.get("provider_model_id", "") or "").strip()
+    preferred_rank = MODEL_OPTION_PRIORITY.get(key)
+    if preferred_rank is None:
+        preferred_rank = PROVIDER_MODEL_OPTION_PRIORITY.get(provider_model_id)
+    if preferred_rank is not None:
+        return (0, int(preferred_rank), key.lower(), provider_model_id.lower())
+    return (1, 0, key.lower(), provider_model_id.lower())
+
+
+def runtime_options(
+    scenario: ScenarioType = "chat",
+    *,
+    force_refresh: bool = False,
+) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+    items = _enriched_catalog_items(force_refresh=force_refresh)
+    model_options: list[dict[str, Any]] = []
+    seen_model_keys: set[str] = set()
+
+    if scenario == "chat":
+        for item in items:
+            if not item["agent_studio_available"]:
+                continue
+            key = str(item.get("letta_handle", "") or "").strip()
+            if not key or key in seen_model_keys:
+                continue
+            seen_model_keys.add(key)
+            label, description = _model_option_metadata(item, chat_key=key)
+            model_options.append(
+                {
+                    "key": key,
+                    "label": label,
+                    "description": description,
+                    "available": True,
+                    "source_id": item["source_id"],
+                    "source_label": item["source_label"],
+                    "provider_model_id": item["provider_model_id"],
+                }
+            )
+    else:
+        for item in items:
+            if not item["comment_lab_available"]:
+                continue
+            key = str(item.get("model_key", "") or "").strip()
+            if not key or key in seen_model_keys:
+                continue
+            seen_model_keys.add(key)
+            label, description = _model_option_metadata(item)
+            model_options.append(
+                {
+                    "key": key,
+                    "label": label,
+                    "description": description,
+                    "available": True,
+                    "source_id": item["source_id"],
+                    "source_label": item["source_label"],
+                    "provider_model_id": item["provider_model_id"],
+                }
+            )
+
+    if scenario == "chat":
+        model_options.sort(key=_model_option_sort_key)
+    return model_options, _embedding_options()
+
+
+def resolve_comment_model_selection(
+    *,
+    model_key: str | None = None,
+    legacy_model: str | None = None,
+    force_refresh: bool = False,
+) -> dict[str, Any]:
+    items = [item for item in _enriched_catalog_items(force_refresh=force_refresh) if item["comment_lab_available"]]
+    settings = get_settings()
+    source_api_keys = {
+        source.id: source.resolve_api_key()
+        for source in settings.model_sources
+    }
+    requested_key = str(model_key or "").strip()
+    if requested_key:
+        matched = next((item for item in items if item["model_key"] == requested_key), None)
+        if matched:
+            return {**matched, "api_key": source_api_keys.get(str(matched["source_id"]), "")}
+        raise ValueError(f"Invalid model_key: {requested_key}")
+
+    requested_model = str(legacy_model or "").strip()
+    if not requested_model:
+        raise ValueError("model_key is required")
+
+    matches = [
+        item
+        for item in items
+        if requested_model in {
+            str(item["model_key"]),
+            str(item["provider_model_id"]),
+            str(item.get("letta_handle", "") or ""),
+        }
+    ]
+    if len(matches) == 1:
+        matched = matches[0]
+        return {**matched, "api_key": source_api_keys.get(str(matched["source_id"]), "")}
+    if len(matches) > 1:
+        raise ValueError(f"Ambiguous model selector '{requested_model}'. Use model_key instead.")
+    raise ValueError(f"Invalid model: {requested_model}")
 
 
 def commenting_runtime_defaults() -> ApiCommentingRuntimeDefaultsResponse:
@@ -382,8 +454,7 @@ def commenting_runtime_defaults() -> ApiCommentingRuntimeDefaultsResponse:
         task_shape = "compact"
     resolved_task_shape = cast(CommentingTaskShape, task_shape)
     return ApiCommentingRuntimeDefaultsResponse(
-        max_tokens=int(defaults.get("max_tokens", 1536)),
+        max_tokens=int(defaults.get("max_tokens", 0)),
         timeout_seconds=float(defaults.get("timeout_seconds", 60.0)),
         task_shape=resolved_task_shape,
     )
-

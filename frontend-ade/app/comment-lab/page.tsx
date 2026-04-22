@@ -146,12 +146,14 @@ function toErrorMessage(exc: unknown): string {
 }
 
 function optionLabel(option: OptionEntry): string {
-  const key = (option.key || "").trim();
+  const key = (option.provider_model_id || option.key || "").trim();
   const label = (option.label || "").trim();
-  if (label && label !== key) {
-    return `${label} (${key})`;
+  const sourceLabel = (option.source_label || "").trim();
+  const base = label && label !== key ? `${label} (${key})` : key;
+  if (sourceLabel) {
+    return `${base} - ${sourceLabel}`;
   }
-  return key;
+  return base;
 }
 
 function pickSelectedKey(current: string, options: OptionEntry[], fallback: string): string {
@@ -454,7 +456,7 @@ export default function CommentLabPage() {
         input: userInput,
         prompt_key: promptKey,
         persona_key: personaKey,
-        model,
+        model_key: model,
         max_tokens: parsedMaxTokens,
         timeout_seconds: parsedTimeoutSeconds,
         retry_count: parsedRetryCount,
@@ -462,7 +464,7 @@ export default function CommentLabPage() {
       });
       setOutput(payload.content || "");
       setProvider(payload.provider || "");
-      setModelUsed(payload.model || "");
+      setModelUsed(payload.provider_model_id || payload.model || "");
       setMaxTokensUsed(`${payload.max_tokens}`);
       setTimeoutUsed(`${payload.timeout_seconds}`);
       setTaskShapeUsed(payload.task_shape || "");
@@ -480,7 +482,7 @@ export default function CommentLabPage() {
       setRawRequestReadable(formatRawRequestForHuman(payload.raw_request || {}));
       setRawReply(stringifyPretty(payload.raw_reply || {}));
       setRawReplyReadable(formatRawReplyForHuman(payload.raw_reply || {}));
-      setStatus(`${copy.modelUsed}: ${payload.model}`);
+      setStatus(`${copy.modelUsed}: ${payload.provider_model_id || payload.model}`);
     } catch (exc) {
       setResponseSeconds("");
       setError(`${copy.generateError}: ${toErrorMessage(exc)}`);
