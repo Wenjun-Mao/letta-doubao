@@ -52,6 +52,7 @@ class CatalogSourceRecord:
     status: CatalogSourceStatus
     detail: str
     models: tuple[CatalogModelRecord, ...]
+    adapter: str = "generic_openai"
     allowlist_applied: bool | None = None
     allowlist_checked_at: str | None = None
     raw_model_count: int = 0
@@ -75,6 +76,7 @@ class CatalogEntry:
     model_type: CatalogModelType
     model_key: str
     letta_handle: str | None
+    source_adapter: str = "generic_openai"
 
 
 def build_model_key(source_id: str, provider_model_id: str) -> str:
@@ -101,7 +103,11 @@ class ModelCatalogService:
             return self._snapshot
 
         generated_at = time.time()
-        sources = tuple(self._discover_source(source, settings=settings) for source in settings.model_sources)
+        sources = tuple(
+            self._discover_source(source, settings=settings)
+            for source in settings.model_sources
+            if source.enabled
+        )
         snapshot = CatalogSnapshot(generated_at=generated_at, sources=sources)
         self._snapshot = snapshot
         self._expires_at = time.monotonic() + settings.options_cache_ttl_seconds
@@ -134,6 +140,7 @@ class ModelCatalogService:
                         model_type=model.model_type,
                         model_key=build_model_key(source.id, model.provider_model_id),
                         letta_handle=source_config.derive_letta_handle(model.provider_model_id),
+                        source_adapter=source.adapter,
                     )
                 )
         return items
@@ -169,6 +176,7 @@ class ModelCatalogService:
                             else f"Provider catalog empty; fallback model probed. {detail}"
                         ),
                         models=filtered_records,
+                        adapter=source.adapter,
                         allowlist_applied=allowlist_applied,
                         allowlist_checked_at=allowlist_checked_at,
                         raw_model_count=raw_model_count,
@@ -184,6 +192,7 @@ class ModelCatalogService:
                     status="empty",
                     detail="No models returned from provider catalog.",
                     models=(),
+                    adapter=source.adapter,
                     raw_model_count=0,
                     filtered_model_count=0,
                 )
@@ -200,6 +209,7 @@ class ModelCatalogService:
                 status="healthy",
                 detail=detail,
                 models=filtered_records,
+                adapter=source.adapter,
                 allowlist_applied=allowlist_applied,
                 allowlist_checked_at=allowlist_checked_at,
                 raw_model_count=raw_model_count,
@@ -216,6 +226,7 @@ class ModelCatalogService:
                 status="auth_error",
                 detail=f"Authentication failed ({exc.status_code}).",
                 models=(),
+                adapter=source.adapter,
                 raw_model_count=0,
                 filtered_model_count=0,
             )
@@ -230,6 +241,7 @@ class ModelCatalogService:
                 status="unreachable",
                 detail=str(exc),
                 models=(),
+                adapter=source.adapter,
                 raw_model_count=0,
                 filtered_model_count=0,
             )

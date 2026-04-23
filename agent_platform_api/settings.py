@@ -12,7 +12,8 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 CommentingTaskShapeSetting = Literal["classic", "all_in_system", "structured_output"]
 ModelSourceKind = Literal["openai-compatible"]
-ScenarioName = Literal["chat", "comment"]
+ModelSourceAdapter = Literal["generic_openai", "ark_openai", "llama_cpp_server"]
+ScenarioName = Literal["chat", "comment", "label"]
 _KNOWN_MODEL_HANDLE_PREFIXES = ("lmstudio_openai/", "openai-proxy/", "openai/", "anthropic/")
 _DEFAULT_SECRETS_DIR = Path("/run/secrets")
 _VERSION_PATH_RE = re.compile(r"/v\d+(?:\.\d+)?$", re.IGNORECASE)
@@ -23,15 +24,27 @@ class ModelSourceConfig(BaseModel):
     label: str
     base_url: str
     kind: ModelSourceKind = "openai-compatible"
+    adapter: ModelSourceAdapter = "generic_openai"
+    enabled: bool = True
     enabled_for: list[ScenarioName] = Field(default_factory=list)
     letta_handle_prefix: str = ""
     api_key_env: str = ""
     api_key_secret: str = ""
 
-    @field_validator("id", "label", "base_url", "letta_handle_prefix", "api_key_env", "api_key_secret")
+    @field_validator("id", "label", "base_url", "adapter", "letta_handle_prefix", "api_key_env", "api_key_secret")
     @classmethod
     def _strip_text_fields(cls, value: str) -> str:
         return str(value or "").strip()
+
+    @field_validator("adapter")
+    @classmethod
+    def _normalize_adapter(cls, value: str) -> str:
+        normalized = str(value or "").strip().lower().replace("-", "_")
+        if not normalized:
+            return "generic_openai"
+        if normalized not in {"generic_openai", "ark_openai", "llama_cpp_server"}:
+            raise ValueError("adapter must be 'generic_openai', 'ark_openai', or 'llama_cpp_server'")
+        return normalized
 
     @field_validator("enabled_for", mode="before")
     @classmethod
@@ -46,8 +59,8 @@ class ModelSourceConfig(BaseModel):
         normalized = [str(item or "").strip().lower() for item in value]
         deduped: list[ScenarioName] = []
         for item in normalized:
-            if item not in {"chat", "comment"}:
-                raise ValueError("enabled_for entries must be 'chat' and/or 'comment'")
+            if item not in {"chat", "comment", "label"}:
+                raise ValueError("enabled_for entries must be 'chat', 'comment', and/or 'label'")
             typed_item = item  # type: ignore[assignment]
             if typed_item not in deduped:
                 deduped.append(typed_item)
@@ -112,7 +125,11 @@ class ModelSourceConfig(BaseModel):
 
         env_name = self.api_key_env.strip()
         if env_name:
-            return str(env_map.get(env_name, "") or "").strip()
+            env_value = str(env_map.get(env_name, "") or "").strip()
+            if env_value:
+                return env_value
+        if self.adapter == "llama_cpp_server":
+            return str(env_map.get("UNSLOTH_API_KEY", "") or "").strip()
         return ""
 
 
@@ -121,6 +138,9 @@ class AgentPlatformSettings(BaseSettings):
     commenting_timeout_seconds: float = 60.0
     commenting_max_tokens: int = 0
     commenting_task_shape: CommentingTaskShapeSetting = "classic"
+    labeling_timeout_seconds: float = 60.0
+    labeling_max_tokens: int = 512
+    labeling_repair_retry_count: int = 1
     options_cache_ttl_seconds: int = 30
     model_discovery_timeout_seconds: float = 5.0
 
@@ -177,6 +197,23 @@ class AgentPlatformSettings(BaseSettings):
         if int(value) <= 0:
             return 0
         return max(64, min(8192, int(value)))
+
+    @field_validator("labeling_timeout_seconds")
+    @classmethod
+    def _clamp_labeling_timeout_seconds(cls, value: float) -> float:
+        return max(5.0, min(600.0, float(value)))
+
+    @field_validator("labeling_max_tokens")
+    @classmethod
+    def _clamp_labeling_max_tokens(cls, value: int) -> int:
+        if int(value) <= 0:
+            return 0
+        return max(64, min(8192, int(value)))
+
+    @field_validator("labeling_repair_retry_count")
+    @classmethod
+    def _clamp_labeling_repair_retry_count(cls, value: int) -> int:
+        return max(0, min(3, int(value)))
 
     @field_validator("options_cache_ttl_seconds")
     @classmethod

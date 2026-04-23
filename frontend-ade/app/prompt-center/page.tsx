@@ -33,7 +33,7 @@ function normalizeScenarioKey(key: string, scenario: Scenario): string {
     return "";
   }
 
-  const withoutScenarioPrefix = normalized.replace(/^(chat|comment)_/, "");
+  const withoutScenarioPrefix = normalized.replace(/^(chat|comment|label)_/, "");
   return `${scenario}_${withoutScenarioPrefix}`;
 }
 
@@ -47,6 +47,7 @@ const COPY = {
     personasTab: "Persona Prompts",
     chatScenario: "Chat",
     commentScenario: "Comment",
+    labelScenario: "Label",
     scenarioLabel: "Scenario",
     includeArchived: "Include archived",
     refresh: "Refresh",
@@ -62,6 +63,7 @@ const COPY = {
     purge: "Purge",
     openInAgentStudio: "Open In Agent Studio",
     openInCommentLab: "Open In Comment Lab",
+    openInLabelLab: "Open In Label Lab",
     noTemplates: "No templates found for current filter.",
     activeList: "Templates",
     editor: "Editor",
@@ -79,6 +81,7 @@ const COPY = {
     personasTab: "Persona Prompt",
     chatScenario: "Chat",
     commentScenario: "Comment",
+    labelScenario: "Label",
     scenarioLabel: "场景",
     includeArchived: "包含已归档",
     refresh: "刷新",
@@ -94,6 +97,7 @@ const COPY = {
     purge: "彻底删除",
     openInAgentStudio: "在智能体工作台中打开",
     openInCommentLab: "在评论实验室中打开",
+    openInLabelLab: "在标注实验室中打开",
     noTemplates: "当前筛选下没有模板。",
     activeList: "模板列表",
     editor: "编辑器",
@@ -199,6 +203,12 @@ export default function PromptCenterPage() {
     setError("");
     setStatus("");
   }, [tab, scenario]);
+
+  useEffect(() => {
+    if (scenario === "label" && tab === "personas") {
+      setTab("prompts");
+    }
+  }, [scenario, tab]);
 
   const onSave = async () => {
     if (!draftKey.trim()) {
@@ -328,17 +338,25 @@ export default function PromptCenterPage() {
     if (promptKey) {
       params.set("promptKey", promptKey);
     }
-    if (personaKey) {
+    if (personaKey && selectedScenario !== "label") {
       params.set("personaKey", personaKey);
     }
     if (selectedScenario === "comment") {
       return `/comment-lab?${params.toString()}`;
     }
+    if (selectedScenario === "label") {
+      return `/label-lab?${params.toString()}`;
+    }
     params.set("focus", "model");
     return `/agent-studio?${params.toString()}`;
   }, [activePersonaKeys, activePromptKeys, scenario, selected?.key, selectedScenario, tab]);
 
-  const workspaceLabel = selectedScenario === "comment" ? copy.openInCommentLab : copy.openInAgentStudio;
+  const workspaceLabel =
+    selectedScenario === "comment"
+      ? copy.openInCommentLab
+      : selectedScenario === "label"
+        ? copy.openInLabelLab
+        : copy.openInAgentStudio;
 
   return (
     <section>
@@ -350,13 +368,16 @@ export default function PromptCenterPage() {
         <div className="toolbar" style={{ justifyContent: "space-between" }}>
           <div className="toolbar">
             <button className={tab === "prompts" ? "tab-active" : "tab-item"} onClick={() => setTab("prompts")}>{copy.promptsTab}</button>
-            <button className={tab === "personas" ? "tab-active" : "tab-item"} onClick={() => setTab("personas")}>{copy.personasTab}</button>
+            {scenario !== "label" ? (
+              <button className={tab === "personas" ? "tab-active" : "tab-item"} onClick={() => setTab("personas")}>{copy.personasTab}</button>
+            ) : null}
           </div>
 
           <div className="toolbar">
             <span className="muted" style={{ fontSize: 12 }}>{copy.scenarioLabel}</span>
             <button className={scenario === "chat" ? "tab-active" : "tab-item"} onClick={() => setScenario("chat")}>{copy.chatScenario}</button>
             <button className={scenario === "comment" ? "tab-active" : "tab-item"} onClick={() => setScenario("comment")}>{copy.commentScenario}</button>
+            <button className={scenario === "label" ? "tab-active" : "tab-item"} onClick={() => setScenario("label")}>{copy.labelScenario}</button>
           </div>
 
           <div className="toolbar">

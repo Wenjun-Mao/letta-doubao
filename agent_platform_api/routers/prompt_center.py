@@ -18,6 +18,12 @@ from utils.prompt_persona_registry import RegistryError
 router = APIRouter()
 
 
+def _is_label_persona_selector(*, scenario: str | None, key: str | None = None) -> bool:
+    resolved_scenario = str(scenario or "").strip().lower()
+    resolved_key = str(key or "").strip().lower()
+    return resolved_scenario == "label" or resolved_key.startswith("label_")
+
+
 @router.get(
     "/api/v1/platform/prompt-center/prompts",
     response_model=ApiTemplateListResponse,
@@ -189,6 +195,13 @@ async def api_prompt_center_purge_prompt(key: str, scenario: str | None = None):
 async def api_prompt_center_list_personas(include_archived: bool = False, scenario: str | None = None):
     ensure_platform_api_enabled()
     resolved_scenario = normalize_scenario(scenario) if scenario else None
+    if _is_label_persona_selector(scenario=resolved_scenario):
+        return {
+            "total": 0,
+            "scenario": resolved_scenario,
+            "include_archived": include_archived,
+            "items": [],
+        }
 
     try:
         records = prompt_persona_registry.list_templates(
@@ -217,6 +230,8 @@ async def api_prompt_center_list_personas(include_archived: bool = False, scenar
 async def api_prompt_center_get_persona(key: str, archived: bool = False, scenario: str | None = None):
     ensure_platform_api_enabled()
     resolved_scenario = normalize_scenario(scenario) if scenario else None
+    if _is_label_persona_selector(scenario=resolved_scenario, key=key):
+        raise HTTPException(status_code=404, detail="Label scenario does not expose persona templates")
 
     try:
         record = prompt_persona_registry.get_template(
@@ -241,6 +256,8 @@ async def api_prompt_center_get_persona(key: str, archived: bool = False, scenar
 )
 async def api_prompt_center_create_persona(request: PersonaTemplateWriteRequest):
     ensure_platform_api_enabled()
+    if _is_label_persona_selector(scenario=request.scenario, key=request.key):
+        raise HTTPException(status_code=400, detail="Label scenario does not support persona templates")
     if not request.content.strip():
         raise HTTPException(status_code=400, detail="content is required")
 
@@ -268,6 +285,8 @@ async def api_prompt_center_create_persona(request: PersonaTemplateWriteRequest)
 )
 async def api_prompt_center_update_persona(key: str, request: PersonaTemplatePatchRequest):
     ensure_platform_api_enabled()
+    if _is_label_persona_selector(key=key):
+        raise HTTPException(status_code=400, detail="Label scenario does not support persona templates")
     if request.label is None and request.description is None and request.content is None:
         raise HTTPException(status_code=400, detail="At least one field must be provided")
 
@@ -295,6 +314,8 @@ async def api_prompt_center_update_persona(key: str, request: PersonaTemplatePat
 async def api_prompt_center_archive_persona(key: str, scenario: str | None = None):
     ensure_platform_api_enabled()
     resolved_scenario = normalize_scenario(scenario) if scenario else None
+    if _is_label_persona_selector(scenario=resolved_scenario, key=key):
+        raise HTTPException(status_code=400, detail="Label scenario does not support persona templates")
 
     try:
         record = prompt_persona_registry.archive_template("persona", key, scenario=resolved_scenario)
@@ -314,6 +335,8 @@ async def api_prompt_center_archive_persona(key: str, scenario: str | None = Non
 async def api_prompt_center_restore_persona(key: str, scenario: str | None = None):
     ensure_platform_api_enabled()
     resolved_scenario = normalize_scenario(scenario) if scenario else None
+    if _is_label_persona_selector(scenario=resolved_scenario, key=key):
+        raise HTTPException(status_code=400, detail="Label scenario does not support persona templates")
 
     try:
         record = prompt_persona_registry.restore_template("persona", key, scenario=resolved_scenario)
@@ -332,6 +355,8 @@ async def api_prompt_center_restore_persona(key: str, scenario: str | None = Non
 async def api_prompt_center_purge_persona(key: str, scenario: str | None = None):
     ensure_platform_api_enabled()
     resolved_scenario = normalize_scenario(scenario) if scenario else None
+    if _is_label_persona_selector(scenario=resolved_scenario, key=key):
+        raise HTTPException(status_code=400, detail="Label scenario does not support persona templates")
 
     try:
         prompt_persona_registry.purge_template("persona", key, scenario=resolved_scenario)

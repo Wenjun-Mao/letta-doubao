@@ -5,7 +5,17 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from agent_platform_api.routers import agents, commenting, core, platform_meta, platform_runtime, prompt_center, tool_center
+from agent_platform_api.routers import (
+    agents,
+    commenting,
+    core,
+    labeling,
+    platform_meta,
+    platform_runtime,
+    prompt_center,
+    schema_center,
+    tool_center,
+)
 from agent_platform_api.runtime import APP_VERSION, validate_platform_capabilities_startup
 
 
@@ -37,9 +47,11 @@ def create_app() -> FastAPI:
     app.include_router(agents.router)
     app.include_router(platform_meta.router)
     app.include_router(prompt_center.router)
+    app.include_router(schema_center.router)
     app.include_router(tool_center.router)
     app.include_router(platform_runtime.router)
     app.include_router(commenting.router)
+    app.include_router(labeling.router)
     return app
 
 

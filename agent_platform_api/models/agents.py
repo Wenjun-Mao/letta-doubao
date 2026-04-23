@@ -5,7 +5,8 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from .commenting import ApiCommentingRuntimeDefaultsResponse
-from .common import ScenarioType
+from .common import LabelingOutputMode, ScenarioType
+from .labeling import ApiLabelingRuntimeDefaultsResponse
 
 
 class ChatRequest(BaseModel):
@@ -34,6 +35,8 @@ class ApiOptionEntryResponse(BaseModel):
     source_id: str | None = None
     source_label: str | None = None
     provider_model_id: str | None = None
+    label_lab_available: bool | None = None
+    structured_output_mode: LabelingOutputMode | None = None
 
 
 class ApiOptionsDefaultsResponse(BaseModel):
@@ -42,6 +45,7 @@ class ApiOptionsDefaultsResponse(BaseModel):
     prompt_key: str
     persona_key: str
     embedding: str
+    schema_key: str = ""
 
 
 class ApiOptionsResponse(BaseModel):
@@ -50,8 +54,10 @@ class ApiOptionsResponse(BaseModel):
     embeddings: list[ApiOptionEntryResponse]
     prompts: list[ApiOptionEntryResponse]
     personas: list[ApiOptionEntryResponse]
+    schemas: list[ApiOptionEntryResponse] = Field(default_factory=list)
     defaults: ApiOptionsDefaultsResponse
     commenting: ApiCommentingRuntimeDefaultsResponse | None = None
+    labeling: ApiLabelingRuntimeDefaultsResponse | None = None
 
 
 class ApiAgentListItemResponse(BaseModel):

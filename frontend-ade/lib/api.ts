@@ -15,8 +15,9 @@ type RequestOptions = {
   cacheTtlMs?: number;
 };
 
-export type Scenario = "chat" | "comment";
+export type Scenario = "chat" | "comment" | "label";
 export type CommentingTaskShape = "classic" | "all_in_system" | "structured_output";
+export type LabelingOutputMode = "strict_json_schema" | "json_schema" | "best_effort_prompt_json";
 export type PlatformRunType = "platform_api_e2e_check" | "ade_mvp_smoke_e2e_check";
 
 export type OptionEntry = {
@@ -29,6 +30,8 @@ export type OptionEntry = {
   source_id?: string | null;
   source_label?: string | null;
   provider_model_id?: string | null;
+  label_lab_available?: boolean | null;
+  structured_output_mode?: LabelingOutputMode | null;
 };
 
 export type AgentListItem = {
@@ -151,6 +154,45 @@ export type CommentingGenerateResponse = {
   raw_reply: Record<string, unknown>;
 };
 
+export type LabelSpan = {
+  label: string;
+  text: string;
+  start: number;
+  end: number;
+};
+
+export type LabelingGenerateResponse = {
+  scenario: Scenario;
+  model_key: string;
+  source_id: string;
+  source_label: string;
+  provider_model_id: string;
+  prompt_key: string;
+  schema_key: string;
+  output_mode: LabelingOutputMode;
+  selected_attempt: "primary" | "repair";
+  result: {
+    spans: LabelSpan[];
+  };
+  finish_reason?: string | null;
+  usage: Record<string, unknown>;
+  received_at?: string | null;
+  raw_request: Record<string, unknown>;
+  raw_reply: Record<string, unknown>;
+  validation_errors: string[];
+};
+
+export type LabelSchemaRecord = {
+  key: string;
+  label: string;
+  description: string;
+  schema: Record<string, unknown>;
+  preview: string;
+  archived: boolean;
+  source_path: string;
+  updated_at: string;
+};
+
 export type PlatformTool = {
   id: string;
   name: string;
@@ -179,6 +221,7 @@ export type PromptTemplateRecord = {
   archived: boolean;
   source_path: string;
   updated_at: string;
+  output_schema?: string | null;
 };
 
 export type ToolCenterItem = {
@@ -315,8 +358,34 @@ async function requestJson<T>(path: string, options: RequestOptions = {}): Promi
   });
 
   if (!response.ok) {
-    const payload = await response.text();
-    throw new Error(payload || `Request failed ${response.status}: ${path}`);
+    const payloadText = await response.text();
+    if (payloadText) {
+      try {
+        const parsed = JSON.parse(payloadText) as { detail?: unknown };
+        const detail = parsed?.detail;
+        if (typeof detail === "string" && detail.trim()) {
+          throw new Error(detail);
+        }
+        if (detail && typeof detail === "object" && !Array.isArray(detail)) {
+          const detailObj = detail as Record<string, unknown>;
+          const message = typeof detailObj.message === "string" ? detailObj.message.trim() : "";
+          const validationErrors = Array.isArray(detailObj.validation_errors)
+            ? detailObj.validation_errors
+                .map((item) => String(item ?? "").trim())
+                .filter((item) => item.length > 0)
+            : [];
+          if (message || validationErrors.length) {
+            const combined = [message, ...validationErrors].filter((item) => item.length > 0).join("\n");
+            throw new Error(combined);
+          }
+        }
+      } catch (exc) {
+        if (exc instanceof Error && !(exc instanceof SyntaxError)) {
+          throw exc;
+        }
+      }
+    }
+    throw new Error(payloadText || `Request failed ${response.status}: ${path}`);
   }
 
   const payload = (await response.json()) as T;
@@ -373,17 +442,24 @@ export function fetchOptions(
     embeddings: OptionEntry[];
     prompts: OptionEntry[];
     personas: OptionEntry[];
+    schemas: OptionEntry[];
     defaults: {
       scenario: Scenario;
       model: string;
       prompt_key: string;
       persona_key: string;
       embedding: string;
+      schema_key: string;
     };
     commenting?: {
       max_tokens: number;
       timeout_seconds: number;
       task_shape: CommentingTaskShape;
+    };
+    labeling?: {
+      max_tokens: number;
+      timeout_seconds: number;
+      repair_retry_count: number;
     };
   }>(`/api/v1/options?${params.toString()}`, requestOptions);
 }
@@ -517,6 +593,99 @@ export function generateComment(payload: {
       retry_count: payload.retry_count,
       task_shape: payload.task_shape,
     },
+  });
+}
+
+export function generateLabels(payload: {
+  input: string;
+  prompt_key: string;
+  schema_key: string;
+  model_key: string;
+  max_tokens?: number;
+  timeout_seconds?: number;
+  repair_retry_count?: number;
+}) {
+  return requestJson<LabelingGenerateResponse>("/api/v1/labeling/generate", {
+    method: "POST",
+    body: {
+      scenario: "label",
+      input: payload.input,
+      prompt_key: payload.prompt_key,
+      schema_key: payload.schema_key,
+      model_key: payload.model_key.trim(),
+      max_tokens: payload.max_tokens,
+      timeout_seconds: payload.timeout_seconds,
+      repair_retry_count: payload.repair_retry_count,
+    },
+  });
+}
+
+export function listLabelSchemas(includeArchived = false) {
+  const params = new URLSearchParams();
+  params.set("include_archived", includeArchived ? "true" : "false");
+  return requestJson<{
+    total: number;
+    include_archived: boolean;
+    items: LabelSchemaRecord[];
+  }>(`/api/v1/platform/schema-center/label-schemas?${params.toString()}`, { cacheTtlMs: 10_000 });
+}
+
+export function createLabelSchema(payload: {
+  key: string;
+  label?: string;
+  description?: string;
+  schema: Record<string, unknown>;
+}) {
+  return requestJson<LabelSchemaRecord>("/api/v1/platform/schema-center/label-schemas", {
+    method: "POST",
+    body: payload,
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/schema-center", "/api/v1/options"]);
+    return record;
+  });
+}
+
+export function updateLabelSchema(
+  key: string,
+  payload: {
+    label?: string;
+    description?: string;
+    schema?: Record<string, unknown>;
+  },
+) {
+  return requestJson<LabelSchemaRecord>(`/api/v1/platform/schema-center/label-schemas/${key}`, {
+    method: "PATCH",
+    body: payload,
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/schema-center", "/api/v1/options"]);
+    return record;
+  });
+}
+
+export function archiveLabelSchema(key: string) {
+  return requestJson<LabelSchemaRecord>(`/api/v1/platform/schema-center/label-schemas/${key}/archive`, {
+    method: "POST",
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/schema-center", "/api/v1/options"]);
+    return record;
+  });
+}
+
+export function restoreLabelSchema(key: string) {
+  return requestJson<LabelSchemaRecord>(`/api/v1/platform/schema-center/label-schemas/${key}/restore`, {
+    method: "POST",
+  }).then((record) => {
+    invalidateApiCache(["/api/v1/platform/schema-center", "/api/v1/options"]);
+    return record;
+  });
+}
+
+export function purgeLabelSchema(key: string) {
+  return requestJson<{ ok: boolean; key: string; kind: string }>(`/api/v1/platform/schema-center/label-schemas/${key}/purge`, {
+    method: "DELETE",
+  }).then((result) => {
+    invalidateApiCache(["/api/v1/platform/schema-center", "/api/v1/options"]);
+    return result;
   });
 }
 

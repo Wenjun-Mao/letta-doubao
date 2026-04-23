@@ -1,0 +1,929 @@
+{
+  "source_id": "ark",
+  "checked_at": "2026-04-23T01:46:35.563771+00:00",
+  "probe_mode": "label-structured",
+  "raw_model_count": 115,
+  "usable_models": [],
+  "results": [
+    {
+      "provider_model_id": "doubao-lite-128k-240428",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-lite-128k-240428 does not exist or you do not have access to it. Request id: 0217769086114691e8917f6489049782b636a98f4bd750c5911d7\",\"param\":\"\",\"type\"..."
+    },
+    {
+      "provider_model_id": "doubao-pro-128k-240515",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-128k-240515 does not exist or you do not have access to it. Request id: 021776908612432c43b249df4b5023f4c24a0f20d5a332178b141\",\"param\":\"\",\"type\":..."
+    },
+    {
+      "provider_model_id": "doubao-lite-4k-240328",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-lite-4k-240328 does not exist or you do not have access to it. Request id: 02177690861358479609f635ffd59ab0fa8e98eb6ee3e27a080c4\",\"param\":\"\",\"type\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-lite-32k-240428",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-lite-32k-240428 does not exist or you do not have access to it. Request id: 02177690861468944a0c29b4a29aed28235da222addf5f1b899fc\",\"param\":\"\",\"type\":..."
+    },
+    {
+      "provider_model_id": "doubao-pro-4k-240515",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-4k-240515 does not exist or you do not have access to it. Request id: 0217769086158350ce6f61182d61ff41021c175780e66348d872b\",\"param\":\"\",\"type\":\"N..."
+    },
+    {
+      "provider_model_id": "doubao-lite-4k-character-240515",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-lite-4k-character-240515 does not exist or you do not have access to it. Request id: 021776908617032852c9ca059d0686f905b05cb05880f50a4e983\",\"param\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-embedding-text-240515",
+      "model_type": "embedding",
+      "status": "skipped_non_llm",
+      "usable": false,
+      "http_status": null,
+      "detail": "Only llm entries are probed for label structured output."
+    },
+    {
+      "provider_model_id": "mistral-7b-instruct-v0.2",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint mistral-7b-instruct-v0.2 does not exist or you do not have access to it. Request id: 021776908618133211a588bff4c8f1e6e2e015603d71d347bb1a0\",\"param\":\"\",\"type..."
+    },
+    {
+      "provider_model_id": "doubao-pro-4k-character-240515",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-4k-character-240515 does not exist or you do not have access to it. Request id: 021776908619296d3e54ebf5d2343d2942f37ab047ca48832adbb\",\"param\":\"\"..."
+    },
+    {
+      "provider_model_id": "doubao-pro-4k-functioncall-240515",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-4k-functioncall-240515 does not exist or you do not have access to it. Request id: 0217769086203931542bc6dcdb74c46c1e1efc6be331707a2a770\",\"param\"..."
+    },
+    {
+      "provider_model_id": "doubao-lite-4k-pretrain-character-240516",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-lite-4k-pretrain-character-240516 does not exist or you do not have access to it. Request id: 0217769086214027079f7997bde53da02e3efd0b6b68d8d73d84a\",..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-character-240528",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-character-240528 does not exist or you do not have access to it. Request id: 02177690862248891172dea4c1343f5a1ee75fbf798a6b0d93cf2\",\"param\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-pro-4k-browsing-240524",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-4k-browsing-240524 does not exist or you do not have access to it. Request id: 021776908623528982b29f8728970ed398f78ebc517c3aeec1465\",\"param\":\"\",..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-functioncall-240515",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-functioncall-240515 does not exist or you do not have access to it. Request id: 0217769086246081c17ef9c173e8babb4a0658490f0169eb99aae\",\"param..."
+    },
+    {
+      "provider_model_id": "doubao-pro-4k-functioncall-240615",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-4k-functioncall-240615 does not exist or you do not have access to it. Request id: 021776908625635071b8e0edac031ecb87fdc9a38ce70a956ea57\",\"param\"..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-browsing-240615",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-browsing-240615 does not exist or you do not have access to it. Request id: 021776908626693ad8f78454eef31552c89ebf2f2559e7de8900d\",\"param\":\"\"..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-240615",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-240615 does not exist or you do not have access to it. Request id: 021776908627712354a047b117584d26c6f4968185dfaf06e91bf\",\"param\":\"\",\"type\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-lite-32k-240628",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-lite-32k-240628 does not exist or you do not have access to it. Request id: 0217769086287258b66449b687c949eb4a95d05286f17146944f7\",\"param\":\"\",\"type\":..."
+    },
+    {
+      "provider_model_id": "doubao-pro-128k-240628",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-128k-240628 does not exist or you do not have access to it. Request id: 021776908629853cec7231233fb09ac28d2716d761f0ab3445021\",\"param\":\"\",\"type\":..."
+    },
+    {
+      "provider_model_id": "doubao-embedding-text-240715",
+      "model_type": "embedding",
+      "status": "skipped_non_llm",
+      "usable": false,
+      "http_status": null,
+      "detail": "Only llm entries are probed for label structured output."
+    },
+    {
+      "provider_model_id": "doubao-pro-4k-character-240728",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-4k-character-240728 does not exist or you do not have access to it. Request id: 021776908630956afd8a45cd617ef9c890e825ed50ba4e57b4321\",\"param\":\"\"..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-functioncall-240815",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-functioncall-240815 does not exist or you do not have access to it. Request id: 0217769086319910ce6f61182d61ff41021c175780e6634cc7f47\",\"param..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-240828",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-240828 does not exist or you do not have access to it. Request id: 021776908633003758a243061b974bfd13d0678393298de478660\",\"param\":\"\",\"type\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-lite-4k-character-240828",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-lite-4k-character-240828 does not exist or you do not have access to it. Request id: 021776908634022ec2a974ffc08eb8a410ac7a7438c0049f37e39\",\"param\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-character-240828",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-character-240828 does not exist or you do not have access to it. Request id: 0217769086350590d1cf14ace2967aad8e4a3eaf61373d926d87f\",\"param\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-lite-32k-240828",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-lite-32k-240828 does not exist or you do not have access to it. Request id: 02177690863612989a6ab5dfd15f12fdf9b1912203a3c65771f7a\",\"param\":\"\",\"type\":..."
+    },
+    {
+      "provider_model_id": "doubao-lite-128k-240828",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-lite-128k-240828 does not exist or you do not have access to it. Request id: 021776908637246ccf5b8319d03f62f675ca8fce44c02e7467bda\",\"param\":\"\",\"type\"..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-browsing-240828",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-browsing-240828 does not exist or you do not have access to it. Request id: 021776908638408a95af52a08104de4a8c47a7f302f74a053f980\",\"param\":\"\"..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-functioncall-preview",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-functioncall-preview does not exist or you do not have access to it. Request id: 0217769086395627e0f94b7e866b1b7cc6105a7c567a1e1ac5ae9\",\"para..."
+    },
+    {
+      "provider_model_id": "doubao-embedding-large-text-240915",
+      "model_type": "embedding",
+      "status": "skipped_non_llm",
+      "usable": false,
+      "http_status": null,
+      "detail": "Only llm entries are probed for label structured output."
+    },
+    {
+      "provider_model_id": "doubao-lite-32k-character-241015",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-lite-32k-character-241015 does not exist or you do not have access to it. Request id: 021776908640590e542ae8f7c04736102ead861a601340c938392\",\"param\":..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-functioncall-241028",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-functioncall-241028 does not exist or you do not have access to it. Request id: 021776908641598265634cfb9c55dca3322eb639399abf168aaba\",\"param..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-browsing-241115",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-browsing-241115 does not exist or you do not have access to it. Request id: 021776908642646dac4614a2f538267182526681eb598f16667d1\",\"param\":\"\"..."
+    },
+    {
+      "provider_model_id": "doubao-vision-pro-32k-241028",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-vision-pro-32k-241028 does not exist or you do not have access to it. Request id: 0217769086438113683317075330b6cc9f64af0089ac7f9f99123\",\"param\":\"\",\"..."
+    },
+    {
+      "provider_model_id": "doubao-vision-lite-32k-241015",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-vision-lite-32k-241015 does not exist or you do not have access to it. Request id: 02177690864480478a562a5d1f9d83a31bddf8475539eaf9ebbb1\",\"param\":\"\",..."
+    },
+    {
+      "provider_model_id": "doubao-seaweed-241128",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-seaweed-241128 does not exist or you do not have access to it. Request id: 0217769086459025bab3eccb0e59942edbe17ea88d60bc6e2f56c\",\"param\":\"\",\"type\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-pro-256k-241115",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-256k-241115 does not exist or you do not have access to it. Request id: 0217769086469403799d76546dcc4f1e7db5f4ad99e15a1c168d8\",\"param\":\"\",\"type\":..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-character-241215",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-character-241215 does not exist or you do not have access to it. Request id: 021776908648044f74590442eab0123ecdd9df6ba66d3a9f775f4\",\"param\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-pro-32k-241215",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-pro-32k-241215 does not exist or you do not have access to it. Request id: 021776908649086afd8a45cd617ef9c890e825ed50ba4e5fd8a83\",\"param\":\"\",\"type\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-1-5-lite-32k-250115",
+      "model_type": "llm",
+      "status": "invalid_payload",
+      "usable": false,
+      "http_status": 200,
+      "detail": "Structured output probe did not return the expected JSON span result."
+    },
+    {
+      "provider_model_id": "doubao-1-5-pro-32k-250115",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-1-5-pro-32k-250115. Please activate the model service in the Ark Console. Request id: 021776908653364868b2df7cad200b62b2bc44e6d..."
+    },
+    {
+      "provider_model_id": "doubao-1-5-vision-pro-32k-250115",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-1-5-vision-pro-32k-250115. Please activate the model service in the Ark Console. Request id: 021776908654356646a82c201206d75cd5..."
+    },
+    {
+      "provider_model_id": "doubao-embedding-vision-241215",
+      "model_type": "embedding",
+      "status": "skipped_non_llm",
+      "usable": false,
+      "http_status": null,
+      "detail": "Only llm entries are probed for label structured output."
+    },
+    {
+      "provider_model_id": "doubao-1-5-pro-256k-250115",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-1-5-pro-256k-250115 does not exist or you do not have access to it. Request id: 021776908655442197c92d5eba9730d7777f7af88e866663643a9\",\"param\":\"\",\"ty..."
+    },
+    {
+      "provider_model_id": "deepseek-v3-241226",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint deepseek-v3-241226 does not exist or you do not have access to it. Request id: 0217769086566325e43bed6e99f957d955d5fe9d61687638b68dd\",\"param\":\"\",\"type\":\"Not..."
+    },
+    {
+      "provider_model_id": "deepseek-r1-distill-qwen-7b-250120",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint deepseek-r1-distill-qwen-7b-250120 does not exist or you do not have access to it. Request id: 02177690865781909d3ad42231bc9609aa73992c6c59b4edc8b14\",\"param..."
+    },
+    {
+      "provider_model_id": "deepseek-r1-distill-qwen-32b-250120",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint deepseek-r1-distill-qwen-32b-250120 does not exist or you do not have access to it. Request id: 021776908658941b9f1f8d82739748c57f1ca9984b4fb5e152f70\",\"para..."
+    },
+    {
+      "provider_model_id": "deepseek-r1-250120",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint deepseek-r1-250120 does not exist or you do not have access to it. Request id: 02177690866006597a332f3b50a0c4ced447fdabc183cc88645f1\",\"param\":\"\",\"type\":\"Not..."
+    },
+    {
+      "provider_model_id": "doubao-1-5-pro-32k-character-250228",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-1-5-pro-32k-character-250228 does not exist or you do not have access to it. Request id: 021776908661202c85c17782ebc45169ced08d4429f63da266cb8\",\"para..."
+    },
+    {
+      "provider_model_id": "doubao-1.5-vision-lite-250315",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-1.5-vision-lite-250315 does not exist or you do not have access to it. Request id: 02177690866224178a562a5d1f9d83a31bddf8475539eaf1a6e01\",\"param\":\"\",..."
+    },
+    {
+      "provider_model_id": "deepseek-v3-250324",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint deepseek-v3-250324 does not exist or you do not have access to it. Request id: 021776908663398ce5ecf588ca94db1d51bc7611e0e34a2d7c6c1\",\"param\":\"\",\"type\":\"Not..."
+    },
+    {
+      "provider_model_id": "doubao-1.5-vision-pro-250328",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-1.5-vision-pro-250328 does not exist or you do not have access to it. Request id: 021776908664468f6bbcadc5ac62a9c6cfd677b3d41381521c3f6\",\"param\":\"\",\"..."
+    },
+    {
+      "provider_model_id": "doubao-lite-32k-character-250228",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-lite-32k-character-250228 does not exist or you do not have access to it. Request id: 0217769086655937079f7997bde53da02e3efd0b6b68d8daa505b\",\"param\":..."
+    },
+    {
+      "provider_model_id": "doubao-1.5-ui-tars-250328",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-1.5-ui-tars-250328 does not exist or you do not have access to it. Request id: 021776908666678646a82c201206d75cd5c6526847a4fd9220c6b\",\"param\":\"\",\"typ..."
+    },
+    {
+      "provider_model_id": "doubao-embedding-vision-250328",
+      "model_type": "embedding",
+      "status": "skipped_non_llm",
+      "usable": false,
+      "http_status": null,
+      "detail": "Only llm entries are probed for label structured output."
+    },
+    {
+      "provider_model_id": "doubao-1-5-thinking-pro-250415",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-1-5-thinking-pro-250415 does not exist or you do not have access to it. Request id: 021776908667748dac4614a2f538267182526681eb598f1aea305\",\"param\":\"\"..."
+    },
+    {
+      "provider_model_id": "wan2-1-14b-i2v-250225",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint wan2-1-14b-i2v-250225 does not exist or you do not have access to it. Request id: 021776908668941480c9da16195717d454d02a438d86eb7693c05\",\"param\":\"\",\"type\":\"..."
+    },
+    {
+      "provider_model_id": "wan2-1-14b-t2v-250225",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint wan2-1-14b-t2v-250225 does not exist or you do not have access to it. Request id: 0217769086700397567f706121169fe4c693c57ce45241c50de62\",\"param\":\"\",\"type\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-1-5-thinking-pro-m-250415",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-1-5-thinking-pro-m-250415 does not exist or you do not have access to it. Request id: 02177690867115277b7e892e9721221f8ca1a94f85371e5709828\",\"param\":..."
+    },
+    {
+      "provider_model_id": "doubao-seedance-1-0-lite-i2v-250428",
+      "model_type": "llm",
+      "status": "server_error",
+      "usable": false,
+      "http_status": 500,
+      "detail": "{\"error\":{\"code\":\"InternalServiceError\",\"message\":\"The service encountered an unexpected internal error. Request id: 02177690867640490b54e8a6ac9d8f31999a1fe47d3c2b0f9bab2\",\"param\":\"\",\"type\":\"InternalServerError\"}}"
+    },
+    {
+      "provider_model_id": "doubao-seedance-1-0-lite-t2v-250428",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-seedance-1-0-lite-t2v-250428 does not exist or you do not have access to it. Request id: 0217769086794654d1a7bd4cdfcf1811296cf68db8d43d8f4355b\",\"para..."
+    },
+    {
+      "provider_model_id": "doubao-seedream-3-0-t2i-250415",
+      "model_type": "llm",
+      "status": "bad_request",
+      "usable": false,
+      "http_status": 400,
+      "detail": "{\"error\":{\"code\":\"InvalidParameter\",\"message\":\"The parameter `model` specified in the request are not valid: the requested model doubao-seedream-3-0-t2i-250415 does not support this api.. Request id: 021776908680571919d2f4c503f400d3489abb50..."
+    },
+    {
+      "provider_model_id": "wan2-1-14b-flf2v-250417",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint wan2-1-14b-flf2v-250417 does not exist or you do not have access to it. Request id: 0217769086816955de161b16d50149cbf4122a430bab0f0b15f75\",\"param\":\"\",\"type\"..."
+    },
+    {
+      "provider_model_id": "doubao-1-5-thinking-vision-pro-250428",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-1-5-thinking-vision-pro-250428 does not exist or you do not have access to it. Request id: 02177690868273080167a7b10ec4a01c7841bdc6c404317dc31c3\",\"pa..."
+    },
+    {
+      "provider_model_id": "doubao-1-5-thinking-pro-m-250428",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-1-5-thinking-pro-m-250428 does not exist or you do not have access to it. Request id: 02177690868423178a562a5d1f9d83a31bddf8475539eaf847302\",\"param\":..."
+    },
+    {
+      "provider_model_id": "doubao-embedding-large-text-250515",
+      "model_type": "embedding",
+      "status": "skipped_non_llm",
+      "usable": false,
+      "http_status": null,
+      "detail": "Only llm entries are probed for label structured output."
+    },
+    {
+      "provider_model_id": "doubao-1-5-ui-tars-250428",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-1-5-ui-tars-250428 does not exist or you do not have access to it. Request id: 021776908685330ce5ecf588ca94db1d51bc7611e0e34a26bf420\",\"param\":\"\",\"typ..."
+    },
+    {
+      "provider_model_id": "deepseek-r1-250528",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint deepseek-r1-250528 does not exist or you do not have access to it. Request id: 0217769086863886061aa40146dbf4d117b0497e84060d71f958e\",\"param\":\"\",\"type\":\"Not..."
+    },
+    {
+      "provider_model_id": "doubao-seed-1-6-flash-250615",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-seed-1-6-flash-250615. Please activate the model service in the Ark Console. Request id: 02177690868746209495a2a9188cb78a37ff9c..."
+    },
+    {
+      "provider_model_id": "doubao-seed-1-6-250615",
+      "model_type": "llm",
+      "status": "bad_request",
+      "usable": false,
+      "http_status": 400,
+      "detail": "{\"error\":{\"code\":\"InvalidParameter\",\"message\":\"Invalid decoding guidance syntax: Keyword 'minLength' is not supported for type 'string' at path '$.properties.spans.items.properties.label' Request id: 0217769086888700b3f405af7fd729b2ba1cacbb..."
+    },
+    {
+      "provider_model_id": "doubao-seed-1-6-thinking-250615",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-seed-1-6-thinking-250615 does not exist or you do not have access to it. Request id: 021776908690272e542ae8f7c04736102ead861a601340c98c235\",\"param\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-seedance-1-0-pro-250528",
+      "model_type": "llm",
+      "status": "server_error",
+      "usable": false,
+      "http_status": 500,
+      "detail": "{\"error\":{\"code\":\"InternalServiceError\",\"message\":\"The service encountered an unexpected internal error. Request id: 02177690869557189a6ab5dfd15f12fdf9b1912203a3c654f3c67\",\"param\":\"\",\"type\":\"InternalServerError\"}}"
+    },
+    {
+      "provider_model_id": "doubao-embedding-vision-250615",
+      "model_type": "embedding",
+      "status": "skipped_non_llm",
+      "usable": false,
+      "http_status": null,
+      "detail": "Only llm entries are probed for label structured output."
+    },
+    {
+      "provider_model_id": "doubao-seed-1-6-thinking-250715",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-seed-1-6-thinking-250715 does not exist or you do not have access to it. Request id: 0217769086986708b66449b687c949eb4a95d05286f1714577a62\",\"param\":\"..."
+    },
+    {
+      "provider_model_id": "doubao-1-5-pro-32k-character-250715",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-1-5-pro-32k-character-250715. Please activate the model service in the Ark Console. Request id: 0217769086997790d297e7e13613f5b..."
+    },
+    {
+      "provider_model_id": "doubao-seededit-3-0-i2i-250628",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-seededit-3-0-i2i-250628 does not exist or you do not have access to it. Request id: 021776908700839cec7231233fb09ac28d2716d761f0ab3cff924\",\"param\":\"\"..."
+    },
+    {
+      "provider_model_id": "doubao-seed-1-6-flash-250715",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-seed-1-6-flash-250715 does not exist or you do not have access to it. Request id: 0217769087019043799d76546dcc4f1e7db5f4ad99e15a141dc59\",\"param\":\"\",\"..."
+    },
+    {
+      "provider_model_id": "kimi-k2-250711",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint kimi-k2-250711 does not exist or you do not have access to it. Request id: 0217769087029368e51dc06ab515804a61f8066ae6218c1a1da4b\",\"param\":\"\",\"type\":\"Not Fou..."
+    },
+    {
+      "provider_model_id": "doubao-seed-1-6-vision-250815",
+      "model_type": "llm",
+      "status": "bad_request",
+      "usable": false,
+      "http_status": 400,
+      "detail": "{\"error\":{\"code\":\"InvalidParameter\",\"message\":\"Invalid decoding guidance syntax: Keyword 'minLength' is not supported for type 'string' at path '$.properties.spans.items.properties.label' Request id: 02177690870401456f99a772ec79dd45125e5081..."
+    },
+    {
+      "provider_model_id": "deepseek-v3-1-250821",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint deepseek-v3-1-250821 does not exist or you do not have access to it. Request id: 021776908705457e63fcd4b1459546935812764a3dda63c6b2a87\",\"param\":\"\",\"type\":\"N..."
+    },
+    {
+      "provider_model_id": "doubao-seed-1-6-flash-250828",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-seed-1-6-flash-250828. Please activate the model service in the Ark Console. Request id: 021776908706504ba98f7c244917cb799ea2cc..."
+    },
+    {
+      "provider_model_id": "glm-4-5-air-20250728",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint glm-4-5-air-20250728 does not exist or you do not have access to it. Request id: 02177690870762731edffe5894cf4edd820b8db875d15b86c040e\",\"param\":\"\",\"type\":\"N..."
+    },
+    {
+      "provider_model_id": "qwen3-8b-20250429",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint qwen3-8b-20250429 does not exist or you do not have access to it. Request id: 021776908708769b2d574b8a133720ef9fae8eba78adee9ce6ca3\",\"param\":\"\",\"type\":\"Not..."
+    },
+    {
+      "provider_model_id": "qwen3-32b-20250429",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint qwen3-32b-20250429 does not exist or you do not have access to it. Request id: 0217769087099511542bc6dcdb74c46c1e1efc6be331707b231d2\",\"param\":\"\",\"type\":\"Not..."
+    },
+    {
+      "provider_model_id": "qwen2-5-72b-20240919",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint qwen2-5-72b-20240919 does not exist or you do not have access to it. Request id: 021776908711050941531497079c912b7846ffe9243569d64c754\",\"param\":\"\",\"type\":\"N..."
+    },
+    {
+      "provider_model_id": "doubao-seedream-4-0-250828",
+      "model_type": "llm",
+      "status": "bad_request",
+      "usable": false,
+      "http_status": 400,
+      "detail": "{\"error\":{\"code\":\"InvalidParameter\",\"message\":\"The parameter `model` specified in the request are not valid: the requested model doubao-seedream-4-0-250828 does not support this api.. Request id: 021776908712097867793f3c8edafba473c8d54576f3..."
+    },
+    {
+      "provider_model_id": "kimi-k2-250905",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint kimi-k2-250905 does not exist or you do not have access to it. Request id: 0217769087132053183e54b3cfcef38bb594a53672044802d6221\",\"param\":\"\",\"type\":\"Not Fou..."
+    },
+    {
+      "provider_model_id": "doubao-seed-translation-250915",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-seed-translation-250915. Please activate the model service in the Ark Console. Request id: 0217769087142900d8b6629036fcd55e1701..."
+    },
+    {
+      "provider_model_id": "deepseek-v3-1-terminus",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint deepseek-v3-1-terminus does not exist or you do not have access to it. Request id: 021776908715434852c9ca059d0686f905b05cb05880f50813556\",\"param\":\"\",\"type\":..."
+    },
+    {
+      "provider_model_id": "doubao-smart-router-250928",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-smart-router-250928 does not exist or you do not have access to it. Request id: 021776908716575b9f1f8d82739748c57f1ca9984b4fb5e171825\",\"param\":\"\",\"ty..."
+    },
+    {
+      "provider_model_id": "doubao-seed-1-6-251015",
+      "model_type": "llm",
+      "status": "bad_request",
+      "usable": false,
+      "http_status": 400,
+      "detail": "{\"error\":{\"code\":\"InvalidParameter\",\"message\":\"Invalid decoding guidance syntax: Keyword 'minLength' is not supported for type 'string' at path '$.properties.spans.items.properties.label' Request id: 021776908717755689e25a8e713c462f619280d3..."
+    },
+    {
+      "provider_model_id": "doubao-seedance-1-0-pro-fast-251015",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-seedance-1-0-pro-fast-251015. Please activate the model service in the Ark Console. Request id: 0217769087190800cea48c30fe52795..."
+    },
+    {
+      "provider_model_id": "doubao-seed-1-6-lite-251015",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-seed-1-6-lite-251015 does not exist or you do not have access to it. Request id: 0217769087201670d297e7e13613f5b288cfd2cb29f624aaac955\",\"param\":\"\",\"t..."
+    },
+    {
+      "provider_model_id": "doubao-seed3d-1-0-250928",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint doubao-seed3d-1-0-250928 does not exist or you do not have access to it. Request id: 021776908721235d1fe9146833e301f6be5de30142daa108c0fa6\",\"param\":\"\",\"type..."
+    },
+    {
+      "provider_model_id": "kimi-k2-thinking-251104",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint kimi-k2-thinking-251104 does not exist or you do not have access to it. Request id: 02177690872232056f99a772ec79dd45125e5081732d611ed30a8\",\"param\":\"\",\"type\"..."
+    },
+    {
+      "provider_model_id": "doubao-seed-code-preview-251028",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-seed-code-preview-251028. Please activate the model service in the Ark Console. Request id: 0217769087234767d8ec4d988cc7ba637a2..."
+    },
+    {
+      "provider_model_id": "qwen3-0-6b-20250429",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint qwen3-0-6b-20250429 does not exist or you do not have access to it. Request id: 021776908724566a00ca6d3b1016a4ae30453994686a965f0d43c\",\"param\":\"\",\"type\":\"No..."
+    },
+    {
+      "provider_model_id": "qwen3-14b-20250429",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"InvalidEndpointOrModel.NotFound\",\"message\":\"The model or endpoint qwen3-14b-20250429 does not exist or you do not have access to it. Request id: 021776908725698df46a91f9f2016e67e7c7fc53f941263bf5bd7\",\"param\":\"\",\"type\":\"Not..."
+    },
+    {
+      "provider_model_id": "doubao-seedream-4-5-251128",
+      "model_type": "llm",
+      "status": "bad_request",
+      "usable": false,
+      "http_status": 400,
+      "detail": "{\"error\":{\"code\":\"InvalidParameter\",\"message\":\"The parameter `model` specified in the request are not valid: the requested model doubao-seedream-4-5-251128 does not support this api.. Request id: 0217769087268828c6dbbfe4baea19fba8f10ec5f129..."
+    },
+    {
+      "provider_model_id": "doubao-embedding-vision-251215",
+      "model_type": "embedding",
+      "status": "skipped_non_llm",
+      "usable": false,
+      "http_status": null,
+      "detail": "Only llm entries are probed for label structured output."
+    },
+    {
+      "provider_model_id": "deepseek-v3-2-251201",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model deepseek-v3-2-251201. Please activate the model service in the Ark Console. Request id: 02177690872829458d28b10a8804db4eedb565e46a406b..."
+    },
+    {
+      "provider_model_id": "doubao-seedance-1-5-pro-251215",
+      "model_type": "llm",
+      "status": "server_error",
+      "usable": false,
+      "http_status": 500,
+      "detail": "{\"error\":{\"code\":\"InternalServiceError\",\"message\":\"The service encountered an unexpected internal error. Request id: 0217769087334315235aef975397f5d903665288b4210b527fc2a\",\"param\":\"\",\"type\":\"InternalServerError\"}}"
+    },
+    {
+      "provider_model_id": "glm-4-7-251222",
+      "model_type": "llm",
+      "status": "timeout",
+      "usable": false,
+      "http_status": null,
+      "detail": "The read operation timed out"
+    },
+    {
+      "provider_model_id": "doubao-seed-1-8-251228",
+      "model_type": "llm",
+      "status": "timeout",
+      "usable": false,
+      "http_status": null,
+      "detail": "The read operation timed out"
+    },
+    {
+      "provider_model_id": "doubao-seed-character-251128",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-seed-character-251128. Please activate the model service in the Ark Console. Request id: 021776908761940627b202dc9f12d4aa3d1101..."
+    },
+    {
+      "provider_model_id": "doubao-seed-2-0-lite-260215",
+      "model_type": "llm",
+      "status": "timeout",
+      "usable": false,
+      "http_status": null,
+      "detail": "The read operation timed out"
+    },
+    {
+      "provider_model_id": "doubao-seedance-2-0-260128",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-seedance-2-0-260128. Please activate the model service in the Ark Console. Request id: 0217769087759478b55878d95caf0a54b04de1da..."
+    },
+    {
+      "provider_model_id": "doubao-seedream-5-0-260128",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-seedream-5-0-260128. Please activate the model service in the Ark Console. Request id: 02177690877701858d95f381f1ac74ba770d5c53..."
+    },
+    {
+      "provider_model_id": "doubao-seed-2-0-mini-260215",
+      "model_type": "llm",
+      "status": "timeout",
+      "usable": false,
+      "http_status": null,
+      "detail": "The read operation timed out"
+    },
+    {
+      "provider_model_id": "doubao-seed-2-0-pro-260215",
+      "model_type": "llm",
+      "status": "bad_request",
+      "usable": false,
+      "http_status": 400,
+      "detail": "{\"error\":{\"code\":\"InvalidParameter\",\"message\":\"The parameter `response_format.type` specified in the request are not valid: `json_schema` is not supported by this model. Request id: 0217769087910094085cf66ba015a99b5a1c33dcbcc050a3f48d4\",\"pa..."
+    },
+    {
+      "provider_model_id": "doubao-seedance-2-0-fast-260128",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-seedance-2-0-fast-260128. Please activate the model service in the Ark Console. Request id: 02177690879204783e4395af05ce286d339..."
+    },
+    {
+      "provider_model_id": "doubao-seed-2-0-code-preview-260215",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-seed-2-0-code-preview-260215. Please activate the model service in the Ark Console. Request id: 0217769087931784f0909438f2d45e7..."
+    },
+    {
+      "provider_model_id": "hyper3d-gen2-260112",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model hyper3d-gen2-260112. Please activate the model service in the Ark Console. Request id: 0217769087942382995bc0404cadc6b35f2fde43a3d6f9c..."
+    },
+    {
+      "provider_model_id": "hitem3d-2-0-251223",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model hitem3d-2-0-251223. Please activate the model service in the Ark Console. Request id: 02177690879536637f745830b35ec47d4e197c4b3b29d25b..."
+    },
+    {
+      "provider_model_id": "doubao-seed3d-2-0-260328",
+      "model_type": "llm",
+      "status": "not_found",
+      "usable": false,
+      "http_status": 404,
+      "detail": "{\"error\":{\"code\":\"ModelNotOpen\",\"message\":\"Your account %!s(int64=2100614078) has not activated the model doubao-seed3d-2-0-260328. Please activate the model service in the Ark Console. Request id: 021776908796497ba35b7513d54f335cf228d031e6..."
+    }
+  ]
+}

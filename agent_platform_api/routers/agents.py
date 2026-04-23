@@ -93,7 +93,11 @@ async def api_create_agent(request: AgentCreateRequest):
     if resolved_scenario != "chat":
         raise HTTPException(
             status_code=400,
-            detail="/api/v1/agents supports only scenario='chat'. Use /api/v1/commenting/generate for stateless comments.",
+            detail=(
+                "/api/v1/agents supports only scenario='chat'. "
+                "Use /api/v1/commenting/generate for stateless comments "
+                "or /api/v1/labeling/generate for stateless labeling."
+            ),
         )
 
     model_options, embedding_options = runtime_options("chat")

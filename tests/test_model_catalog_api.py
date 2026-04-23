@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+from types import SimpleNamespace
 
 import agent_platform_api.runtime as runtime
 from agent_platform_api.routers import core, platform_meta
@@ -12,17 +13,18 @@ def _snapshot_fixture() -> tuple[CatalogSnapshot, list[CatalogEntry]]:
         generated_at=123.0,
         sources=(
             CatalogSourceRecord(
-                id="local_unsloth",
-                label="Local Unsloth",
+                id="local_llama_server",
+                label="Local llama-server",
                 kind="openai-compatible",
-                base_url="http://127.0.0.1:2234/v1",
-                enabled_for=("comment",),
-                letta_handle_prefix="lmstudio_openai",
+                base_url="http://127.0.0.1:8081/v1",
+                enabled_for=("comment", "label"),
+                letta_handle_prefix="",
                 status="healthy",
                 detail="ok",
                 models=(
-                    CatalogModelRecord(provider_model_id="gemma-4-31b-it", model_type="llm"),
+                    CatalogModelRecord(provider_model_id="gemma4", model_type="llm"),
                 ),
+                adapter="llama_cpp_server",
                 raw_model_count=1,
                 filtered_model_count=1,
             ),
@@ -31,7 +33,7 @@ def _snapshot_fixture() -> tuple[CatalogSnapshot, list[CatalogEntry]]:
                 label="Local LM Studio",
                 kind="openai-compatible",
                 base_url="http://127.0.0.1:1234/v1",
-                enabled_for=("chat", "comment"),
+                enabled_for=("chat", "comment", "label"),
                 letta_handle_prefix="lmstudio_openai",
                 status="healthy",
                 detail="ok",
@@ -49,6 +51,7 @@ def _snapshot_fixture() -> tuple[CatalogSnapshot, list[CatalogEntry]]:
                 status="healthy",
                 detail="Allowlist applied: 1 of 3 catalog entries remain selectable.",
                 models=(CatalogModelRecord(provider_model_id="doubao-seed-1-8-251228", model_type="llm"),),
+                adapter="ark_openai",
                 allowlist_applied=True,
                 allowlist_checked_at="2026-04-22T12:00:00+00:00",
                 raw_model_count=3,
@@ -58,22 +61,23 @@ def _snapshot_fixture() -> tuple[CatalogSnapshot, list[CatalogEntry]]:
     )
     entries = [
         CatalogEntry(
-            source_id="local_unsloth",
-            source_label="Local Unsloth",
+            source_id="local_llama_server",
+            source_label="Local llama-server",
             source_kind="openai-compatible",
-            base_url="http://127.0.0.1:2234/v1",
-            enabled_for=("comment",),
-            provider_model_id="gemma-4-31b-it",
+            base_url="http://127.0.0.1:8081/v1",
+            enabled_for=("comment", "label"),
+            provider_model_id="gemma4",
             model_type="llm",
-            model_key="local_unsloth::gemma-4-31b-it",
-            letta_handle="lmstudio_openai/gemma-4-31b-it",
+            model_key="local_llama_server::gemma4",
+            letta_handle=None,
+            source_adapter="llama_cpp_server",
         ),
         CatalogEntry(
             source_id="local_lmstudio",
             source_label="Local LM Studio",
             source_kind="openai-compatible",
             base_url="http://127.0.0.1:1234/v1",
-            enabled_for=("chat", "comment"),
+            enabled_for=("chat", "comment", "label"),
             provider_model_id="local-model",
             model_type="llm",
             model_key="local_lmstudio::local-model",
@@ -89,6 +93,7 @@ def _snapshot_fixture() -> tuple[CatalogSnapshot, list[CatalogEntry]]:
             model_type="llm",
             model_key="ark::doubao-seed-1-8-251228",
             letta_handle="openai-proxy/doubao-seed-1-8-251228",
+            source_adapter="ark_openai",
         ),
     ]
     return snapshot, entries
@@ -99,6 +104,15 @@ def test_options_api_filters_chat_handles_and_keeps_comment_model_keys(monkeypat
     monkeypatch.setattr(core, "ensure_platform_api_enabled", lambda: None)
     monkeypatch.setattr(runtime.model_catalog_service, "snapshot", lambda force_refresh=False: snapshot)
     monkeypatch.setattr(runtime.model_catalog_service, "flatten", lambda payload: entries)
+    monkeypatch.setattr(
+        runtime,
+        "_label_allowlist_for_source",
+        lambda source_id: (
+            SimpleNamespace(applied=True, usable_models=frozenset({"doubao-seed-1-8-251228"}))
+            if source_id == "ark"
+            else None
+        ),
+    )
     monkeypatch.setattr(
         runtime,
         "_resolve_letta_catalog_handles",
@@ -122,11 +136,22 @@ def test_options_api_filters_chat_handles_and_keeps_comment_model_keys(monkeypat
     comment_payload = asyncio.run(core.api_get_options(refresh=True, scenario="comment"))
     assert comment_payload["defaults"]["model"] == ""
     assert [item["key"] for item in comment_payload["models"]] == [
-        "local_unsloth::gemma-4-31b-it",
+        "local_llama_server::gemma4",
         "local_lmstudio::local-model",
         "ark::doubao-seed-1-8-251228",
     ]
-    assert comment_payload["models"][0]["provider_model_id"] == "gemma-4-31b-it"
+    assert comment_payload["models"][0]["provider_model_id"] == "gemma4"
+
+    label_payload = asyncio.run(core.api_get_options(refresh=True, scenario="label"))
+    assert label_payload["defaults"]["persona_key"] == ""
+    assert label_payload["defaults"]["schema_key"] == "label_span_annotations_v1"
+    assert label_payload["schemas"][0]["key"] == "label_span_annotations_v1"
+    assert label_payload["labeling"].repair_retry_count >= 0
+    assert [item["key"] for item in label_payload["models"]] == [
+        "local_llama_server::gemma4",
+        "local_lmstudio::local-model",
+    ]
+    assert label_payload["models"][0]["structured_output_mode"] == "json_schema"
 
 
 def test_model_catalog_api_reports_source_health_and_enriched_items(monkeypatch) -> None:
@@ -134,6 +159,15 @@ def test_model_catalog_api_reports_source_health_and_enriched_items(monkeypatch)
     monkeypatch.setattr(platform_meta, "ensure_platform_api_enabled", lambda: None)
     monkeypatch.setattr(runtime.model_catalog_service, "snapshot", lambda force_refresh=False: snapshot)
     monkeypatch.setattr(runtime.model_catalog_service, "flatten", lambda payload: entries)
+    monkeypatch.setattr(
+        runtime,
+        "_label_allowlist_for_source",
+        lambda source_id: (
+            SimpleNamespace(applied=True, usable_models=frozenset({"doubao-seed-1-8-251228"}))
+            if source_id == "ark"
+            else None
+        ),
+    )
     monkeypatch.setattr(
         runtime,
         "_resolve_letta_catalog_handles",
@@ -151,3 +185,10 @@ def test_model_catalog_api_reports_source_health_and_enriched_items(monkeypatch)
     assert ark_source["filtered_model_count"] == 1
     assert local_model["agent_studio_available"] is True
     assert local_model["comment_lab_available"] is True
+    assert local_model["label_lab_available"] is True
+    llama_model = next(item for item in payload["items"] if item["provider_model_id"] == "gemma4")
+    ark_model = next(item for item in payload["items"] if item["source_id"] == "ark")
+    assert llama_model["source_adapter"] == "llama_cpp_server"
+    assert llama_model["structured_output_mode"] == "json_schema"
+    assert llama_model["label_lab_available"] is True
+    assert ark_model["label_lab_available"] is False

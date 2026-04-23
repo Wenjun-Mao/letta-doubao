@@ -14,6 +14,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY agent_platform_api ./agent_platform_api
 COPY utils ./utils
 COPY prompts ./prompts
+COPY schemas ./schemas
 COPY tests ./tests
 
 CMD ["/opt/venv/bin/uvicorn", "agent_platform_api.main:app", "--host", "0.0.0.0", "--port", "8284"]

@@ -75,6 +75,7 @@ services:
       - LETTA_BASE_URL=http://letta_server:8283
     volumes:
       - ./prompts:/app/prompts
+      - ./schemas:/app/schemas
       - ./tools/custom:/app/tools/custom
       - ./data/agent_lifecycle:/app/data/agent_lifecycle
     ports:

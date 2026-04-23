@@ -25,7 +25,14 @@ from .commenting import (
     ApiCommentingRuntimeDefaultsResponse,
     CommentingGenerateRequest,
 )
-from .common import CommentingTaskShape, ScenarioType
+from .common import CommentingTaskShape, LabelingOutputMode, ScenarioType
+from .labeling import (
+    ApiLabelSpanResponse,
+    ApiLabelingGenerateResponse,
+    ApiLabelingResultResponse,
+    ApiLabelingRuntimeDefaultsResponse,
+    LabelingGenerateRequest,
+)
 from .platform import (
     ApiMemoryBlockUpdateResponse,
     ApiModelUpdateResponse,
@@ -54,6 +61,12 @@ from .platform import (
     PlatformSystemUpdateRequest,
     PlatformTestRunRequest,
     PlatformToolTestInvokeRequest,
+)
+from .schemas import (
+    ApiLabelSchemaListResponse,
+    ApiLabelSchemaRecordResponse,
+    LabelSchemaPatchRequest,
+    LabelSchemaWriteRequest,
 )
 from .templates import (
     ApiPersonaMetadataResponse,
@@ -87,6 +100,12 @@ __all__ = [
     "ApiCommentingRuntimeDefaultsResponse",
     "ApiConversationHistoryItemResponse",
     "ApiConversationHistoryResponse",
+    "ApiLabelSpanResponse",
+    "ApiLabelingGenerateResponse",
+    "ApiLabelingResultResponse",
+    "ApiLabelingRuntimeDefaultsResponse",
+    "ApiLabelSchemaListResponse",
+    "ApiLabelSchemaRecordResponse",
     "ApiMemoryBlockUpdateResponse",
     "ApiModelUpdateResponse",
     "ApiOptionEntryResponse",
@@ -130,6 +149,10 @@ __all__ = [
     "ChatRequest",
     "CommentingGenerateRequest",
     "CommentingTaskShape",
+    "LabelingGenerateRequest",
+    "LabelingOutputMode",
+    "LabelSchemaPatchRequest",
+    "LabelSchemaWriteRequest",
     "PersonaTemplatePatchRequest",
     "PersonaTemplateWriteRequest",
     "PlatformMemoryBlockUpdateRequest",

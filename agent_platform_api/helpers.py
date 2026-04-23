@@ -51,7 +51,9 @@ def normalize_scenario(value: str | None, *, default: ScenarioType = "chat") -> 
         return "chat"
     if normalized == "comment":
         return "comment"
-    raise HTTPException(status_code=400, detail="scenario must be either 'chat' or 'comment'")
+    if normalized == "label":
+        return "label"
+    raise HTTPException(status_code=400, detail="scenario must be one of: chat, comment, label")
 
 
 def active_prompt_records(scenario: ScenarioType | None = None) -> list[dict[str, Any]]:
@@ -74,6 +76,8 @@ def active_prompt_records(scenario: ScenarioType | None = None) -> list[dict[str
 
 
 def active_persona_records(scenario: ScenarioType | None = None) -> list[dict[str, Any]]:
+    if scenario == "label":
+        return []
     records = [
         record
         for record in prompt_persona_registry.list_templates(
@@ -95,6 +99,14 @@ def active_persona_records(scenario: ScenarioType | None = None) -> list[dict[st
 def prompt_content_map(scenario: ScenarioType | None = None) -> dict[str, str]:
     return {
         str(record.get("key", "")): str(record.get("content", "") or "")
+        for record in active_prompt_records(scenario)
+        if str(record.get("key", "")).strip()
+    }
+
+
+def prompt_record_map(scenario: ScenarioType | None = None) -> dict[str, dict[str, Any]]:
+    return {
+        str(record.get("key", "")): record
         for record in active_prompt_records(scenario)
         if str(record.get("key", "")).strip()
     }

@@ -18,7 +18,7 @@ http:
       }
   auth:
     type: bearer
-    token: sk-unsloth-99fcd6804fa732c38f8b51879da0038f
+    token: "{{UNSLOTH_API_KEY}}"
 
 settings:
   encodeUrl: true

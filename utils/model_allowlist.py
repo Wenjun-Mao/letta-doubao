@@ -8,7 +8,11 @@ from typing import Any
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 _ALLOWLIST_PATHS = {
-    "ark": PROJECT_ROOT / "agent_platform_api" / "catalog_data" / "ark_chat_probe_report.json",
+    ("ark", "chat-probe"): PROJECT_ROOT / "agent_platform_api" / "catalog_data" / "ark_chat_probe_report.json",
+    (
+        "ark",
+        "label-structured",
+    ): PROJECT_ROOT / "agent_platform_api" / "catalog_data" / "ark_label_structured_probe_report.json",
 }
 
 
@@ -24,13 +28,20 @@ class SourceAllowlistLoadResult:
     detail: str
 
 
-def resolve_source_allowlist_path(source_id: str) -> Path | None:
-    return _ALLOWLIST_PATHS.get(str(source_id or "").strip())
-
-
-def load_configured_source_allowlist(source_id: str) -> SourceAllowlistLoadResult | None:
+def resolve_source_allowlist_path(source_id: str, *, probe_mode: str = "chat-probe") -> Path | None:
     resolved_source_id = str(source_id or "").strip()
-    allowlist_path = resolve_source_allowlist_path(resolved_source_id)
+    resolved_probe_mode = str(probe_mode or "").strip()
+    return _ALLOWLIST_PATHS.get((resolved_source_id, resolved_probe_mode)) or _ALLOWLIST_PATHS.get(resolved_source_id)
+
+
+def load_configured_source_allowlist(
+    source_id: str,
+    *,
+    probe_mode: str = "chat-probe",
+) -> SourceAllowlistLoadResult | None:
+    resolved_source_id = str(source_id or "").strip()
+    resolved_probe_mode = str(probe_mode or "").strip() or "chat-probe"
+    allowlist_path = resolve_source_allowlist_path(resolved_source_id, probe_mode=resolved_probe_mode)
     if allowlist_path is None:
         return None
 
@@ -61,7 +72,12 @@ def load_configured_source_allowlist(source_id: str) -> SourceAllowlistLoadResul
         )
 
     try:
-        return _parse_allowlist_payload(payload, source_id=resolved_source_id, path=allowlist_path)
+        return _parse_allowlist_payload(
+            payload,
+            source_id=resolved_source_id,
+            path=allowlist_path,
+            probe_mode=resolved_probe_mode,
+        )
     except ValueError as exc:
         return SourceAllowlistLoadResult(
             source_id=resolved_source_id,
@@ -80,6 +96,7 @@ def _parse_allowlist_payload(
     *,
     source_id: str,
     path: Path,
+    probe_mode: str,
 ) -> SourceAllowlistLoadResult:
     if not isinstance(payload, dict):
         raise ValueError("payload must be an object")
@@ -89,7 +106,9 @@ def _parse_allowlist_payload(
         raise ValueError(f"expected source_id '{source_id}' but found '{payload_source_id}'")
 
     checked_at = _optional_text(payload.get("checked_at"))
-    probe_mode = _optional_text(payload.get("probe_mode"))
+    payload_probe_mode = _optional_text(payload.get("probe_mode"))
+    if payload_probe_mode != probe_mode:
+        raise ValueError(f"expected probe_mode '{probe_mode}' but found '{payload_probe_mode}'")
 
     raw_model_count = payload.get("raw_model_count", 0)
     if not isinstance(raw_model_count, int) or raw_model_count < 0:
@@ -113,7 +132,7 @@ def _parse_allowlist_payload(
         path=path,
         applied=True,
         checked_at=checked_at,
-        probe_mode=probe_mode,
+        probe_mode=payload_probe_mode,
         raw_model_count=raw_model_count,
         usable_models=frozenset(normalized_usable_models),
         detail="ok",

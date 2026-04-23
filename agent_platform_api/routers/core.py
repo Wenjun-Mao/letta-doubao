@@ -20,6 +20,9 @@ from agent_platform_api.runtime import (
     commenting_runtime_defaults,
     ensure_agent_not_archived,
     ensure_platform_api_enabled,
+    label_schema_option_entries,
+    labeling_runtime_defaults,
+    resolve_default_label_schema_key,
     runtime_options,
 )
 
@@ -34,9 +37,11 @@ async def api_get_options(refresh: bool = False, scenario: str = "chat"):
     model_options, embedding_options = runtime_options(resolved_scenario, force_refresh=refresh)
     prompt_options = prompt_option_entries(resolved_scenario)
     persona_options = persona_option_entries(resolved_scenario)
+    schema_options = label_schema_option_entries() if resolved_scenario == "label" else []
     default_model = ""
     default_prompt_key = resolve_default_prompt_key(prompt_options, resolved_scenario)
     default_persona_key = resolve_default_persona_key(persona_options, resolved_scenario)
+    default_schema_key = resolve_default_label_schema_key(schema_options) if resolved_scenario == "label" else ""
 
     default_embedding = (
         os.getenv("LETTA_DEFAULT_EMBEDDING_HANDLE")
@@ -55,14 +60,17 @@ async def api_get_options(refresh: bool = False, scenario: str = "chat"):
         "embeddings": embedding_options,
         "prompts": prompt_options,
         "personas": persona_options,
+        "schemas": schema_options,
         "defaults": {
             "scenario": resolved_scenario,
             "model": default_model,
             "prompt_key": default_prompt_key,
             "persona_key": default_persona_key,
             "embedding": default_embedding,
+            "schema_key": default_schema_key,
         },
-        "commenting": commenting_runtime_defaults(),
+        "commenting": commenting_runtime_defaults() if resolved_scenario == "comment" else None,
+        "labeling": labeling_runtime_defaults() if resolved_scenario == "label" else None,
     }
 
 

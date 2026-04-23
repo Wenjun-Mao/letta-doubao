@@ -32,9 +32,9 @@ The same key did not expose a usable text embedding model through the tested Ope
 ## Quick Start
 
 1. Review `.env` or copy `.env.example` to `.env` and update values.
-   `AGENT_PLATFORM_MODEL_SOURCES` is the shared ADE model catalog used by both Agent Studio and Comment Lab, while the Letta bootstrap variables remain dedicated to the upstream `letta_server`.
-   By default, `2234` is the active Unsloth Studio source for Comment Lab, while `1234` is reserved for optional LM Studio standby and Letta bootstrap compatibility.
-   Unsloth Studio itself remains host-managed: model loading, context window, and similar runtime controls are expected to be set in the Studio UI on the machine running it, not through ADE.
+   `AGENT_PLATFORM_MODEL_SOURCES` is the shared ADE model catalog used by Agent Studio, Comment Lab, and Label Lab, while the Letta bootstrap variables remain dedicated to the upstream `letta_server`.
+   By default, `8081` is the active llama-server source for local Comment Lab and Label Lab work, while `2234` Unsloth Studio and `1234` LM Studio are disabled standby examples.
+   llama-server runtime settings, including loaded GGUF, context window, GPU layers, and reasoning mode, are host-managed on the machine running it rather than controlled by ADE.
 2. Start the stack:
 
 ```powershell
@@ -158,6 +158,7 @@ After this, `agent_platform_api` should start directly with Uvicorn and no start
 - `MANUAL.md`: detailed decision log and handoff guide
 - `scripts/probe_provider_models.py`: rerunnable Ark usability probe for regenerating the checked-in allowlist
 - `agent_platform_api/catalog_data/ark_chat_probe_report.json`: persisted Ark chat-usable model allowlist
+- `schemas/label/`: file-backed Label Schema Center storage for Label Lab output schemas
 - `notebooks/01_doubao_api_smoke.py`: direct Ark/Doubao validation
 - `notebooks/02_letta_e2e.py`: Letta end-to-end validation against the running stack
 
@@ -168,6 +169,7 @@ Current baseline assumptions for development tests:
 - Default system prompt baseline: `CHAT_V20260418_PROMPT`
 - Default test embedding: `letta/letta-free`
 - Comment Lab task shape default: `classic`
+- Label Lab schema default: `label_span_annotations_v1`
 
 The maintained verification surface under `tests/` is:
 
@@ -177,6 +179,12 @@ uv run python -m pytest
 uv run python scripts/probe_provider_models.py --source-id ark --mode chat-probe --write
 uv run python tests/checks/platform_api_e2e_check.py
 uv run python tests/checks/ade_mvp_smoke_e2e_check.py
+```
+
+Optional live Label Lab smoke, when llama-server is running on `8081`:
+
+```bash
+curl http://127.0.0.1:8284/api/v1/options?scenario=label
 ```
 
 `tests/outputs/platform_orchestrator/` is now treated as transient runtime log storage for Test Center runs and is not part of the committed test surface.
@@ -212,6 +220,10 @@ uv run python tests/checks/ade_mvp_smoke_e2e_check.py
 	- Lists available platform tools for ADE Toolbench discovery.
 - `GET /api/v1/platform/metadata/prompts-personas`
 	- Returns prompt and persona metadata for ADE Prompt and Persona Lab selectors.
+- `GET /api/v1/platform/schema-center/label-schemas`
+	- Lists file-backed Label Lab JSON schemas.
+- `POST /api/v1/labeling/generate`
+	- Runs stateless span labeling with a selected model, prompt, and schema.
 - `GET /api/v1/platform/test-runs/{run_id}/artifacts`
 	- Lists discovered artifacts for a test run (logs, summaries).
 - `GET /api/v1/platform/test-runs/{run_id}/artifacts/{artifact_id}`

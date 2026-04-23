@@ -21,6 +21,7 @@ Current development baseline defaults:
 - System prompt: `CHAT_V20260418_PROMPT`
 - Test embedding: `letta/letta-free`
 - Comment Lab task shape: `classic`
+- Label Lab schema: `label_span_annotations_v1`
 
 ## Directory Contents
 
@@ -260,7 +261,7 @@ Expected result:
 ### Shared ADE Model Catalog
 
 Important:
-- `agent_platform_api` now uses `AGENT_PLATFORM_MODEL_SOURCES` as the shared source of truth for Agent Studio and Comment Lab model discovery.
+- `agent_platform_api` now uses `AGENT_PLATFORM_MODEL_SOURCES` as the shared source of truth for Agent Studio, Comment Lab, and Label Lab model discovery.
 
 Notes:
 - Each source entry declares the base URL, enabled scenarios, Letta handle prefix, and auth lookup fields.
@@ -268,11 +269,28 @@ Notes:
 - Agent Studio only surfaces models whose derived Letta handles are actually registered in Letta.
 - Comment Lab uses source-scoped model keys in the form `<source-id>::<provider-model-id>` so duplicate model names remain distinct across providers.
 - The local port split is intentional:
-  - `2234` is the active Unsloth Studio endpoint for Comment Lab.
+  - `8081` is the active llama-server endpoint for local Comment Lab and Label Lab work.
+  - `2234` remains optional Unsloth Studio standby.
   - `1234` remains optional LM Studio standby plus Letta bootstrap compatibility.
-- Unsloth Studio runtime settings remain host-side operations. Loaded model selection, context sizing, and similar controls are expected to be adjusted in the Studio UI on the machine running Unsloth, not through ADE.
-- LM Studio may be offline or have no loaded model for long periods. In that state it should only appear as `unreachable` or `empty` in diagnostics and should not block normal Unsloth-first use.
+- llama-server runtime settings remain host-side operations. Loaded GGUF, context sizing, GPU offload, and reasoning mode are expected to be adjusted in the launch command on the machine running llama-server, not through ADE.
+- Unsloth Studio and LM Studio may be offline or have no loaded model for long periods. In that state they should either be disabled in `AGENT_PLATFORM_MODEL_SOURCES` or appear only as `unreachable`/`empty` in diagnostics without blocking normal llama-server-first use.
 - Ark model visibility is filtered through the checked-in allowlist report at `agent_platform_api/catalog_data/ark_chat_probe_report.json`, which is regenerated with `uv run python scripts/probe_provider_models.py --source-id ark --mode chat-probe --write`.
+- Ark is currently enabled for chat/comment only. Label Lab is centered on llama-server JSON Schema output until a provider is explicitly enabled and verified for label schemas.
+
+### Label Lab And Schema Center
+
+Important:
+- Label Lab is stateless like Comment Lab, but it produces structured span annotations instead of prose.
+- Prompts define labeling criteria. Schemas define the JSON output contract.
+- The default label schema is stored at `schemas/label/label_span_annotations_v1.json` and is surfaced through the Label Schema Center.
+
+Notes:
+- Schema Center v1 is label-only. It provides create, edit, archive, restore, and purge operations under `/api/v1/platform/schema-center/label-schemas`.
+- The API container mounts `./schemas:/app/schemas`, so UI edits persist to the host filesystem like Prompt Center edits.
+- `POST /api/v1/labeling/generate` requires a selected `model_key`, `prompt_key`, and `schema_key`.
+- For the `llama_cpp_server` adapter, Label Lab sends `response_format={"type":"json_schema","json_schema":...}` to `/v1/chat/completions`, matching the notebook-proven llama-server pattern.
+- Server-side validation still verifies the parsed shape and exact Unicode character offsets, including `input[start:end] == text` and no overlapping spans.
+- If a provider returns the right unique `text` with wrong offsets, ADE normalizes the offsets before accepting the result; ambiguous or missing text still fails validation.
 
 ### Ark Usability Allowlist
 
@@ -400,7 +418,7 @@ If you change ADE provider discovery later:
 
 Update:
 - `AGENT_PLATFORM_MODEL_SOURCES`
-- any referenced source auth env vars such as `UNSLOTH_API_KEY` or `OPENAI_API_KEY`
+- any referenced source auth env vars such as `LLAMA_SERVER_API_KEY`, `UNSLOTH_API_KEY`, or `OPENAI_API_KEY`
 
 ## If You Want Pure Doubao Embeddings Later
 

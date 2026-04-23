@@ -8,12 +8,16 @@ from fastapi import HTTPException
 from letta_client import Letta
 
 from agent_platform_api.models.commenting import ApiCommentingRuntimeDefaultsResponse
-from agent_platform_api.models.common import CommentingTaskShape, ScenarioType
+from agent_platform_api.models.common import CommentingTaskShape, LabelingOutputMode, ScenarioType
+from agent_platform_api.models.labeling import ApiLabelingRuntimeDefaultsResponse
 from agent_platform_api.settings import get_settings
 from utils.agent_lifecycle_registry import AgentLifecycleRegistry
 from utils.agent_platform_service import AgentPlatformService
 from utils.commenting_service import CommentingService
 from utils.custom_tool_registry import CustomToolRegistry
+from utils.labeling_service import LabelingService
+from utils.label_schema_registry import DEFAULT_LABEL_SCHEMA_KEY, LabelSchemaRegistry
+from utils.model_allowlist import load_configured_source_allowlist
 from utils.model_catalog import ModelCatalogService
 from utils.platform_test_orchestrator import PlatformTestOrchestrator
 from utils.prompt_persona_registry import PromptPersonaRegistry
@@ -43,6 +47,10 @@ PROVIDER_MODEL_OPTION_OVERRIDES: dict[str, dict[str, str]] = {
     "gemma-4-31b-it": {
         "label": "Gemma 4 31B IT",
         "description": "Local model discovered from Unsloth Studio.",
+    },
+    "gemma4": {
+        "label": "Gemma 4 (llama-server)",
+        "description": "Local GGUF model served by llama-server with JSON schema support.",
     },
     "qwen3.5-27b": {
         "label": "Qwen 3.5 27B",
@@ -85,7 +93,9 @@ DEFAULT_CHAT_PROMPT_KEY = "chat_v20260418"
 DEFAULT_CHAT_PERSONA_KEY = "chat_linxiaotang"
 DEFAULT_COMMENT_PROMPT_KEY = "comment_v20260418"
 DEFAULT_COMMENT_PERSONA_KEY = "comment_linxiaotang"
+DEFAULT_LABEL_PROMPT_KEY = "label_generic_spans_v1"
 DEFAULT_EMBEDDING = ""
+LABEL_STRICT_SOURCE_IDS = {"ark"}
 SCENARIO_DEFAULTS: dict[ScenarioType, dict[str, str]] = {
     "chat": {
         "prompt_key": DEFAULT_CHAT_PROMPT_KEY,
@@ -95,6 +105,10 @@ SCENARIO_DEFAULTS: dict[ScenarioType, dict[str, str]] = {
         "prompt_key": DEFAULT_COMMENT_PROMPT_KEY,
         "persona_key": DEFAULT_COMMENT_PERSONA_KEY,
     },
+    "label": {
+        "prompt_key": DEFAULT_LABEL_PROMPT_KEY,
+        "persona_key": "",
+    },
 }
 MANAGED_TOOL_TAG = "ade:managed"
 
@@ -103,10 +117,12 @@ agent_platform = AgentPlatformService(client)
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 test_orchestrator = PlatformTestOrchestrator(project_root=PROJECT_ROOT)
 prompt_persona_registry = PromptPersonaRegistry(PROJECT_ROOT)
+label_schema_registry = LabelSchemaRegistry(PROJECT_ROOT)
 custom_tool_registry = CustomToolRegistry(PROJECT_ROOT)
 agent_lifecycle_registry = AgentLifecycleRegistry(PROJECT_ROOT)
 model_catalog_service = ModelCatalogService()
 commenting_service = CommentingService()
+labeling_service = LabelingService()
 REVISION_LOG_DIR = PROJECT_ROOT / "diagnostics"
 REVISION_LOG_FILE = REVISION_LOG_DIR / "prompt_persona_revisions.jsonl"
 
@@ -247,9 +263,23 @@ def _resolve_letta_catalog_handles() -> tuple[set[str], set[str]]:
     return discovered_model_handles, discovered_embedding_handles
 
 
+def _structured_output_mode_for_source(source_id: str, source_adapter: str = "") -> LabelingOutputMode:
+    adapter = str(source_adapter or "").strip().lower()
+    if adapter == "llama_cpp_server":
+        return "json_schema"
+    if adapter == "ark_openai" or str(source_id or "").strip() in LABEL_STRICT_SOURCE_IDS:
+        return "strict_json_schema"
+    return "best_effort_prompt_json"
+
+
+def _label_allowlist_for_source(source_id: str):
+    return load_configured_source_allowlist(str(source_id or "").strip(), probe_mode="label-structured")
+
+
 def _enriched_catalog_items(force_refresh: bool = False) -> list[dict[str, Any]]:
     snapshot = model_catalog_service.snapshot(force_refresh=force_refresh)
     letta_model_handles, _ = _resolve_letta_catalog_handles()
+    label_allowlists: dict[str, Any] = {}
     items: list[dict[str, Any]] = []
     for entry in model_catalog_service.flatten(snapshot):
         is_embedding = entry.model_type == "embedding"
@@ -261,12 +291,28 @@ def _enriched_catalog_items(force_refresh: bool = False) -> list[dict[str, Any]]
             and letta_handle in letta_model_handles
         )
         comment_lab_available = (not is_embedding) and ("comment" in entry.enabled_for)
+        structured_output_mode: LabelingOutputMode | None = None
+        label_lab_available = False
+        if (not is_embedding) and ("label" in entry.enabled_for):
+            structured_output_mode = _structured_output_mode_for_source(entry.source_id, entry.source_adapter)
+            if structured_output_mode == "strict_json_schema":
+                if entry.source_id not in label_allowlists:
+                    label_allowlists[entry.source_id] = _label_allowlist_for_source(entry.source_id)
+                allowlist = label_allowlists.get(entry.source_id)
+                label_lab_available = bool(
+                    allowlist
+                    and allowlist.applied
+                    and entry.provider_model_id in allowlist.usable_models
+                )
+            else:
+                label_lab_available = True
         items.append(
             {
                 "model_key": entry.model_key,
                 "source_id": entry.source_id,
                 "source_label": entry.source_label,
                 "source_kind": entry.source_kind,
+                "source_adapter": entry.source_adapter,
                 "base_url": entry.base_url,
                 "enabled_for": list(entry.enabled_for),
                 "provider_model_id": entry.provider_model_id,
@@ -274,6 +320,8 @@ def _enriched_catalog_items(force_refresh: bool = False) -> list[dict[str, Any]]
                 "letta_handle": letta_handle,
                 "agent_studio_available": agent_studio_available,
                 "comment_lab_available": comment_lab_available,
+                "label_lab_available": label_lab_available,
+                "structured_output_mode": structured_output_mode,
             }
         )
     return items
@@ -288,6 +336,7 @@ def model_catalog(force_refresh: bool = False) -> dict[str, Any]:
                 "id": source.id,
                 "label": source.label,
                 "kind": source.kind,
+                "adapter": source.adapter,
                 "base_url": source.base_url,
                 "enabled_for": list(source.enabled_for),
                 "letta_handle_prefix": source.letta_handle_prefix,
@@ -383,9 +432,11 @@ def runtime_options(
                     "source_id": item["source_id"],
                     "source_label": item["source_label"],
                     "provider_model_id": item["provider_model_id"],
+                    "label_lab_available": item["label_lab_available"],
+                    "structured_output_mode": item["structured_output_mode"],
                 }
             )
-    else:
+    elif scenario == "comment":
         for item in items:
             if not item["comment_lab_available"]:
                 continue
@@ -403,6 +454,30 @@ def runtime_options(
                     "source_id": item["source_id"],
                     "source_label": item["source_label"],
                     "provider_model_id": item["provider_model_id"],
+                    "label_lab_available": item["label_lab_available"],
+                    "structured_output_mode": item["structured_output_mode"],
+                }
+            )
+    else:
+        for item in items:
+            if not item["label_lab_available"]:
+                continue
+            key = str(item.get("model_key", "") or "").strip()
+            if not key or key in seen_model_keys:
+                continue
+            seen_model_keys.add(key)
+            label, description = _model_option_metadata(item)
+            model_options.append(
+                {
+                    "key": key,
+                    "label": label,
+                    "description": description,
+                    "available": True,
+                    "source_id": item["source_id"],
+                    "source_label": item["source_label"],
+                    "provider_model_id": item["provider_model_id"],
+                    "label_lab_available": item["label_lab_available"],
+                    "structured_output_mode": item["structured_output_mode"],
                 }
             )
 
@@ -418,11 +493,7 @@ def resolve_comment_model_selection(
     force_refresh: bool = False,
 ) -> dict[str, Any]:
     items = [item for item in _enriched_catalog_items(force_refresh=force_refresh) if item["comment_lab_available"]]
-    settings = get_settings()
-    source_api_keys = {
-        source.id: source.resolve_api_key()
-        for source in settings.model_sources
-    }
+    source_api_keys = _source_api_keys()
     requested_key = str(model_key or "").strip()
     if requested_key:
         matched = next((item for item in items if item["model_key"] == requested_key), None)
@@ -451,6 +522,66 @@ def resolve_comment_model_selection(
     raise ValueError(f"Invalid model: {requested_model}")
 
 
+def _source_api_keys() -> dict[str, str]:
+    settings = get_settings()
+    return {
+        source.id: source.resolve_api_key()
+        for source in settings.model_sources
+    }
+
+
+def active_label_schema_records() -> list[dict[str, Any]]:
+    return [
+        record
+        for record in label_schema_registry.list_schemas(include_archived=False)
+        if not bool(record.get("archived", False))
+    ]
+
+
+def label_schema_option_entries() -> list[dict[str, Any]]:
+    return [
+        {
+            "key": str(record.get("key", "") or ""),
+            "label": str(record.get("label", "") or ""),
+            "description": str(record.get("description", "") or ""),
+            "scenario": "label",
+            "available": True,
+        }
+        for record in active_label_schema_records()
+        if str(record.get("key", "") or "").strip()
+    ]
+
+
+def label_schema_record_map() -> dict[str, dict[str, Any]]:
+    return {
+        str(record.get("key", "") or ""): record
+        for record in active_label_schema_records()
+        if str(record.get("key", "") or "").strip()
+    }
+
+
+def resolve_default_label_schema_key(schema_options: list[dict[str, Any]]) -> str:
+    if any(str(option.get("key", "")) == DEFAULT_LABEL_SCHEMA_KEY for option in schema_options):
+        return DEFAULT_LABEL_SCHEMA_KEY
+    return str(schema_options[0].get("key", "") if schema_options else "")
+
+
+def resolve_label_model_selection(
+    *,
+    model_key: str,
+    force_refresh: bool = False,
+) -> dict[str, Any]:
+    items = [item for item in _enriched_catalog_items(force_refresh=force_refresh) if item["label_lab_available"]]
+    requested_key = str(model_key or "").strip()
+    if not requested_key:
+        raise ValueError("model_key is required")
+
+    matched = next((item for item in items if item["model_key"] == requested_key), None)
+    if matched is None:
+        raise ValueError(f"Invalid model_key: {requested_key}")
+    return {**matched, "api_key": _source_api_keys().get(str(matched["source_id"]), "")}
+
+
 def commenting_runtime_defaults() -> ApiCommentingRuntimeDefaultsResponse:
     defaults = commenting_service.runtime_defaults()
     task_shape = str(defaults.get("task_shape", "classic") or "classic").strip().lower()
@@ -461,4 +592,13 @@ def commenting_runtime_defaults() -> ApiCommentingRuntimeDefaultsResponse:
         max_tokens=int(defaults.get("max_tokens", 0)),
         timeout_seconds=float(defaults.get("timeout_seconds", 60.0)),
         task_shape=resolved_task_shape,
+    )
+
+
+def labeling_runtime_defaults() -> ApiLabelingRuntimeDefaultsResponse:
+    defaults = labeling_service.runtime_defaults()
+    return ApiLabelingRuntimeDefaultsResponse(
+        max_tokens=int(defaults.get("max_tokens", 0)),
+        timeout_seconds=float(defaults.get("timeout_seconds", 60.0)),
+        repair_retry_count=int(defaults.get("repair_retry_count", 1)),
     )

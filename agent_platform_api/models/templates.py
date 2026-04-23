@@ -75,6 +75,7 @@ class ApiTemplateRecordResponse(BaseModel):
     archived: bool
     source_path: str
     updated_at: str
+    output_schema: str | None = None
 
 
 class ApiTemplateListResponse(BaseModel):

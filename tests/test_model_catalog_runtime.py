@@ -120,6 +120,45 @@ def test_resolve_comment_model_selection_requires_model_key_when_legacy_name_is_
         runtime.resolve_comment_model_selection(legacy_model="shared-model")
 
 
+def test_resolve_label_model_selection_requires_label_capable_model_key(monkeypatch) -> None:
+    monkeypatch.setattr(
+        runtime,
+        "_enriched_catalog_items",
+        lambda force_refresh=False: [
+            {
+                "model_key": "local_llama_server::gemma4",
+                "source_id": "local_llama_server",
+                "source_label": "Local llama-server",
+                "source_kind": "openai-compatible",
+                "base_url": "http://127.0.0.1:8081/v1",
+                "enabled_for": ["comment", "label"],
+                "provider_model_id": "gemma4",
+                "model_type": "llm",
+                "letta_handle": None,
+                "agent_studio_available": False,
+                "comment_lab_available": True,
+                "label_lab_available": True,
+                "structured_output_mode": "json_schema",
+            }
+        ],
+    )
+    monkeypatch.setattr(
+        runtime,
+        "get_settings",
+        lambda: SimpleNamespace(
+            model_sources=[
+                SimpleNamespace(id="local_llama_server", resolve_api_key=lambda: "local-token"),
+            ]
+        ),
+    )
+
+    payload = runtime.resolve_label_model_selection(model_key="local_llama_server::gemma4")
+
+    assert payload["provider_model_id"] == "gemma4"
+    assert payload["api_key"] == "local-token"
+    assert payload["structured_output_mode"] == "json_schema"
+
+
 def test_model_catalog_service_probes_active_model_when_catalog_is_empty(monkeypatch) -> None:
     local = ModelSourceConfig(
         id="local",

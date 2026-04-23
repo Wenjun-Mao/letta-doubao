@@ -35,6 +35,21 @@ def test_create_chat_prompt_infers_chat_scenario_from_key(tmp_path) -> None:
     assert (tmp_path / "prompts" / "system_prompts" / "chat" / "chat_test.py").exists()
 
 
+def test_create_label_prompt_infers_label_scenario_from_key(tmp_path) -> None:
+    registry = PromptPersonaRegistry(tmp_path)
+
+    record = registry.create_template(
+        "prompt",
+        key="label_test",
+        content="Label prompt body",
+    )
+
+    assert record["scenario"] == "label"
+    assert record["key"] == "label_test"
+    assert record["source_path"] == "prompts/system_prompts/label/label_test.py"
+    assert (tmp_path / "prompts" / "system_prompts" / "label" / "label_test.py").exists()
+
+
 def test_create_template_rejects_mismatched_explicit_scenario(tmp_path) -> None:
     registry = PromptPersonaRegistry(tmp_path)
 
@@ -92,3 +107,39 @@ def test_custom_templates_can_omit_label_and_description_metadata(tmp_path) -> N
     assert "DESCRIPTION =" not in source
     assert record["label"] == "Chat Optional Meta"
     assert record["description"] == ""
+
+
+def test_label_scenario_rejects_persona_templates(tmp_path) -> None:
+    registry = PromptPersonaRegistry(tmp_path)
+
+    with pytest.raises(RegistryError, match="does not support persona"):
+        registry.create_template(
+            "persona",
+            key="label_test",
+            content="Persona body",
+        )
+
+
+def test_label_prompt_parses_output_schema_metadata(tmp_path) -> None:
+    prompt_path = tmp_path / "prompts" / "system_prompts" / "label" / "label_schema.py"
+    prompt_path.parent.mkdir(parents=True, exist_ok=True)
+    prompt_path.write_text(
+        "\n".join(
+            [
+                '"""Custom label prompt."""',
+                'LABEL = "Label Schema"',
+                'OUTPUT_SCHEMA = "{\\"type\\":\\"object\\",\\"properties\\":{\\"spans\\":{\\"type\\":\\"array\\"}},\\"required\\":[\\"spans\\"],\\"additionalProperties\\":false}"',
+                'PROMPT = "Return spans."',
+                "",
+            ]
+        ),
+        encoding="utf-8",
+    )
+    registry = PromptPersonaRegistry(tmp_path)
+
+    record = registry.get_template("prompt", "label_schema", scenario="label")
+
+    assert record is not None
+    assert record["scenario"] == "label"
+    assert record["output_schema"] is not None
+    assert '"spans"' in record["output_schema"]

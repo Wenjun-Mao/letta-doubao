@@ -38,7 +38,8 @@
             "default": "chat",
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "场景",
             "type": "string"
@@ -83,7 +84,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "场景",
             "type": "string"
@@ -441,7 +443,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "场景",
             "type": "string"
@@ -623,6 +626,181 @@
         "title": "API 会话 历史 响应",
         "type": "object"
       },
+      "ApiLabelSpanResponse": {
+        "properties": {
+          "end": {
+            "minimum": 0.0,
+            "title": "End",
+            "type": "integer"
+          },
+          "label": {
+            "title": "标签",
+            "type": "string"
+          },
+          "start": {
+            "minimum": 0.0,
+            "title": "Start",
+            "type": "integer"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "text",
+          "start",
+          "end"
+        ],
+        "title": "API 标签 Span 响应",
+        "type": "object"
+      },
+      "ApiLabelingGenerateResponse": {
+        "properties": {
+          "finish_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finish Reason"
+          },
+          "model_key": {
+            "title": "模型 键",
+            "type": "string"
+          },
+          "output_mode": {
+            "enum": [
+              "strict_json_schema",
+              "best_effort_prompt_json"
+            ],
+            "title": "Output Mode",
+            "type": "string"
+          },
+          "prompt_key": {
+            "title": "提示词键",
+            "type": "string"
+          },
+          "provider_model_id": {
+            "title": "Provider 模型 ID",
+            "type": "string"
+          },
+          "raw_reply": {
+            "additionalProperties": true,
+            "title": "原始 Reply",
+            "type": "object"
+          },
+          "raw_request": {
+            "additionalProperties": true,
+            "title": "原始 请求",
+            "type": "object"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "result": {
+            "$ref": "#/components/schemas/ApiLabelingResultResponse"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment",
+              "label"
+            ],
+            "title": "场景",
+            "type": "string"
+          },
+          "selected_attempt": {
+            "enum": [
+              "primary",
+              "repair"
+            ],
+            "title": "Selected Attempt",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "来源 ID",
+            "type": "string"
+          },
+          "source_label": {
+            "title": "来源 标签",
+            "type": "string"
+          },
+          "usage": {
+            "additionalProperties": true,
+            "title": "Usage",
+            "type": "object"
+          },
+          "validation_errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "校验 Errors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scenario",
+          "model_key",
+          "source_id",
+          "source_label",
+          "provider_model_id",
+          "prompt_key",
+          "output_mode",
+          "selected_attempt",
+          "result"
+        ],
+        "title": "API Labeling 生成 响应",
+        "type": "object"
+      },
+      "ApiLabelingResultResponse": {
+        "properties": {
+          "spans": {
+            "items": {
+              "$ref": "#/components/schemas/ApiLabelSpanResponse"
+            },
+            "title": "Spans",
+            "type": "array"
+          }
+        },
+        "title": "API Labeling 结果 响应",
+        "type": "object"
+      },
+      "ApiLabelingRuntimeDefaultsResponse": {
+        "properties": {
+          "max_tokens": {
+            "title": "最大 Token 数",
+            "type": "integer"
+          },
+          "repair_retry_count": {
+            "title": "Repair Retry Count",
+            "type": "integer"
+          },
+          "timeout_seconds": {
+            "title": "超时秒数",
+            "type": "number"
+          }
+        },
+        "required": [
+          "max_tokens",
+          "timeout_seconds",
+          "repair_retry_count"
+        ],
+        "title": "API Labeling 运行时 默认值 响应",
+        "type": "object"
+      },
       "ApiMemoryBlockUpdateResponse": {
         "properties": {
           "agent_id": {
@@ -731,6 +909,17 @@
             "title": "标签",
             "type": "string"
           },
+          "label_lab_available": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "标签 Lab 可用"
+          },
           "provider_model_id": {
             "anyOf": [
               {
@@ -747,7 +936,8 @@
               {
                 "enum": [
                   "chat",
-                  "comment"
+                  "comment",
+                  "label"
                 ],
                 "type": "string"
               },
@@ -778,6 +968,21 @@
               }
             ],
             "title": "来源 标签"
+          },
+          "structured_output_mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strict_json_schema",
+                  "best_effort_prompt_json"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structured Output Mode"
           }
         },
         "required": [
@@ -809,7 +1014,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "场景",
             "type": "string"
@@ -847,6 +1053,16 @@
             "title": "Embeddings",
             "type": "array"
           },
+          "labeling": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiLabelingRuntimeDefaultsResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "models": {
             "items": {
               "$ref": "#/components/schemas/ApiOptionEntryResponse"
@@ -871,7 +1087,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "场景",
             "type": "string"
@@ -1064,7 +1281,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "场景",
             "type": "string"
@@ -1160,6 +1378,10 @@
             "title": "评论 Lab 可用",
             "type": "boolean"
           },
+          "label_lab_available": {
+            "title": "标签 Lab 可用",
+            "type": "boolean"
+          },
           "letta_handle": {
             "anyOf": [
               {
@@ -1194,6 +1416,21 @@
           "source_label": {
             "title": "来源 标签",
             "type": "string"
+          },
+          "structured_output_mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strict_json_schema",
+                  "best_effort_prompt_json"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structured Output Mode"
           }
         },
         "required": [
@@ -1204,7 +1441,8 @@
           "provider_model_id",
           "model_type",
           "agent_studio_available",
-          "comment_lab_available"
+          "comment_lab_available",
+          "label_lab_available"
         ],
         "title": "API 平台 模型 Catalog 条目 响应",
         "type": "object"
@@ -1633,7 +1871,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "场景",
             "type": "string"
@@ -1663,7 +1902,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "场景",
             "type": "string"
@@ -1942,7 +2182,8 @@
               {
                 "enum": [
                   "chat",
-                  "comment"
+                  "comment",
+                  "label"
                 ],
                 "type": "string"
               },
@@ -1995,6 +2236,17 @@
             "title": "长度",
             "type": "integer"
           },
+          "output_schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Schema"
+          },
           "preview": {
             "title": "预览",
             "type": "string"
@@ -2002,7 +2254,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "场景",
             "type": "string"
@@ -2520,7 +2773,8 @@
             "default": "comment",
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "场景",
             "type": "string"
@@ -2571,6 +2825,76 @@
           }
         },
         "title": "HTTP 校验错误",
+        "type": "object"
+      },
+      "LabelingGenerateRequest": {
+        "properties": {
+          "input": {
+            "title": "输入",
+            "type": "string"
+          },
+          "max_tokens": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "最大 Token 数"
+          },
+          "model_key": {
+            "title": "模型 键",
+            "type": "string"
+          },
+          "prompt_key": {
+            "default": "label_generic_spans_v1",
+            "title": "提示词键",
+            "type": "string"
+          },
+          "repair_retry_count": {
+            "anyOf": [
+              {
+                "maximum": 3.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repair Retry Count"
+          },
+          "scenario": {
+            "default": "label",
+            "enum": [
+              "chat",
+              "comment",
+              "label"
+            ],
+            "title": "场景",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "超时秒数"
+          }
+        },
+        "required": [
+          "input",
+          "model_key"
+        ],
+        "title": "Labeling 生成 请求",
         "type": "object"
       },
       "PersonaTemplatePatchRequest": {
@@ -2637,7 +2961,8 @@
               {
                 "enum": [
                   "chat",
-                  "comment"
+                  "comment",
+                  "label"
                 ],
                 "type": "string"
               },
@@ -2914,7 +3239,8 @@
               {
                 "enum": [
                   "chat",
-                  "comment"
+                  "comment",
+                  "label"
                 ],
                 "type": "string"
               },
@@ -3549,6 +3875,47 @@
         "summary": "生成用于新闻/评论线程的无状态评论",
         "tags": [
           "commenting"
+        ]
+      }
+    },
+    "/api/v1/labeling/generate": {
+      "post": {
+        "operationId": "api_labeling_generate_api_v1_labeling_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelingGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiLabelingGenerateResponse"
+                }
+              }
+            },
+            "description": "成功响应"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "校验错误"
+          }
+        },
+        "summary": "Generate stateless span annotations for an input article",
+        "tags": [
+          "labeling"
         ]
       }
     },

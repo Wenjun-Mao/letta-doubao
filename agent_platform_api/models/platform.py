@@ -4,6 +4,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .common import LabelingOutputMode
+
 
 class PlatformRuntimeMessageRequest(BaseModel):
     input: str
@@ -197,6 +199,7 @@ class ApiPlatformModelCatalogSourceResponse(BaseModel):
     id: str
     label: str
     kind: str
+    adapter: str = "generic_openai"
     base_url: str
     enabled_for: list[str]
     letta_handle_prefix: str
@@ -214,11 +217,14 @@ class ApiPlatformModelCatalogEntryResponse(BaseModel):
     source_id: str
     source_label: str
     source_kind: str
+    source_adapter: str = "generic_openai"
     provider_model_id: str
     model_type: str
     letta_handle: str | None = None
     agent_studio_available: bool
     comment_lab_available: bool
+    label_lab_available: bool
+    structured_output_mode: LabelingOutputMode | None = None
 
 
 class ApiPlatformModelCatalogResponse(BaseModel):

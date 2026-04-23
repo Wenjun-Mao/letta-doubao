@@ -34,6 +34,21 @@ def as_template_record(record: dict[str, Any]) -> dict[str, Any]:
         "archived": bool(record.get("archived", False)),
         "source_path": str(record.get("source_path", "") or ""),
         "updated_at": str(record.get("updated_at", "") or ""),
+        "output_schema": str(record.get("output_schema", "") or "") or None,
+    }
+
+
+def as_label_schema_record(record: dict[str, Any]) -> dict[str, Any]:
+    schema = record.get("schema")
+    return {
+        "key": str(record.get("key", "") or ""),
+        "label": str(record.get("label", "") or ""),
+        "description": str(record.get("description", "") or ""),
+        "schema": schema if isinstance(schema, dict) else {},
+        "preview": str(record.get("preview", "") or ""),
+        "archived": bool(record.get("archived", False)),
+        "source_path": str(record.get("source_path", "") or ""),
+        "updated_at": str(record.get("updated_at", "") or ""),
     }
 
 

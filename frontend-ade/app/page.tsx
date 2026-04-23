@@ -41,6 +41,11 @@ const COPY = {
       commentLabTitle: "Comment Lab",
       commentLabDescription:
         "Stateless comment generation workspace with independent model, prompt, and persona controls.",
+      labelLabTitle: "Label Lab",
+      labelLabDescription:
+        "Stateless structured labeling workspace for article spans, with exact offsets, JSON output, and provider capability hints.",
+      schemaCenterTitle: "Schema Center",
+      schemaCenterDescription: "Manage Label Lab JSON schemas as workspace files with CRUD and archive/restore.",
       promptCenterTitle: "Prompt Center",
       promptCenterDescription: "Manage system prompts and persona templates with workspace-persisted CRUD and archive/restore.",
       toolCenterTitle: "Tool Center",
@@ -81,6 +86,10 @@ const COPY = {
       agentStudioDescription: "支持运行时对话、提示词和 Persona 编辑、工具管理、执行轨迹及持久化状态查看。",
       commentLabTitle: "评论实验室",
       commentLabDescription: "独立的无状态评论生成空间，可分别控制模型、Prompt 与 Persona。",
+      labelLabTitle: "标注实验室",
+      labelLabDescription: "用于文章结构化标注的无状态工作区，支持精确偏移、JSON 输出和模型能力提示。",
+      schemaCenterTitle: "Schema 中心",
+      schemaCenterDescription: "以工作区文件方式管理 Label Lab JSON Schema，支持 CRUD 与归档恢复。",
       promptCenterTitle: "提示词中心",
       promptCenterDescription: "管理 System Prompt 与 Persona 模板，支持工作区持久化 CRUD 与归档恢复。",
       toolCenterTitle: "工具中心",
@@ -168,6 +177,16 @@ export default function DashboardPage() {
         title: copy.modules.commentLabTitle,
         description: copy.modules.commentLabDescription,
         href: "/comment-lab",
+      },
+      {
+        title: copy.modules.labelLabTitle,
+        description: copy.modules.labelLabDescription,
+        href: "/label-lab",
+      },
+      {
+        title: copy.modules.schemaCenterTitle,
+        description: copy.modules.schemaCenterDescription,
+        href: "/schema-center",
       },
       {
         title: copy.modules.promptCenterTitle,

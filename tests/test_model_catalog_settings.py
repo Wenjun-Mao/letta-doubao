@@ -11,20 +11,24 @@ def test_settings_parse_model_sources_from_env(monkeypatch) -> None:
         json.dumps(
             [
                 {
-                    "id": "local_unsloth",
-                    "label": "Local Unsloth",
-                    "base_url": "http://127.0.0.1:2234/v1",
+                    "id": "local_llama_server",
+                    "label": "Local llama-server",
+                    "base_url": "http://127.0.0.1:8081/v1",
                     "kind": "openai-compatible",
-                    "enabled_for": ["comment"],
-                    "letta_handle_prefix": "lmstudio_openai",
-                    "api_key_env": "UNSLOTH_API_KEY",
-                    "api_key_secret": "unsloth-api-key",
+                    "adapter": "llama_cpp_server",
+                    "enabled": True,
+                    "enabled_for": ["comment", "label"],
+                    "letta_handle_prefix": "",
+                    "api_key_env": "LLAMA_SERVER_API_KEY",
+                    "api_key_secret": "llama-server-api-key",
                 },
                 {
                     "id": "local_lmstudio",
                     "label": "Local LM Studio",
                     "base_url": "http://127.0.0.1:1234/v1",
                     "kind": "openai-compatible",
+                    "adapter": "generic_openai",
+                    "enabled": False,
                     "enabled_for": ["chat", "comment"],
                     "letta_handle_prefix": "lmstudio_openai",
                     "api_key_env": "",
@@ -35,6 +39,7 @@ def test_settings_parse_model_sources_from_env(monkeypatch) -> None:
                     "label": "Volcengine Ark",
                     "base_url": "https://ark.cn-beijing.volces.com/api/v3",
                     "kind": "openai-compatible",
+                    "adapter": "ark_openai",
                     "enabled_for": ["comment"],
                     "letta_handle_prefix": "openai-proxy",
                     "api_key_env": "OPENAI_API_KEY",
@@ -46,9 +51,12 @@ def test_settings_parse_model_sources_from_env(monkeypatch) -> None:
     clear_settings_cache()
     try:
         settings = get_settings()
-        assert [source.id for source in settings.model_sources] == ["local_unsloth", "local_lmstudio", "ark"]
-        assert settings.model_sources[0].enabled_for == ["comment"]
+        assert [source.id for source in settings.model_sources] == ["local_llama_server", "local_lmstudio", "ark"]
+        assert settings.model_sources[0].adapter == "llama_cpp_server"
+        assert settings.model_sources[0].enabled_for == ["comment", "label"]
+        assert settings.model_sources[1].enabled is False
         assert settings.model_sources[1].enabled_for == ["chat", "comment"]
+        assert settings.model_sources[2].adapter == "ark_openai"
         assert settings.model_sources[2].letta_handle_prefix == "openai-proxy"
     finally:
         clear_settings_cache()
@@ -102,6 +110,34 @@ def test_model_source_resolve_api_key_uses_process_env_when_environ_is_omitted(
     monkeypatch.setenv("UNSLOTH_API_KEY", "env-token")
 
     assert source.resolve_api_key(secrets_dir=tmp_path) == "env-token"
+
+
+def test_llama_server_api_key_falls_back_to_unsloth_key(tmp_path) -> None:
+    source = ModelSourceConfig(
+        id="local_llama_server",
+        label="Local llama-server",
+        base_url="http://127.0.0.1:8081/v1",
+        kind="openai-compatible",
+        adapter="llama_cpp_server",
+        enabled_for=["label"],
+        api_key_env="LLAMA_SERVER_API_KEY",
+        api_key_secret="llama-server-api-key",
+    )
+
+    assert (
+        source.resolve_api_key(
+            secrets_dir=tmp_path,
+            environ={"LLAMA_SERVER_API_KEY": "", "UNSLOTH_API_KEY": "fallback-token"},
+        )
+        == "fallback-token"
+    )
+    assert (
+        source.resolve_api_key(
+            secrets_dir=tmp_path,
+            environ={"LLAMA_SERVER_API_KEY": "llama-token", "UNSLOTH_API_KEY": "fallback-token"},
+        )
+        == "llama-token"
+    )
 
 
 def test_model_source_versioned_base_urls_cover_v1_and_v3() -> None:

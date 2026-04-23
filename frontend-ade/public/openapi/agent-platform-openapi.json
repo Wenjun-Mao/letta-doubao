@@ -38,7 +38,8 @@
             "default": "chat",
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "Scenario",
             "type": "string"
@@ -83,7 +84,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "Scenario",
             "type": "string"
@@ -441,7 +443,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "Scenario",
             "type": "string"
@@ -623,6 +626,261 @@
         "title": "ApiConversationHistoryResponse",
         "type": "object"
       },
+      "ApiLabelSchemaListResponse": {
+        "properties": {
+          "include_archived": {
+            "title": "Include Archived",
+            "type": "boolean"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ApiLabelSchemaRecordResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "total": {
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "include_archived"
+        ],
+        "title": "ApiLabelSchemaListResponse",
+        "type": "object"
+      },
+      "ApiLabelSchemaRecordResponse": {
+        "properties": {
+          "archived": {
+            "title": "Archived",
+            "type": "boolean"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "preview": {
+            "title": "Preview",
+            "type": "string"
+          },
+          "schema": {
+            "additionalProperties": true,
+            "title": "Schema",
+            "type": "object"
+          },
+          "source_path": {
+            "title": "Source Path",
+            "type": "string"
+          },
+          "updated_at": {
+            "title": "Updated At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "label",
+          "description",
+          "schema",
+          "preview",
+          "archived",
+          "source_path",
+          "updated_at"
+        ],
+        "title": "ApiLabelSchemaRecordResponse",
+        "type": "object"
+      },
+      "ApiLabelSpanResponse": {
+        "properties": {
+          "end": {
+            "minimum": 0.0,
+            "title": "End",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "start": {
+            "minimum": 0.0,
+            "title": "Start",
+            "type": "integer"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "text",
+          "start",
+          "end"
+        ],
+        "title": "ApiLabelSpanResponse",
+        "type": "object"
+      },
+      "ApiLabelingGenerateResponse": {
+        "properties": {
+          "finish_reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Finish Reason"
+          },
+          "model_key": {
+            "title": "Model Key",
+            "type": "string"
+          },
+          "output_mode": {
+            "enum": [
+              "strict_json_schema",
+              "json_schema",
+              "best_effort_prompt_json"
+            ],
+            "title": "Output Mode",
+            "type": "string"
+          },
+          "prompt_key": {
+            "title": "Prompt Key",
+            "type": "string"
+          },
+          "provider_model_id": {
+            "title": "Provider Model Id",
+            "type": "string"
+          },
+          "raw_reply": {
+            "additionalProperties": true,
+            "title": "Raw Reply",
+            "type": "object"
+          },
+          "raw_request": {
+            "additionalProperties": true,
+            "title": "Raw Request",
+            "type": "object"
+          },
+          "received_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Received At"
+          },
+          "result": {
+            "$ref": "#/components/schemas/ApiLabelingResultResponse"
+          },
+          "scenario": {
+            "enum": [
+              "chat",
+              "comment",
+              "label"
+            ],
+            "title": "Scenario",
+            "type": "string"
+          },
+          "schema_key": {
+            "title": "Schema Key",
+            "type": "string"
+          },
+          "selected_attempt": {
+            "enum": [
+              "primary",
+              "repair"
+            ],
+            "title": "Selected Attempt",
+            "type": "string"
+          },
+          "source_id": {
+            "title": "Source Id",
+            "type": "string"
+          },
+          "source_label": {
+            "title": "Source Label",
+            "type": "string"
+          },
+          "usage": {
+            "additionalProperties": true,
+            "title": "Usage",
+            "type": "object"
+          },
+          "validation_errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Validation Errors",
+            "type": "array"
+          }
+        },
+        "required": [
+          "scenario",
+          "model_key",
+          "source_id",
+          "source_label",
+          "provider_model_id",
+          "prompt_key",
+          "schema_key",
+          "output_mode",
+          "selected_attempt",
+          "result"
+        ],
+        "title": "ApiLabelingGenerateResponse",
+        "type": "object"
+      },
+      "ApiLabelingResultResponse": {
+        "properties": {
+          "spans": {
+            "items": {
+              "$ref": "#/components/schemas/ApiLabelSpanResponse"
+            },
+            "title": "Spans",
+            "type": "array"
+          }
+        },
+        "title": "ApiLabelingResultResponse",
+        "type": "object"
+      },
+      "ApiLabelingRuntimeDefaultsResponse": {
+        "properties": {
+          "max_tokens": {
+            "title": "Max Tokens",
+            "type": "integer"
+          },
+          "repair_retry_count": {
+            "title": "Repair Retry Count",
+            "type": "integer"
+          },
+          "timeout_seconds": {
+            "title": "Timeout Seconds",
+            "type": "number"
+          }
+        },
+        "required": [
+          "max_tokens",
+          "timeout_seconds",
+          "repair_retry_count"
+        ],
+        "title": "ApiLabelingRuntimeDefaultsResponse",
+        "type": "object"
+      },
       "ApiMemoryBlockUpdateResponse": {
         "properties": {
           "agent_id": {
@@ -731,6 +989,17 @@
             "title": "Label",
             "type": "string"
           },
+          "label_lab_available": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label Lab Available"
+          },
           "provider_model_id": {
             "anyOf": [
               {
@@ -747,7 +1016,8 @@
               {
                 "enum": [
                   "chat",
-                  "comment"
+                  "comment",
+                  "label"
                 ],
                 "type": "string"
               },
@@ -778,6 +1048,22 @@
               }
             ],
             "title": "Source Label"
+          },
+          "structured_output_mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strict_json_schema",
+                  "json_schema",
+                  "best_effort_prompt_json"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structured Output Mode"
           }
         },
         "required": [
@@ -809,9 +1095,15 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "Scenario",
+            "type": "string"
+          },
+          "schema_key": {
+            "default": "",
+            "title": "Schema Key",
             "type": "string"
           }
         },
@@ -847,6 +1139,16 @@
             "title": "Embeddings",
             "type": "array"
           },
+          "labeling": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiLabelingRuntimeDefaultsResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "models": {
             "items": {
               "$ref": "#/components/schemas/ApiOptionEntryResponse"
@@ -871,10 +1173,18 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "Scenario",
             "type": "string"
+          },
+          "schemas": {
+            "items": {
+              "$ref": "#/components/schemas/ApiOptionEntryResponse"
+            },
+            "title": "Schemas",
+            "type": "array"
           }
         },
         "required": [
@@ -1064,7 +1374,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "Scenario",
             "type": "string"
@@ -1160,6 +1471,10 @@
             "title": "Comment Lab Available",
             "type": "boolean"
           },
+          "label_lab_available": {
+            "title": "Label Lab Available",
+            "type": "boolean"
+          },
           "letta_handle": {
             "anyOf": [
               {
@@ -1183,6 +1498,11 @@
             "title": "Provider Model Id",
             "type": "string"
           },
+          "source_adapter": {
+            "default": "generic_openai",
+            "title": "Source Adapter",
+            "type": "string"
+          },
           "source_id": {
             "title": "Source Id",
             "type": "string"
@@ -1194,6 +1514,22 @@
           "source_label": {
             "title": "Source Label",
             "type": "string"
+          },
+          "structured_output_mode": {
+            "anyOf": [
+              {
+                "enum": [
+                  "strict_json_schema",
+                  "json_schema",
+                  "best_effort_prompt_json"
+                ],
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Structured Output Mode"
           }
         },
         "required": [
@@ -1204,7 +1540,8 @@
           "provider_model_id",
           "model_type",
           "agent_studio_available",
-          "comment_lab_available"
+          "comment_lab_available",
+          "label_lab_available"
         ],
         "title": "ApiPlatformModelCatalogEntryResponse",
         "type": "object"
@@ -1256,6 +1593,11 @@
       },
       "ApiPlatformModelCatalogSourceResponse": {
         "properties": {
+          "adapter": {
+            "default": "generic_openai",
+            "title": "Adapter",
+            "type": "string"
+          },
           "allowlist_applied": {
             "anyOf": [
               {
@@ -1633,7 +1975,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "Scenario",
             "type": "string"
@@ -1663,7 +2006,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "Scenario",
             "type": "string"
@@ -1942,7 +2286,8 @@
               {
                 "enum": [
                   "chat",
-                  "comment"
+                  "comment",
+                  "label"
                 ],
                 "type": "string"
               },
@@ -1995,6 +2340,17 @@
             "title": "Length",
             "type": "integer"
           },
+          "output_schema": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Output Schema"
+          },
           "preview": {
             "title": "Preview",
             "type": "string"
@@ -2002,7 +2358,8 @@
           "scenario": {
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "Scenario",
             "type": "string"
@@ -2520,7 +2877,8 @@
             "default": "comment",
             "enum": [
               "chat",
-              "comment"
+              "comment",
+              "label"
             ],
             "title": "Scenario",
             "type": "string"
@@ -2571,6 +2929,150 @@
           }
         },
         "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "LabelSchemaPatchRequest": {
+        "properties": {
+          "description": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "label": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Label"
+          },
+          "schema": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Schema"
+          }
+        },
+        "title": "LabelSchemaPatchRequest",
+        "type": "object"
+      },
+      "LabelSchemaWriteRequest": {
+        "properties": {
+          "description": {
+            "default": "",
+            "title": "Description",
+            "type": "string"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          },
+          "label": {
+            "default": "",
+            "title": "Label",
+            "type": "string"
+          },
+          "schema": {
+            "additionalProperties": true,
+            "title": "Schema",
+            "type": "object"
+          }
+        },
+        "required": [
+          "key",
+          "schema"
+        ],
+        "title": "LabelSchemaWriteRequest",
+        "type": "object"
+      },
+      "LabelingGenerateRequest": {
+        "properties": {
+          "input": {
+            "title": "Input",
+            "type": "string"
+          },
+          "max_tokens": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Tokens"
+          },
+          "model_key": {
+            "title": "Model Key",
+            "type": "string"
+          },
+          "prompt_key": {
+            "default": "label_generic_spans_v1",
+            "title": "Prompt Key",
+            "type": "string"
+          },
+          "repair_retry_count": {
+            "anyOf": [
+              {
+                "maximum": 3.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Repair Retry Count"
+          },
+          "scenario": {
+            "default": "label",
+            "enum": [
+              "chat",
+              "comment",
+              "label"
+            ],
+            "title": "Scenario",
+            "type": "string"
+          },
+          "schema_key": {
+            "default": "label_span_annotations_v1",
+            "title": "Schema Key",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeout Seconds"
+          }
+        },
+        "required": [
+          "input",
+          "model_key"
+        ],
+        "title": "LabelingGenerateRequest",
         "type": "object"
       },
       "PersonaTemplatePatchRequest": {
@@ -2637,7 +3139,8 @@
               {
                 "enum": [
                   "chat",
-                  "comment"
+                  "comment",
+                  "label"
                 ],
                 "type": "string"
               },
@@ -2914,7 +3417,8 @@
               {
                 "enum": [
                   "chat",
-                  "comment"
+                  "comment",
+                  "label"
                 ],
                 "type": "string"
               },
@@ -3549,6 +4053,47 @@
         "summary": "Generate a stateless comment for news/comment threads",
         "tags": [
           "commenting"
+        ]
+      }
+    },
+    "/api/v1/labeling/generate": {
+      "post": {
+        "operationId": "api_labeling_generate_api_v1_labeling_generate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelingGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiLabelingGenerateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Generate stateless span annotations for an input article",
+        "tags": [
+          "labeling"
         ]
       }
     },
@@ -5002,6 +5547,314 @@
         "summary": "Restore archived system prompt template",
         "tags": [
           "platform-prompts"
+        ]
+      }
+    },
+    "/api/v1/platform/schema-center/label-schemas": {
+      "get": {
+        "operationId": "api_schema_center_list_label_schemas_api_v1_platform_schema_center_label_schemas_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "include_archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiLabelSchemaListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Label Lab JSON schemas",
+        "tags": [
+          "platform-schemas"
+        ]
+      },
+      "post": {
+        "operationId": "api_schema_center_create_label_schema_api_v1_platform_schema_center_label_schemas_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelSchemaWriteRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiLabelSchemaRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Label Lab JSON schema",
+        "tags": [
+          "platform-schemas"
+        ]
+      }
+    },
+    "/api/v1/platform/schema-center/label-schemas/{key}": {
+      "get": {
+        "operationId": "api_schema_center_get_label_schema_api_v1_platform_schema_center_label_schemas__key__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "archived",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Archived",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiLabelSchemaRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Label Lab JSON schema",
+        "tags": [
+          "platform-schemas"
+        ]
+      },
+      "patch": {
+        "operationId": "api_schema_center_update_label_schema_api_v1_platform_schema_center_label_schemas__key__patch",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LabelSchemaPatchRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiLabelSchemaRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Label Lab JSON schema",
+        "tags": [
+          "platform-schemas"
+        ]
+      }
+    },
+    "/api/v1/platform/schema-center/label-schemas/{key}/archive": {
+      "post": {
+        "operationId": "api_schema_center_archive_label_schema_api_v1_platform_schema_center_label_schemas__key__archive_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiLabelSchemaRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Archive Label Lab JSON schema",
+        "tags": [
+          "platform-schemas"
+        ]
+      }
+    },
+    "/api/v1/platform/schema-center/label-schemas/{key}/purge": {
+      "delete": {
+        "operationId": "api_schema_center_purge_label_schema_api_v1_platform_schema_center_label_schemas__key__purge_delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Purge archived Label Lab JSON schema",
+        "tags": [
+          "platform-schemas"
+        ]
+      }
+    },
+    "/api/v1/platform/schema-center/label-schemas/{key}/restore": {
+      "post": {
+        "operationId": "api_schema_center_restore_label_schema_api_v1_platform_schema_center_label_schemas__key__restore_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "key",
+            "required": true,
+            "schema": {
+              "title": "Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiLabelSchemaRecordResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Restore archived Label Lab JSON schema",
+        "tags": [
+          "platform-schemas"
         ]
       }
     },
