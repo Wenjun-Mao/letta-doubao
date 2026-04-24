@@ -1,0 +1,31 @@
+info:
+  name: label01
+  type: http
+  seq: 3
+
+http:
+  method: POST
+  url: http://127.0.0.1:8284/api/v1/labeling/generate
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+        "input": "谁能接替阿韦洛亚？关于这个问题有很多疑问。我敢肯定，如果皇马决定更换主教练，这将成为未来几周、几个月的主要话题之一。很明显，这对许多教练来说将是一个重要的角色、一个巨大的机会。我从一月份就一直在说，并且仍然坚持认为，皇马内部确实有一些人很欣赏克洛普。",
+        "max_tokens": 0,
+        "model_key": "local_llama_server::gemma4",
+        "prompt_key": "label_football_entities_v1",
+        "repair_retry_count": 0,
+        "scenario": "label",
+        "schema_key": "label_football_entity_groups_v1",
+        "timeout_seconds": 180
+      }
+  auth: inherit
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5
