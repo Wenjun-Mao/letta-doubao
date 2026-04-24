@@ -19,6 +19,7 @@ from utils.labeling_service import LabelingService
 from utils.label_schema_registry import DEFAULT_LABEL_SCHEMA_KEY, LabelSchemaRegistry
 from utils.model_allowlist import load_configured_source_allowlist
 from utils.model_catalog import ModelCatalogService
+from utils.model_router_client import ModelRouterClient
 from utils.platform_test_orchestrator import PlatformTestOrchestrator
 from utils.prompt_persona_registry import PromptPersonaRegistry
 
@@ -121,6 +122,7 @@ label_schema_registry = LabelSchemaRegistry(PROJECT_ROOT)
 custom_tool_registry = CustomToolRegistry(PROJECT_ROOT)
 agent_lifecycle_registry = AgentLifecycleRegistry(PROJECT_ROOT)
 model_catalog_service = ModelCatalogService()
+model_router_client = ModelRouterClient()
 commenting_service = CommentingService()
 labeling_service = LabelingService()
 REVISION_LOG_DIR = PROJECT_ROOT / "diagnostics"
@@ -218,6 +220,7 @@ def dedupe_options(options: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 def invalidate_options_cache() -> None:
     model_catalog_service.invalidate()
+    model_router_client.invalidate()
 
 
 def _looks_like_embedding_handle(handle: str) -> bool:
@@ -276,7 +279,68 @@ def _label_allowlist_for_source(source_id: str):
     return load_configured_source_allowlist(str(source_id or "").strip(), probe_mode="label-structured")
 
 
+def _model_router_enabled() -> bool:
+    try:
+        return model_router_client.enabled()
+    except Exception:
+        return False
+
+
+def _router_enriched_catalog_items(force_refresh: bool = False) -> list[dict[str, Any]]:
+    payload = model_router_client.catalog(force_refresh=force_refresh)
+    letta_model_handles, _ = _resolve_letta_catalog_handles()
+    router_base_url = model_router_client.v1_base_url()
+    items: list[dict[str, Any]] = []
+    for raw_item in payload.get("items", []):
+        if not isinstance(raw_item, dict):
+            continue
+        model_key = str(raw_item.get("model_key") or raw_item.get("router_model_id") or "").strip()
+        upstream_provider_model_id = str(raw_item.get("provider_model_id", "") or "").strip()
+        if not model_key:
+            continue
+        is_embedding = str(raw_item.get("model_type", "") or "").strip() == "embedding"
+        letta_handle = str(raw_item.get("letta_handle", "") or "").strip() or None
+        router_agent_available = bool(raw_item.get("agent_studio_available", False))
+        agent_studio_available = (
+            (not is_embedding)
+            and router_agent_available
+            and bool(letta_handle)
+            and letta_handle in letta_model_handles
+        )
+        module_visibility = [
+            str(item or "").strip()
+            for item in raw_item.get("module_visibility", [])
+            if str(item or "").strip()
+        ]
+        items.append(
+            {
+                "model_key": model_key,
+                "source_id": str(raw_item.get("source_id", "") or ""),
+                "source_label": str(raw_item.get("source_label", "") or ""),
+                "source_kind": str(raw_item.get("source_kind", "") or "openai-compatible"),
+                "source_adapter": str(raw_item.get("source_adapter", "") or "generic_openai"),
+                "base_url": router_base_url,
+                "source_base_url": str(raw_item.get("source_base_url", "") or ""),
+                "enabled_for": module_visibility,
+                "module_visibility": module_visibility,
+                "provider_model_id": model_key,
+                "upstream_provider_model_id": upstream_provider_model_id,
+                "model_type": str(raw_item.get("model_type", "") or "unknown"),
+                "letta_handle": letta_handle,
+                "agent_studio_available": agent_studio_available,
+                "router_agent_studio_available": router_agent_available,
+                "comment_lab_available": (not is_embedding) and bool(raw_item.get("comment_lab_available", False)),
+                "label_lab_available": (not is_embedding) and bool(raw_item.get("label_lab_available", False)),
+                "structured_output_mode": raw_item.get("structured_output_mode"),
+            }
+        )
+    return items
+
+
 def _enriched_catalog_items(force_refresh: bool = False) -> list[dict[str, Any]]:
+    if _model_router_enabled():
+        return _router_enriched_catalog_items(force_refresh=force_refresh)
+
     snapshot = model_catalog_service.snapshot(force_refresh=force_refresh)
     letta_model_handles, _ = _resolve_letta_catalog_handles()
     label_allowlists: dict[str, Any] = {}
@@ -328,6 +392,27 @@ def _enriched_catalog_items(force_refresh: bool = False) -> list[dict[str, Any]]
 
 
 def model_catalog(force_refresh: bool = False) -> dict[str, Any]:
+    if _model_router_enabled():
+        payload = model_router_client.catalog(force_refresh=force_refresh)
+        sources: list[dict[str, Any]] = []
+        for raw_source in payload.get("sources", []):
+            if not isinstance(raw_source, dict):
+                continue
+            normalized_source = dict(raw_source)
+            module_visibility = normalized_source.get("module_visibility", [])
+            normalized_source["enabled_for"] = list(module_visibility) if isinstance(module_visibility, list) else []
+            normalized_source.setdefault("letta_handle_prefix", "openai-proxy")
+            sources.append(normalized_source)
+        return {
+            "generated_at": payload.get("generated_at"),
+            "sources": sources,
+            "items": _router_enriched_catalog_items(force_refresh=force_refresh),
+            "router": {
+                "enabled": True,
+                "base_url": model_router_client.v1_base_url(),
+            },
+        }
+
     snapshot = model_catalog_service.snapshot(force_refresh=force_refresh)
     return {
         "generated_at": snapshot.generated_at,
@@ -363,11 +448,17 @@ def model_catalog(force_refresh: bool = False) -> dict[str, Any]:
 def _model_option_metadata(item: dict[str, Any], *, chat_key: str | None = None) -> tuple[str, str]:
     resolved_key = str(chat_key or item.get("letta_handle", "") or "").strip()
     provider_model_id = str(item.get("provider_model_id", "") or "").strip()
-    override = MODEL_OPTION_OVERRIDES.get(resolved_key) or PROVIDER_MODEL_OPTION_OVERRIDES.get(provider_model_id)
+    upstream_provider_model_id = str(item.get("upstream_provider_model_id", "") or "").strip()
+    override = (
+        MODEL_OPTION_OVERRIDES.get(resolved_key)
+        or PROVIDER_MODEL_OPTION_OVERRIDES.get(provider_model_id)
+        or PROVIDER_MODEL_OPTION_OVERRIDES.get(upstream_provider_model_id)
+    )
     if override:
         return override["label"], override["description"]
     source_label = str(item.get("source_label", "") or "").strip()
-    return provider_model_id or resolved_key, f"Discovered from {source_label}."
+    display_model_id = upstream_provider_model_id or provider_model_id or resolved_key
+    return display_model_id, f"Discovered from {source_label}."
 
 
 def _embedding_options() -> list[dict[str, Any]]:
@@ -397,9 +488,12 @@ def _embedding_options() -> list[dict[str, Any]]:
 def _model_option_sort_key(option: dict[str, Any]) -> tuple[int, int, str, str]:
     key = str(option.get("key", "") or "").strip()
     provider_model_id = str(option.get("provider_model_id", "") or "").strip()
+    upstream_provider_model_id = str(option.get("upstream_provider_model_id", "") or "").strip()
     preferred_rank = MODEL_OPTION_PRIORITY.get(key)
     if preferred_rank is None:
         preferred_rank = PROVIDER_MODEL_OPTION_PRIORITY.get(provider_model_id)
+    if preferred_rank is None:
+        preferred_rank = PROVIDER_MODEL_OPTION_PRIORITY.get(upstream_provider_model_id)
     if preferred_rank is not None:
         return (0, int(preferred_rank), key.lower(), provider_model_id.lower())
     return (1, 0, key.lower(), provider_model_id.lower())
@@ -432,6 +526,7 @@ def runtime_options(
                     "source_id": item["source_id"],
                     "source_label": item["source_label"],
                     "provider_model_id": item["provider_model_id"],
+                    "upstream_provider_model_id": item.get("upstream_provider_model_id"),
                     "label_lab_available": item["label_lab_available"],
                     "structured_output_mode": item["structured_output_mode"],
                 }
@@ -454,6 +549,7 @@ def runtime_options(
                     "source_id": item["source_id"],
                     "source_label": item["source_label"],
                     "provider_model_id": item["provider_model_id"],
+                    "upstream_provider_model_id": item.get("upstream_provider_model_id"),
                     "label_lab_available": item["label_lab_available"],
                     "structured_output_mode": item["structured_output_mode"],
                 }
@@ -476,6 +572,7 @@ def runtime_options(
                     "source_id": item["source_id"],
                     "source_label": item["source_label"],
                     "provider_model_id": item["provider_model_id"],
+                    "upstream_provider_model_id": item.get("upstream_provider_model_id"),
                     "label_lab_available": item["label_lab_available"],
                     "structured_output_mode": item["structured_output_mode"],
                 }
@@ -494,11 +591,13 @@ def resolve_comment_model_selection(
 ) -> dict[str, Any]:
     items = [item for item in _enriched_catalog_items(force_refresh=force_refresh) if item["comment_lab_available"]]
     source_api_keys = _source_api_keys()
+    router_api_key = model_router_client.api_key() if _model_router_enabled() else ""
     requested_key = str(model_key or "").strip()
     if requested_key:
         matched = next((item for item in items if item["model_key"] == requested_key), None)
         if matched:
-            return {**matched, "api_key": source_api_keys.get(str(matched["source_id"]), "")}
+            api_key = router_api_key if _model_router_enabled() else source_api_keys.get(str(matched["source_id"]), "")
+            return {**matched, "api_key": api_key}
         raise ValueError(f"Invalid model_key: {requested_key}")
 
     requested_model = str(legacy_model or "").strip()
@@ -516,7 +615,8 @@ def resolve_comment_model_selection(
     ]
     if len(matches) == 1:
         matched = matches[0]
-        return {**matched, "api_key": source_api_keys.get(str(matched["source_id"]), "")}
+        api_key = router_api_key if _model_router_enabled() else source_api_keys.get(str(matched["source_id"]), "")
+        return {**matched, "api_key": api_key}
     if len(matches) > 1:
         raise ValueError(f"Ambiguous model selector '{requested_model}'. Use model_key instead.")
     raise ValueError(f"Invalid model: {requested_model}")
@@ -579,7 +679,8 @@ def resolve_label_model_selection(
     matched = next((item for item in items if item["model_key"] == requested_key), None)
     if matched is None:
         raise ValueError(f"Invalid model_key: {requested_key}")
-    return {**matched, "api_key": _source_api_keys().get(str(matched["source_id"]), "")}
+    api_key = model_router_client.api_key() if _model_router_enabled() else _source_api_keys().get(str(matched["source_id"]), "")
+    return {**matched, "api_key": api_key}
 
 
 def commenting_runtime_defaults() -> ApiCommentingRuntimeDefaultsResponse:

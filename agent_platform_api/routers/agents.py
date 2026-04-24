@@ -7,6 +7,7 @@ from fastapi import APIRouter, HTTPException
 from prompts.persona import HUMAN_TEMPLATE
 from utils.agent_lifecycle_registry import AgentLifecycleRegistryError
 
+from agent_platform_api.settings import get_settings
 from agent_platform_api.helpers import (
     derive_last_interaction_at,
     normalize_scenario,
@@ -38,6 +39,27 @@ from agent_platform_api.runtime import (
 )
 
 router = APIRouter()
+
+
+def _router_llm_config_for_model(model_handle: str) -> dict[str, Any] | None:
+    handle = str(model_handle or "").strip()
+    if not handle.startswith("openai-proxy/") or "::" not in handle:
+        return None
+    router_base_url = get_settings().model_router_v1_base_url()
+    if not router_base_url:
+        return None
+    provider_model_id = handle.split("/", 1)[1].strip()
+    if not provider_model_id:
+        return None
+    return {
+        "context_window": 16384,
+        "model": provider_model_id,
+        "model_endpoint_type": "openai",
+        "model_endpoint": router_base_url,
+        "handle": handle,
+        "max_tokens": 16384,
+        "parallel_tool_calls": False,
+    }
 
 
 @router.get("/api/v1/agents", response_model=ApiAgentListResponse)
@@ -146,6 +168,9 @@ async def api_create_agent(request: AgentCreateRequest):
     }
     if request.embedding:
         create_args["embedding"] = request.embedding
+    router_llm_config = _router_llm_config_for_model(request.model)
+    if router_llm_config is not None:
+        create_args["llm_config"] = router_llm_config
 
     try:
         agent = client.agents.create(**create_args)

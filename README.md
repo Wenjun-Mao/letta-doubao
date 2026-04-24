@@ -7,7 +7,8 @@ This directory is self-contained. You can copy `standalone/letta-doubao` anywher
 - pinned upstream Letta image (`letta/letta:0.16.7` by default, overridable via `LETTA_SERVER_IMAGE`)
 - `pgvector/pgvector:0.8.1-pg15` for Postgres + pgvector
 - `redis:7-alpine` for an explicit external Redis dependency
-- Doubao Ark through Letta's OpenAI-compatible provider path
+- first-party `model_router` service as the single OpenAI-compatible front door
+- Ark, llama-server, LM Studio, and Unsloth Studio as configurable router upstreams
 - Letta's built-in `letta/letta-free` embedding handle for agent memory
 - prebuilt Agent Platform API image from GHCR (`AGENT_PLATFORM_API_IMAGE`)
 
@@ -32,8 +33,8 @@ The same key did not expose a usable text embedding model through the tested Ope
 ## Quick Start
 
 1. Review `.env` or copy `.env.example` to `.env` and update values.
-   `AGENT_PLATFORM_MODEL_SOURCES` is the shared ADE model catalog used by Agent Studio, Comment Lab, and Label Lab, while the Letta bootstrap variables remain dedicated to the upstream `letta_server`.
-   By default, `8081` is the active llama-server source for local Comment Lab and Label Lab work, while `2234` Unsloth Studio and `1234` LM Studio are disabled standby examples.
+   `MODEL_ROUTER_SOURCES` is the canonical ADE model catalog. Letta sees the router as one OpenAI-compatible provider at `http://model_router:8290/v1`, while Agent Studio, Comment Lab, and Label Lab read router diagnostics for module-specific visibility.
+   By default, `8081` is the active llama-server source for local Agent Studio, Comment Lab, and Label Lab work, while `2234` Unsloth Studio and `1234` LM Studio are disabled standby examples.
    llama-server runtime settings, including loaded GGUF, context window, GPU layers, and reasoning mode, are host-managed on the machine running it rather than controlled by ADE.
 2. Start the stack:
 
@@ -41,7 +42,7 @@ The same key did not expose a usable text embedding model through the tested Ope
 docker compose up -d
 ```
 
-3. Confirm all three services become healthy:
+3. Confirm the core services become healthy:
 
 ```powershell
 docker compose ps

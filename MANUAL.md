@@ -88,20 +88,20 @@ Consequence:
 - Letta API is exposed directly on `8283`.
 - Letta ADE/UI is exposed directly on `8083`.
 
-### 4. Doubao Through Letta's OpenAI-Compatible Path
+### 4. Model Router Through Letta's OpenAI-Compatible Path
 
 Decision:
 - Configure Letta via:
-  - `OPENAI_API_BASE=https://ark.cn-beijing.volces.com/api/v3`
-  - `OPENAI_API_KEY=<ark key>`
+  - `OPENAI_API_BASE=http://model_router:8290/v1`
+  - `OPENAI_API_KEY=${MODEL_ROUTER_API_KEY}`
 
 Why:
 - Letta already supports OpenAI-compatible providers through this path.
-- Ark supports compatible `/models` and `/chat/completions` behavior.
+- A first-party router lets ADE own provider naming, source health, module visibility, Ark allowlists, and future backend policy in one place.
 
 Consequence:
-- Letta discovers Doubao-backed models as `openai-proxy/<model-id>`.
-- The tested model handle is `openai-proxy/doubao-seed-1-8-251228`.
+- Letta discovers router-backed models as `openai-proxy/<source-id>::<provider-model-id>`.
+- The preferred local handle is `openai-proxy/local_llama_server::gemma4` when llama-server is healthy and tool calling is compatible.
 
 ### 5. Doubao For LLM, Not For Embeddings
 
@@ -258,22 +258,26 @@ Expected result:
 
 ## Runtime Details That Matter
 
-### Shared ADE Model Catalog
+### Unified Model Router
 
 Important:
-- `agent_platform_api` now uses `AGENT_PLATFORM_MODEL_SOURCES` as the shared source of truth for Agent Studio, Comment Lab, and Label Lab model discovery.
+- `model_router` now uses `MODEL_ROUTER_SOURCES` as the source of truth for Agent Studio, Comment Lab, Label Lab, and future ADE modules.
+- Letta is pointed at the router through `OPENAI_API_BASE=http://model_router:8290/v1` in Compose, so it only needs one OpenAI-compatible provider.
+- `agent_platform_api` reads `/v1/router/model-catalog` and calls the router for stateless Comment Lab and Label Lab generation. `AGENT_PLATFORM_MODEL_SOURCES` is only a direct-provider fallback when the router is disabled.
 
 Notes:
-- Each source entry declares the base URL, enabled scenarios, Letta handle prefix, and auth lookup fields.
+- Each source entry declares the upstream base URL, adapter, module visibility, and auth lookup fields.
 - Auth resolution order is `/run/secrets/<api_key_secret>` first, then the env var named by `api_key_env`.
-- Agent Studio only surfaces models whose derived Letta handles are actually registered in Letta.
+- Router model ids use `<source-id>::<provider-model-id>`, for example `local_llama_server::gemma4`.
+- Letta sees router models as `openai-proxy/<source-id>::<provider-model-id>`, for example `openai-proxy/local_llama_server::gemma4`.
+- Agent Studio only surfaces router models whose Letta handles are actually registered in Letta.
 - Comment Lab uses source-scoped model keys in the form `<source-id>::<provider-model-id>` so duplicate model names remain distinct across providers.
 - The local port split is intentional:
   - `8081` is the active llama-server endpoint for local Comment Lab and Label Lab work.
   - `2234` remains optional Unsloth Studio standby.
   - `1234` remains optional LM Studio standby plus Letta bootstrap compatibility.
 - llama-server runtime settings remain host-side operations. Loaded GGUF, context sizing, GPU offload, and reasoning mode are expected to be adjusted in the launch command on the machine running llama-server, not through ADE.
-- Unsloth Studio and LM Studio may be offline or have no loaded model for long periods. In that state they should either be disabled in `AGENT_PLATFORM_MODEL_SOURCES` or appear only as `unreachable`/`empty` in diagnostics without blocking normal llama-server-first use.
+- Unsloth Studio and LM Studio may be offline or have no loaded model for long periods. In that state they should either be disabled in `MODEL_ROUTER_SOURCES` or appear only as `unreachable`/`empty` in diagnostics without blocking normal llama-server-first use.
 - Ark model visibility is filtered through the checked-in allowlist report at `agent_platform_api/catalog_data/ark_chat_probe_report.json`, which is regenerated with `uv run python scripts/probe_provider_models.py --source-id ark --mode chat-probe --write`.
 - Ark is currently enabled for chat/comment only. Label Lab is centered on llama-server JSON Schema output until a provider is explicitly enabled and verified for label schemas.
 
@@ -398,26 +402,28 @@ uv run marimo run notebooks\\02_letta_e2e.py --headless
 
 ## What To Change If You Swap Models
 
-If you change the Doubao model later:
+If you change the default Agent Studio model later:
 
 Update both:
-- `DOUBAO_CHAT_MODEL`
+- `MODEL_ROUTER_SOURCES` module visibility for the desired upstream/model
 - `LETTA_MODEL_HANDLE`
 
 Rule:
 - `LETTA_MODEL_HANDLE` should match Letta's discovered handle format:
-  - `openai-proxy/<exact-model-id>`
+  - `openai-proxy/<source-id>::<provider-model-id>`
 
 Recommended procedure:
-1. Update `DOUBAO_CHAT_MODEL` in `.env`.
+1. Confirm the model appears in `GET /v1/models` on `model_router`.
 2. Update `LETTA_MODEL_HANDLE` to match.
-3. Run direct smoke notebook first.
-4. Then run the Letta e2e notebook.
+3. Restart Letta so it rediscovers router models.
+4. Run the direct router smoke first.
+5. Then run the Letta e2e notebook.
 
 If you change ADE provider discovery later:
 
 Update:
-- `AGENT_PLATFORM_MODEL_SOURCES`
+- `MODEL_ROUTER_SOURCES`
+- `AGENT_PLATFORM_MODEL_SOURCES` only if intentionally using the direct-provider fallback
 - any referenced source auth env vars such as `LLAMA_SERVER_API_KEY`, `UNSLOTH_API_KEY`, or `OPENAI_API_KEY`
 
 ## If You Want Pure Doubao Embeddings Later

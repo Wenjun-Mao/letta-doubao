@@ -29,6 +29,24 @@ services:
       timeout: 5s
       retries: 20
 
+  model_router:
+    build:
+      context: .
+      dockerfile: docker/model_router.Dockerfile
+    restart: unless-stopped
+    env_file:
+      - ${LETTA_ENV_FILE:-.env}
+    environment:
+      - PYTHONPATH=/app
+    ports:
+      - "8290:8290"
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS --max-time 5 --noproxy '*' http://127.0.0.1:8290/v1/health > /dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
+
   letta_server:
     image: ${LETTA_SERVER_IMAGE:-letta/letta:0.16.7}
     restart: unless-stopped
@@ -36,6 +54,8 @@ services:
       letta_db:
         condition: service_healthy
       redis:
+        condition: service_healthy
+      model_router:
         condition: service_healthy
     env_file:
       - ${LETTA_ENV_FILE:-.env}
@@ -48,6 +68,9 @@ services:
       NLTK_DATA: ${NLTK_DATA:-/root/nltk_data}
       LETTA_NLTK_STRICT_LOCAL: ${LETTA_NLTK_STRICT_LOCAL:-true}
       LETTA_NLTK_DOWNLOAD_TIMEOUT_SECONDS: ${LETTA_NLTK_DOWNLOAD_TIMEOUT_SECONDS:-5}
+      OPENAI_API_BASE: ${LETTA_OPENAI_API_BASE:-http://model_router:8290/v1}
+      OPENAI_BASE_URL: ${LETTA_OPENAI_API_BASE:-http://model_router:8290/v1}
+      OPENAI_API_KEY: ${MODEL_ROUTER_API_KEY:-local-router-dev-key}
     volumes:
       - ./data/nltk_data:/root/nltk_data:ro
       - ./docker/sitecustomize.py:/app/sitecustomize.py:ro
@@ -73,6 +96,7 @@ services:
     environment:
       - PYTHONPATH=/app
       - LETTA_BASE_URL=http://letta_server:8283
+      - AGENT_PLATFORM_MODEL_ROUTER_BASE_URL=http://model_router:8290
     volumes:
       - ./prompts:/app/prompts
       - ./schemas:/app/schemas
@@ -81,6 +105,8 @@ services:
     ports:
       - "8284:8284"
     depends_on:
+      model_router:
+        condition: service_healthy
       letta_server:
         condition: service_healthy
 

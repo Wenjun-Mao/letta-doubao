@@ -135,6 +135,9 @@ class ModelSourceConfig(BaseModel):
 
 class AgentPlatformSettings(BaseSettings):
     model_sources: list[ModelSourceConfig] = Field(default_factory=list)
+    model_router_base_url: str = ""
+    model_router_api_key_env: str = "MODEL_ROUTER_API_KEY"
+    model_router_api_key_secret: str = "model-router-api-key"
     commenting_timeout_seconds: float = 60.0
     commenting_max_tokens: int = 0
     commenting_task_shape: CommentingTaskShapeSetting = "classic"
@@ -186,6 +189,11 @@ class AgentPlatformSettings(BaseSettings):
             seen.add(source.id)
         return value
 
+    @field_validator("model_router_base_url", "model_router_api_key_env", "model_router_api_key_secret")
+    @classmethod
+    def _strip_router_text_fields(cls, value: str) -> str:
+        return str(value or "").strip()
+
     @field_validator("commenting_timeout_seconds")
     @classmethod
     def _clamp_timeout_seconds(cls, value: float) -> float:
@@ -224,6 +232,42 @@ class AgentPlatformSettings(BaseSettings):
     @classmethod
     def _clamp_discovery_timeout(cls, value: float) -> float:
         return max(1.0, min(60.0, float(value)))
+
+    def normalized_model_router_base_url(self) -> str:
+        return self.model_router_base_url.rstrip("/")
+
+    def model_router_v1_base_url(self) -> str:
+        base = self.normalized_model_router_base_url()
+        if not base:
+            return ""
+        if _VERSION_PATH_RE.search(base):
+            return base
+        return f"{base}/v1"
+
+    def resolve_model_router_api_key(
+        self,
+        *,
+        secrets_dir: Path = _DEFAULT_SECRETS_DIR,
+        environ: dict[str, str] | None = None,
+    ) -> str:
+        env_map = os.environ if environ is None else environ
+        secret_name = self.model_router_api_key_secret.strip()
+        if secret_name:
+            secret_path = secrets_dir / secret_name
+            try:
+                if secret_path.is_file():
+                    secret_value = secret_path.read_text(encoding="utf-8").strip()
+                    if secret_value:
+                        return secret_value
+            except OSError:
+                pass
+
+        env_name = self.model_router_api_key_env.strip()
+        if env_name:
+            env_value = str(env_map.get(env_name, "") or "").strip()
+            if env_value:
+                return env_value
+        return ""
 
 
 @lru_cache(maxsize=1)

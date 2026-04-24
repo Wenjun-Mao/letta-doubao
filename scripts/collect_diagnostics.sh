@@ -119,11 +119,11 @@ else
   log "WARN: env file not found at ${PROJECT_ROOT}/${ENV_FILE}"
 fi
 
-run_cmd "compose_config_redacted" "cd '${PROJECT_ROOT}' && ${COMPOSE_CMD} --env-file '${ENV_FILE}' config | sed -E 's/(OPENAI_API_KEY:).*/\\1 ***REDACTED***/; s/(ARK_API_KEY:).*/\\1 ***REDACTED***/'"
+run_cmd "compose_config_redacted" "cd '${PROJECT_ROOT}' && ${COMPOSE_CMD} --env-file '${ENV_FILE}' config | sed -E 's/(OPENAI_API_KEY:).*/\\1 ***REDACTED***/; s/(MODEL_ROUTER_API_KEY:).*/\\1 ***REDACTED***/; s/(ARK_API_KEY:).*/\\1 ***REDACTED***/'"
 
 mapfile -t SERVICES < <(cd "${PROJECT_ROOT}" && ${COMPOSE_CMD} --env-file "${ENV_FILE}" config --services 2>/dev/null || true)
 if [[ ${#SERVICES[@]} -eq 0 ]]; then
-  SERVICES=(letta_server letta_db redis agent_platform_api)
+  SERVICES=(letta_server letta_db redis model_router agent_platform_api)
 fi
 
 log "Services discovered: ${SERVICES[*]}"
@@ -151,12 +151,19 @@ fi
 
 AGENT_API_CID="$(get_service_cid agent_platform_api)"
 if [[ -n "${AGENT_API_CID}" ]]; then
-  run_cmd "agent_platform_api_env_selected" "docker exec '${AGENT_API_CID}' /bin/sh -lc \"env | grep -E '^(AGENT_PLATFORM_MODEL_SOURCES|AGENT_PLATFORM_COMMENTING_TIMEOUT_SECONDS|AGENT_PLATFORM_COMMENTING_MAX_TOKENS|AGENT_PLATFORM_COMMENTING_TASK_SHAPE|LETTA_BASE_URL)='\""
+  run_cmd "agent_platform_api_env_selected" "docker exec '${AGENT_API_CID}' /bin/sh -lc \"env | grep -E '^(AGENT_PLATFORM_MODEL_ROUTER_BASE_URL|AGENT_PLATFORM_MODEL_SOURCES|AGENT_PLATFORM_COMMENTING_TIMEOUT_SECONDS|AGENT_PLATFORM_COMMENTING_MAX_TOKENS|AGENT_PLATFORM_COMMENTING_TASK_SHAPE|LETTA_BASE_URL)='\""
+fi
+
+MODEL_ROUTER_CID="$(get_service_cid model_router)"
+if [[ -n "${MODEL_ROUTER_CID}" ]]; then
+  run_cmd "model_router_env_selected" "docker exec '${MODEL_ROUTER_CID}' /bin/sh -lc \"env | grep -E '^(MODEL_ROUTER_SOURCES|MODEL_ROUTER_CACHE_TTL_SECONDS|MODEL_ROUTER_DISCOVERY_TIMEOUT_SECONDS|MODEL_ROUTER_REQUEST_TIMEOUT_SECONDS)='\""
 fi
 
 run_cmd "probe_host_openapi" "python3 -c \"import urllib.request; opener=urllib.request.build_opener(urllib.request.ProxyHandler({})); resp=opener.open('http://127.0.0.1:8283/openapi.json', timeout=5); print('status', getattr(resp, 'status', None)); resp.read(1); print('host_openapi_ok')\""
 run_cmd "probe_host_openapi_curl" "curl -sS -D '${OUT_DIR}/probe_host_openapi_headers.txt' -o '${OUT_DIR}/probe_host_openapi_body.txt' 'http://127.0.0.1:8283/openapi.json' || true"
 run_cmd "probe_dns_ark" "getent hosts ark.cn-beijing.volces.com || true"
+run_cmd "probe_model_router_health" "python3 -c \"import json,urllib.request; opener=urllib.request.build_opener(urllib.request.ProxyHandler({})); resp=opener.open('http://127.0.0.1:8290/v1/health', timeout=10); print(json.dumps(json.load(resp), indent=2))\""
+run_cmd "probe_model_router_catalog" "python3 -c \"import json,urllib.request; opener=urllib.request.build_opener(urllib.request.ProxyHandler({})); resp=opener.open('http://127.0.0.1:8290/v1/router/model-catalog', timeout=10); payload=json.load(resp); summary={'generated_at': payload.get('generated_at'), 'sources': [{'id': item.get('id'), 'base_url': item.get('base_url'), 'status': item.get('status'), 'detail': item.get('detail'), 'allowlist_applied': item.get('allowlist_applied'), 'raw_model_count': item.get('raw_model_count'), 'filtered_model_count': item.get('filtered_model_count')} for item in payload.get('sources', [])], 'models': [item.get('router_model_id') for item in payload.get('items', [])]}; print(json.dumps(summary, indent=2))\""
 run_cmd "probe_model_catalog" "python3 -c \"import json,urllib.request; opener=urllib.request.build_opener(urllib.request.ProxyHandler({})); resp=opener.open('http://127.0.0.1:8284/api/v1/platform/model-catalog', timeout=10); payload=json.load(resp); summary={'generated_at': payload.get('generated_at'), 'sources': [{'id': item.get('id'), 'base_url': item.get('base_url'), 'status': item.get('status'), 'detail': item.get('detail'), 'allowlist_applied': item.get('allowlist_applied'), 'allowlist_checked_at': item.get('allowlist_checked_at'), 'raw_model_count': item.get('raw_model_count'), 'filtered_model_count': item.get('filtered_model_count')} for item in payload.get('sources', [])]}; print(json.dumps(summary, indent=2))\""
 run_cmd "ark_allowlist_summary" "python3 -c \"import json, pathlib; path=pathlib.Path('agent_platform_api/catalog_data/ark_chat_probe_report.json'); payload=json.loads(path.read_text(encoding='utf-8')) if path.is_file() else {'missing': True}; summary={'path': str(path), 'source_id': payload.get('source_id'), 'checked_at': payload.get('checked_at'), 'probe_mode': payload.get('probe_mode'), 'raw_model_count': payload.get('raw_model_count'), 'usable_models': payload.get('usable_models', [])}; print(json.dumps(summary, indent=2, ensure_ascii=False))\""
 
