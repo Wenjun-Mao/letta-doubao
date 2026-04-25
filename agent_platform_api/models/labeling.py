@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
 from .common import LabelingOutputMode, ScenarioType
 
@@ -14,14 +14,35 @@ class ApiLabelingRuntimeDefaultsResponse(BaseModel):
 
 
 class LabelingGenerateRequest(BaseModel):
-    scenario: ScenarioType = "label"
-    input: str
-    prompt_key: str = "label_generic_entities_v1"
-    schema_key: str = "label_entity_groups_v1"
-    model_key: str
-    max_tokens: int | None = Field(default=None, ge=0)
-    timeout_seconds: float | None = Field(default=None, gt=0)
-    repair_retry_count: int | None = Field(default=None, ge=0, le=3)
+    model_config = ConfigDict(
+        json_schema_extra={
+            "examples": [
+                {
+                    "scenario": "label",
+                    "input": "Messi scored for Inter Miami against Orlando City.",
+                    "prompt_key": "label_football_entities_v1",
+                    "schema_key": "label_football_entity_groups_v1",
+                    "model_key": "local_llama_server::gemma4",
+                    "max_tokens": 1024,
+                    "timeout_seconds": 120,
+                    "repair_retry_count": 1,
+                }
+            ]
+        }
+    )
+
+    scenario: ScenarioType = Field(default="label", description="Must be `label` for this endpoint.")
+    input: str = Field(..., description="Article or text to extract grouped entity lists from.")
+    prompt_key: str = Field(default="label_generic_entities_v1", description="Label Lab prompt key from `/api/v1/options?scenario=label`.")
+    schema_key: str = Field(default="label_entity_groups_v1", description="Label Schema Center key from `/api/v1/options?scenario=label`.")
+    model_key: str = Field(
+        ...,
+        description="Router-scoped model key from `/api/v1/options?scenario=label`, for example `local_llama_server::gemma4`.",
+        examples=["local_llama_server::gemma4"],
+    )
+    max_tokens: int | None = Field(default=None, ge=0, description="Optional response token budget. Defaults to Label Lab runtime settings.")
+    timeout_seconds: float | None = Field(default=None, gt=0, description="Optional provider timeout in seconds. Use a realistic local-model value such as 120.")
+    repair_retry_count: int | None = Field(default=None, ge=0, le=3, description="Number of structured-output repair attempts after validation failure.")
 
 
 class ApiLabelingGenerateResponse(BaseModel):

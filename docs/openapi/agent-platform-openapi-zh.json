@@ -356,7 +356,7 @@
           },
           "total_steps": {
             "default": 0,
-            "title": "总数 Steps",
+            "title": "总数 步骤",
             "type": "integer"
           }
         },
@@ -389,7 +389,7 @@
                 "type": "null"
               }
             ],
-            "title": "Finish Reason"
+            "title": "结束原因"
           },
           "max_tokens": {
             "title": "最大 Token 数",
@@ -412,16 +412,16 @@
             "type": "string"
           },
           "provider": {
-            "title": "Provider",
+            "title": "供应商",
             "type": "string"
           },
           "provider_model_id": {
-            "title": "Provider 模型 ID",
+            "title": "供应商 模型 ID",
             "type": "string"
           },
           "raw_reply": {
             "additionalProperties": true,
-            "title": "原始 Reply",
+            "title": "原始 回复",
             "type": "object"
           },
           "raw_request": {
@@ -438,7 +438,7 @@
                 "type": "null"
               }
             ],
-            "title": "Received At"
+            "title": "接收时间"
           },
           "scenario": {
             "enum": [
@@ -450,7 +450,7 @@
             "type": "string"
           },
           "selected_attempt": {
-            "title": "Selected Attempt",
+            "title": "选中尝试",
             "type": "string"
           },
           "source_id": {
@@ -476,7 +476,7 @@
           },
           "usage": {
             "additionalProperties": true,
-            "title": "Usage",
+            "title": "用量",
             "type": "object"
           }
         },
@@ -573,7 +573,7 @@
                 "type": "null"
               }
             ],
-            "title": "工具 Arguments"
+            "title": "工具 参数"
           }
         },
         "required": [
@@ -597,7 +597,7 @@
             "type": "object"
           },
           "displayed": {
-            "title": "Displayed",
+            "title": "已显示",
             "type": "integer"
           },
           "items": {
@@ -612,7 +612,7 @@
             "type": "integer"
           },
           "total_persisted": {
-            "title": "总数 Persisted",
+            "title": "总数 已持久化",
             "type": "integer"
           }
         },
@@ -700,36 +700,6 @@
         "title": "API 标签 Schema 记录 响应",
         "type": "object"
       },
-      "ApiLabelSpanResponse": {
-        "properties": {
-          "end": {
-            "minimum": 0.0,
-            "title": "End",
-            "type": "integer"
-          },
-          "label": {
-            "title": "标签",
-            "type": "string"
-          },
-          "start": {
-            "minimum": 0.0,
-            "title": "Start",
-            "type": "integer"
-          },
-          "text": {
-            "title": "Text",
-            "type": "string"
-          }
-        },
-        "required": [
-          "label",
-          "text",
-          "start",
-          "end"
-        ],
-        "title": "API 标签 Span 响应",
-        "type": "object"
-      },
       "ApiLabelingGenerateResponse": {
         "properties": {
           "finish_reason": {
@@ -741,7 +711,7 @@
                 "type": "null"
               }
             ],
-            "title": "Finish Reason"
+            "title": "结束原因"
           },
           "model_key": {
             "title": "模型 键",
@@ -753,7 +723,7 @@
               "json_schema",
               "best_effort_prompt_json"
             ],
-            "title": "Output Mode",
+            "title": "输出模式",
             "type": "string"
           },
           "prompt_key": {
@@ -761,12 +731,12 @@
             "type": "string"
           },
           "provider_model_id": {
-            "title": "Provider 模型 ID",
+            "title": "供应商 模型 ID",
             "type": "string"
           },
           "raw_reply": {
             "additionalProperties": true,
-            "title": "原始 Reply",
+            "title": "原始 回复",
             "type": "object"
           },
           "raw_request": {
@@ -783,10 +753,17 @@
                 "type": "null"
               }
             ],
-            "title": "Received At"
+            "title": "接收时间"
           },
           "result": {
-            "$ref": "#/components/schemas/ApiLabelingResultResponse"
+            "additionalProperties": {
+              "items": {
+                "type": "string"
+              },
+              "type": "array"
+            },
+            "title": "结果",
+            "type": "object"
           },
           "scenario": {
             "enum": [
@@ -806,7 +783,7 @@
               "primary",
               "repair"
             ],
-            "title": "Selected Attempt",
+            "title": "选中尝试",
             "type": "string"
           },
           "source_id": {
@@ -819,14 +796,14 @@
           },
           "usage": {
             "additionalProperties": true,
-            "title": "Usage",
+            "title": "用量",
             "type": "object"
           },
           "validation_errors": {
             "items": {
               "type": "string"
             },
-            "title": "校验 Errors",
+            "title": "校验 错误",
             "type": "array"
           }
         },
@@ -839,23 +816,9 @@
           "prompt_key",
           "schema_key",
           "output_mode",
-          "selected_attempt",
-          "result"
+          "selected_attempt"
         ],
-        "title": "API Labeling 生成 响应",
-        "type": "object"
-      },
-      "ApiLabelingResultResponse": {
-        "properties": {
-          "spans": {
-            "items": {
-              "$ref": "#/components/schemas/ApiLabelSpanResponse"
-            },
-            "title": "Spans",
-            "type": "array"
-          }
-        },
-        "title": "API Labeling 结果 响应",
+        "title": "API 标注 生成 响应",
         "type": "object"
       },
       "ApiLabelingRuntimeDefaultsResponse": {
@@ -865,7 +828,7 @@
             "type": "integer"
           },
           "repair_retry_count": {
-            "title": "Repair Retry Count",
+            "title": "修复重试次数",
             "type": "integer"
           },
           "timeout_seconds": {
@@ -878,7 +841,7 @@
           "timeout_seconds",
           "repair_retry_count"
         ],
-        "title": "API Labeling 运行时 默认值 响应",
+        "title": "API 标注 运行时 默认值 响应",
         "type": "object"
       },
       "ApiMemoryBlockUpdateResponse": {
@@ -979,7 +942,7 @@
                 "type": "null"
               }
             ],
-            "title": "Is 默认"
+            "title": "是否 默认"
           },
           "key": {
             "title": "键",
@@ -998,7 +961,7 @@
                 "type": "null"
               }
             ],
-            "title": "标签 Lab 可用"
+            "title": "标签 实验室 可用"
           },
           "provider_model_id": {
             "anyOf": [
@@ -1009,7 +972,7 @@
                 "type": "null"
               }
             ],
-            "title": "Provider 模型 ID"
+            "title": "供应商 模型 ID"
           },
           "scenario": {
             "anyOf": [
@@ -1063,7 +1026,7 @@
                 "type": "null"
               }
             ],
-            "title": "Structured Output Mode"
+            "title": "结构化输出模式"
           }
         },
         "required": [
@@ -1136,7 +1099,7 @@
             "items": {
               "$ref": "#/components/schemas/ApiOptionEntryResponse"
             },
-            "title": "Embeddings",
+            "title": "向量模型",
             "type": "array"
           },
           "labeling": {
@@ -1153,7 +1116,7 @@
             "items": {
               "$ref": "#/components/schemas/ApiOptionEntryResponse"
             },
-            "title": "Models",
+            "title": "模型列表",
             "type": "array"
           },
           "personas": {
@@ -1183,7 +1146,7 @@
             "items": {
               "$ref": "#/components/schemas/ApiOptionEntryResponse"
             },
-            "title": "Schemas",
+            "title": "Schema 列表",
             "type": "array"
           }
         },
@@ -1396,14 +1359,14 @@
             "$ref": "#/components/schemas/ApiPlatformControlCapabilitiesResponse"
           },
           "enabled": {
-            "title": "Enabled",
+            "title": "已启用",
             "type": "boolean"
           },
           "missing_required": {
             "items": {
               "type": "string"
             },
-            "title": "Missing Required",
+            "title": "缺失必需能力",
             "type": "array"
           },
           "runtime": {
@@ -1413,7 +1376,7 @@
             "$ref": "#/components/schemas/ApiPlatformSdkCapabilitiesResponse"
           },
           "strict_mode": {
-            "title": "Strict Mode",
+            "title": "严格模式",
             "type": "boolean"
           }
         },
@@ -1464,15 +1427,15 @@
       "ApiPlatformModelCatalogEntryResponse": {
         "properties": {
           "agent_studio_available": {
-            "title": "智能体 Studio 可用",
+            "title": "智能体 工作台 可用",
             "type": "boolean"
           },
           "comment_lab_available": {
-            "title": "评论 Lab 可用",
+            "title": "评论 实验室 可用",
             "type": "boolean"
           },
           "label_lab_available": {
-            "title": "标签 Lab 可用",
+            "title": "标签 实验室 可用",
             "type": "boolean"
           },
           "letta_handle": {
@@ -1495,12 +1458,12 @@
             "type": "string"
           },
           "provider_model_id": {
-            "title": "Provider 模型 ID",
+            "title": "供应商 模型 ID",
             "type": "string"
           },
           "source_adapter": {
             "default": "generic_openai",
-            "title": "来源 Adapter",
+            "title": "来源 适配器",
             "type": "string"
           },
           "source_id": {
@@ -1529,7 +1492,7 @@
                 "type": "null"
               }
             ],
-            "title": "Structured Output Mode"
+            "title": "结构化输出模式"
           }
         },
         "required": [
@@ -1543,13 +1506,13 @@
           "comment_lab_available",
           "label_lab_available"
         ],
-        "title": "API 平台 模型 Catalog 条目 响应",
+        "title": "API 平台 模型 目录 条目 响应",
         "type": "object"
       },
       "ApiPlatformModelCatalogResponse": {
         "properties": {
           "generated_at": {
-            "title": "已生成 At",
+            "title": "已生成 时间",
             "type": "number"
           },
           "items": {
@@ -1563,14 +1526,14 @@
             "items": {
               "$ref": "#/components/schemas/ApiPlatformModelCatalogSourceResponse"
             },
-            "title": "Sources",
+            "title": "来源列表",
             "type": "array"
           }
         },
         "required": [
           "generated_at"
         ],
-        "title": "API 平台 模型 Catalog 响应",
+        "title": "API 平台 模型 目录 响应",
         "type": "object"
       },
       "ApiPlatformModelCatalogSourceModelResponse": {
@@ -1580,7 +1543,7 @@
             "type": "string"
           },
           "provider_model_id": {
-            "title": "Provider 模型 ID",
+            "title": "供应商 模型 ID",
             "type": "string"
           }
         },
@@ -1588,14 +1551,14 @@
           "provider_model_id",
           "model_type"
         ],
-        "title": "API 平台 模型 Catalog 来源 模型 响应",
+        "title": "API 平台 模型 目录 来源 模型 响应",
         "type": "object"
       },
       "ApiPlatformModelCatalogSourceResponse": {
         "properties": {
           "adapter": {
             "default": "generic_openai",
-            "title": "Adapter",
+            "title": "适配器",
             "type": "string"
           },
           "allowlist_applied": {
@@ -1607,7 +1570,7 @@
                 "type": "null"
               }
             ],
-            "title": "Allowlist Applied"
+            "title": "已应用允许列表"
           },
           "allowlist_checked_at": {
             "anyOf": [
@@ -1618,26 +1581,26 @@
                 "type": "null"
               }
             ],
-            "title": "Allowlist Checked At"
+            "title": "允许列表检查时间"
           },
           "base_url": {
-            "title": "Base Url",
+            "title": "Base URL",
             "type": "string"
           },
           "detail": {
-            "title": "Detail",
+            "title": "详情",
             "type": "string"
           },
           "enabled_for": {
             "items": {
               "type": "string"
             },
-            "title": "Enabled For",
+            "title": "启用场景",
             "type": "array"
           },
           "filtered_model_count": {
             "default": 0,
-            "title": "Filtered 模型 Count",
+            "title": "过滤后 模型 计数",
             "type": "integer"
           },
           "id": {
@@ -1653,19 +1616,19 @@
             "type": "string"
           },
           "letta_handle_prefix": {
-            "title": "Letta Handle Prefix",
+            "title": "Letta Handle 前缀",
             "type": "string"
           },
           "models": {
             "items": {
               "$ref": "#/components/schemas/ApiPlatformModelCatalogSourceModelResponse"
             },
-            "title": "Models",
+            "title": "模型列表",
             "type": "array"
           },
           "raw_model_count": {
             "default": 0,
-            "title": "原始 模型 Count",
+            "title": "原始 模型 计数",
             "type": "integer"
           },
           "status": {
@@ -1683,25 +1646,25 @@
           "status",
           "detail"
         ],
-        "title": "API 平台 模型 Catalog 来源 响应",
+        "title": "API 平台 模型 目录 来源 响应",
         "type": "object"
       },
       "ApiPlatformRuntimeCapabilitiesResponse": {
         "properties": {
           "per_request_model_override": {
-            "title": "Per 请求 模型 Override",
+            "title": "每 请求 模型 覆盖",
             "type": "boolean"
           },
           "per_request_model_override_via_extra_body": {
-            "title": "Per 请求 模型 Override Via Extra Body",
+            "title": "每 请求 模型 覆盖 通过 额外 正文",
             "type": "boolean"
           },
           "per_request_system_override": {
-            "title": "Per 请求 系统 Override",
+            "title": "每 请求 系统 覆盖",
             "type": "boolean"
           },
           "per_request_system_override_via_extra_body": {
-            "title": "Per 请求 系统 Override Via Extra Body",
+            "title": "每 请求 系统 覆盖 通过 额外 正文",
             "type": "boolean"
           }
         },
@@ -1734,7 +1697,7 @@
             "items": {
               "type": "string"
             },
-            "title": "Messages 创建 参数",
+            "title": "消息 创建 参数",
             "type": "array"
           }
         },
@@ -1909,7 +1872,7 @@
                 "type": "null"
               }
             ],
-            "title": "期望 工具 Matched"
+            "title": "期望 工具 匹配"
           },
           "expected_tool_name": {
             "anyOf": [
@@ -1932,11 +1895,11 @@
             "type": "object"
           },
           "tool_call_count": {
-            "title": "工具 调用 Count",
+            "title": "工具 调用 计数",
             "type": "integer"
           },
           "tool_return_count": {
-            "title": "工具 返回 Count",
+            "title": "工具 返回 计数",
             "type": "integer"
           }
         },
@@ -2088,7 +2051,7 @@
             "type": "string"
           },
           "recorded_at": {
-            "title": "Recorded At",
+            "title": "记录时间",
             "type": "string"
           },
           "revision_id": {
@@ -2189,7 +2152,7 @@
             "items": {
               "$ref": "#/components/schemas/ApiRawPromptMessageResponse"
             },
-            "title": "Messages",
+            "title": "消息",
             "type": "array"
           }
         },
@@ -2349,7 +2312,7 @@
                 "type": "null"
               }
             ],
-            "title": "Output Schema"
+            "title": "输出 Schema"
           },
           "preview": {
             "title": "预览",
@@ -2420,7 +2383,7 @@
             "type": "string"
           },
           "line_count": {
-            "title": "Line Count",
+            "title": "行数",
             "type": "integer"
           },
           "run_id": {
@@ -2428,7 +2391,7 @@
             "type": "string"
           },
           "truncated": {
-            "title": "Truncated",
+            "title": "已截断",
             "type": "boolean"
           }
         },
@@ -2449,7 +2412,7 @@
             "type": "string"
           },
           "exists": {
-            "title": "Exists",
+            "title": "是否存在",
             "type": "boolean"
           },
           "path": {
@@ -2457,7 +2420,7 @@
             "type": "string"
           },
           "size_bytes": {
-            "title": "Size Bytes",
+            "title": "字节大小",
             "type": "integer"
           },
           "type": {
@@ -2501,7 +2464,7 @@
             "type": "array"
           },
           "cancel_requested": {
-            "title": "取消 Requested",
+            "title": "取消 请求的",
             "type": "boolean"
           },
           "command": {
@@ -2528,21 +2491,21 @@
                 "type": "null"
               }
             ],
-            "title": "Exit 源码"
+            "title": "退出 源码"
           },
           "finished_at": {
-            "title": "Finished At",
+            "title": "结束时间",
             "type": "string"
           },
           "log_file": {
-            "title": "Log File",
+            "title": "日志文件",
             "type": "string"
           },
           "output_tail": {
             "items": {
               "type": "string"
             },
-            "title": "Output Tail",
+            "title": "输出尾部",
             "type": "array"
           },
           "run_id": {
@@ -2554,7 +2517,7 @@
             "type": "string"
           },
           "started_at": {
-            "title": "Started At",
+            "title": "开始时间",
             "type": "string"
           },
           "status": {
@@ -2584,11 +2547,11 @@
             "type": "string"
           },
           "tool_count_after": {
-            "title": "工具 Count 变更后",
+            "title": "工具 计数 变更后",
             "type": "integer"
           },
           "tool_count_before": {
-            "title": "工具 Count 变更前",
+            "title": "工具 计数 变更前",
             "type": "integer"
           },
           "tool_id": {
@@ -2596,11 +2559,11 @@
             "type": "string"
           },
           "tool_is_attached": {
-            "title": "工具 Is 已挂载",
+            "title": "工具 是否 已挂载",
             "type": "boolean"
           },
           "tool_was_attached": {
-            "title": "工具 Was 已挂载",
+            "title": "工具 是否已 已挂载",
             "type": "boolean"
           }
         },
@@ -2787,7 +2750,7 @@
                 "type": "null"
               }
             ],
-            "title": "Retry Count"
+            "title": "重试次数"
           },
           "timeout_seconds": {
             "anyOf": [
@@ -2811,8 +2774,22 @@
         "type": "object"
       },
       "CommentingGenerateRequest": {
+        "examples": [
+          {
+            "input": "Summarize the reader reaction and write one concise editor-style reply.",
+            "max_tokens": 512,
+            "model_key": "local_llama_server::gemma4",
+            "persona_key": "comment_linxiaotang",
+            "prompt_key": "comment_v20260418",
+            "retry_count": 1,
+            "scenario": "comment",
+            "task_shape": "classic",
+            "timeout_seconds": 120
+          }
+        ],
         "properties": {
           "input": {
+            "description": "需要评论的新闻文章、评论线程或源文本。",
             "title": "输入",
             "type": "string"
           },
@@ -2826,6 +2803,7 @@
                 "type": "null"
               }
             ],
+            "description": "可选响应 Token 预算。默认使用 Comment Lab 运行时设置。",
             "title": "最大 Token 数"
           },
           "model": {
@@ -2837,6 +2815,8 @@
                 "type": "null"
               }
             ],
+            "deprecated": true,
+            "description": "为向后兼容保留的旧选择器。优先使用 `model_key`。",
             "title": "模型"
           },
           "model_key": {
@@ -2848,15 +2828,21 @@
                 "type": "null"
               }
             ],
+            "description": "来自 `/api/v1/options?scenario=comment` 的路由器作用域模型键，例如 `local_llama_server::gemma4`。",
+            "examples": [
+              "local_llama_server::gemma4"
+            ],
             "title": "模型 键"
           },
           "persona_key": {
             "default": "comment_linxiaotang",
+            "description": "来自 `/api/v1/options?scenario=comment` 的 Comment Lab Persona 键。",
             "title": "Persona 键",
             "type": "string"
           },
           "prompt_key": {
             "default": "comment_v20260418",
+            "description": "来自 `/api/v1/options?scenario=comment` 的 Comment Lab 提示词键。",
             "title": "提示词键",
             "type": "string"
           },
@@ -2871,10 +2857,12 @@
                 "type": "null"
               }
             ],
-            "title": "Retry Count"
+            "description": "瞬时失败时的可选供应商重试次数。",
+            "title": "重试次数"
           },
           "scenario": {
             "default": "comment",
+            "description": "该端点必须使用 `comment`。",
             "enum": [
               "chat",
               "comment",
@@ -2897,6 +2885,7 @@
                 "type": "null"
               }
             ],
+            "description": "提示词打包策略。默认使用 Comment Lab 运行时设置。",
             "title": "任务形态"
           },
           "timeout_seconds": {
@@ -2909,6 +2898,7 @@
                 "type": "null"
               }
             ],
+            "description": "可选供应商超时时间（秒）。本地模型建议使用类似 120 的实际值。",
             "title": "超时秒数"
           }
         },
@@ -2924,7 +2914,7 @@
             "items": {
               "$ref": "#/components/schemas/ValidationError"
             },
-            "title": "Detail",
+            "title": "详情",
             "type": "array"
           }
         },
@@ -2968,7 +2958,7 @@
             "title": "Schema"
           }
         },
-        "title": "标签 Schema Patch 请求",
+        "title": "标签 Schema 补丁 请求",
         "type": "object"
       },
       "LabelSchemaWriteRequest": {
@@ -2997,12 +2987,25 @@
           "key",
           "schema"
         ],
-        "title": "标签 Schema Write 请求",
+        "title": "标签 Schema 写入 请求",
         "type": "object"
       },
       "LabelingGenerateRequest": {
+        "examples": [
+          {
+            "input": "Messi scored for Inter Miami against Orlando City.",
+            "max_tokens": 1024,
+            "model_key": "local_llama_server::gemma4",
+            "prompt_key": "label_football_entities_v1",
+            "repair_retry_count": 1,
+            "scenario": "label",
+            "schema_key": "label_football_entity_groups_v1",
+            "timeout_seconds": 120
+          }
+        ],
         "properties": {
           "input": {
+            "description": "用于抽取分组实体列表的文章或文本。",
             "title": "输入",
             "type": "string"
           },
@@ -3016,14 +3019,20 @@
                 "type": "null"
               }
             ],
+            "description": "可选响应 Token 预算。默认使用 Label Lab 运行时设置。",
             "title": "最大 Token 数"
           },
           "model_key": {
+            "description": "来自 `/api/v1/options?scenario=label` 的路由器作用域模型键，例如 `local_llama_server::gemma4`。",
+            "examples": [
+              "local_llama_server::gemma4"
+            ],
             "title": "模型 键",
             "type": "string"
           },
           "prompt_key": {
-            "default": "label_generic_spans_v1",
+            "default": "label_generic_entities_v1",
+            "description": "来自 `/api/v1/options?scenario=label` 的 Label Lab 提示词键。",
             "title": "提示词键",
             "type": "string"
           },
@@ -3038,10 +3047,12 @@
                 "type": "null"
               }
             ],
-            "title": "Repair Retry Count"
+            "description": "结构化输出校验失败后的修复重试次数。",
+            "title": "修复重试次数"
           },
           "scenario": {
             "default": "label",
+            "description": "该端点必须使用 `label`。",
             "enum": [
               "chat",
               "comment",
@@ -3051,7 +3062,8 @@
             "type": "string"
           },
           "schema_key": {
-            "default": "label_span_annotations_v1",
+            "default": "label_entity_groups_v1",
+            "description": "来自 `/api/v1/options?scenario=label` 的 Label Schema Center 键。",
             "title": "Schema 键",
             "type": "string"
           },
@@ -3065,6 +3077,7 @@
                 "type": "null"
               }
             ],
+            "description": "可选供应商超时时间（秒）。本地模型建议使用类似 120 的实际值。",
             "title": "超时秒数"
           }
         },
@@ -3072,7 +3085,7 @@
           "input",
           "model_key"
         ],
-        "title": "Labeling 生成 请求",
+        "title": "标注 生成 请求",
         "type": "object"
       },
       "PersonaTemplatePatchRequest": {
@@ -3111,7 +3124,7 @@
             "title": "标签"
           }
         },
-        "title": "Persona 模板 Patch 请求",
+        "title": "Persona 模板 补丁 请求",
         "type": "object"
       },
       "PersonaTemplateWriteRequest": {
@@ -3155,7 +3168,7 @@
           "key",
           "content"
         ],
-        "title": "Persona 模板 Write 请求",
+        "title": "Persona 模板 写入 请求",
         "type": "object"
       },
       "PlatformMemoryBlockUpdateRequest": {
@@ -3223,7 +3236,7 @@
                 "type": "null"
               }
             ],
-            "title": "Retry Count"
+            "title": "重试次数"
           },
           "timeout_seconds": {
             "anyOf": [
@@ -3330,7 +3343,7 @@
                 "type": "null"
               }
             ],
-            "title": "Retry Count"
+            "title": "重试次数"
           },
           "timeout_seconds": {
             "anyOf": [
@@ -3389,7 +3402,7 @@
             "title": "标签"
           }
         },
-        "title": "提示词 模板 Patch 请求",
+        "title": "提示词 模板 补丁 请求",
         "type": "object"
       },
       "PromptTemplateWriteRequest": {
@@ -3433,7 +3446,7 @@
           "key",
           "content"
         ],
-        "title": "提示词 模板 Write 请求",
+        "title": "提示词 模板 写入 请求",
         "type": "object"
       },
       "ToolCenterCreateRequest": {
@@ -3670,7 +3683,7 @@
                 }
               ]
             },
-            "title": "Location",
+            "title": "位置",
             "type": "array"
           },
           "msg": {
@@ -3758,7 +3771,10 @@
             "description": "校验错误"
           }
         },
-        "summary": "API 列出智能体"
+        "summary": "列出 Agent Studio 智能体",
+        "tags": [
+          "智能体工作台"
+        ]
       },
       "post": {
         "operationId": "api_create_agent_api_v1_agents_post",
@@ -3794,7 +3810,10 @@
             "description": "校验错误"
           }
         },
-        "summary": "API 创建智能体"
+        "summary": "创建 Agent Studio 智能体",
+        "tags": [
+          "智能体工作台"
+        ]
       }
     },
     "/api/v1/agents/{agent_id}": {
@@ -3835,7 +3854,7 @@
         },
         "summary": "删除已归档智能体（硬删除）",
         "tags": [
-          "platform-control"
+          "平台控制"
         ]
       }
     },
@@ -3875,7 +3894,10 @@
             "description": "校验错误"
           }
         },
-        "summary": "API 获取智能体详情"
+        "summary": "获取 Agent Studio 智能体详情",
+        "tags": [
+          "智能体工作台"
+        ]
       }
     },
     "/api/v1/agents/{agent_id}/persistent_state": {
@@ -3935,7 +3957,10 @@
             "description": "校验错误"
           }
         },
-        "summary": "API 获取智能体持久化状态"
+        "summary": "获取 Agent Studio 持久化状态",
+        "tags": [
+          "智能体工作台"
+        ]
       }
     },
     "/api/v1/agents/{agent_id}/raw_prompt": {
@@ -3974,7 +3999,10 @@
             "description": "校验错误"
           }
         },
-        "summary": "API 获取原始提示词"
+        "summary": "获取 Agent Studio 智能体的原始提示词消息",
+        "tags": [
+          "智能体工作台"
+        ]
       }
     },
     "/api/v1/chat": {
@@ -4012,7 +4040,10 @@
             "description": "校验错误"
           }
         },
-        "summary": "API 对话"
+        "summary": "向持久化 Agent Studio 智能体发送对话消息",
+        "tags": [
+          "智能体工作台"
+        ]
       }
     },
     "/api/v1/commenting/generate": {
@@ -4021,6 +4052,22 @@
         "requestBody": {
           "content": {
             "application/json": {
+              "examples": {
+                "llama_server_comment": {
+                  "summary": "使用本地 llama-server 生成",
+                  "value": {
+                    "input": "Summarize the reader reaction and write one concise editor-style reply.",
+                    "max_tokens": 512,
+                    "model_key": "local_llama_server::gemma4",
+                    "persona_key": "comment_linxiaotang",
+                    "prompt_key": "comment_v20260418",
+                    "retry_count": 1,
+                    "scenario": "comment",
+                    "task_shape": "classic",
+                    "timeout_seconds": 120
+                  }
+                }
+              },
               "schema": {
                 "$ref": "#/components/schemas/CommentingGenerateRequest"
               }
@@ -4052,7 +4099,7 @@
         },
         "summary": "生成用于新闻/评论线程的无状态评论",
         "tags": [
-          "commenting"
+          "评论实验室"
         ]
       }
     },
@@ -4062,6 +4109,21 @@
         "requestBody": {
           "content": {
             "application/json": {
+              "examples": {
+                "football_entities": {
+                  "summary": "抽取足球球员与球队",
+                  "value": {
+                    "input": "Messi scored for Inter Miami against Orlando City.",
+                    "max_tokens": 1024,
+                    "model_key": "local_llama_server::gemma4",
+                    "prompt_key": "label_football_entities_v1",
+                    "repair_retry_count": 1,
+                    "scenario": "label",
+                    "schema_key": "label_football_entity_groups_v1",
+                    "timeout_seconds": 120
+                  }
+                }
+              },
               "schema": {
                 "$ref": "#/components/schemas/LabelingGenerateRequest"
               }
@@ -4091,9 +4153,9 @@
             "description": "校验错误"
           }
         },
-        "summary": "Generate stateless span annotations for an input article",
+        "summary": "为输入文章生成无状态分组实体抽取",
         "tags": [
-          "labeling"
+          "标注实验室"
         ]
       }
     },
@@ -4107,7 +4169,7 @@
             "required": false,
             "schema": {
               "default": false,
-              "title": "Refresh",
+              "title": "刷新",
               "type": "boolean"
             }
           },
@@ -4144,7 +4206,10 @@
             "description": "校验错误"
           }
         },
-        "summary": "API 获取选项"
+        "summary": "列出 ADE 场景的运行时选项",
+        "tags": [
+          "平台元数据"
+        ]
       }
     },
     "/api/v1/platform/agents/{agent_id}/archive": {
@@ -4185,7 +4250,7 @@
         },
         "summary": "归档智能体（软删除）",
         "tags": [
-          "platform-control"
+          "平台控制"
         ]
       }
     },
@@ -4246,7 +4311,7 @@
         },
         "summary": "更新核心记忆块值",
         "tags": [
-          "platform-control"
+          "平台控制"
         ]
       }
     },
@@ -4298,7 +4363,7 @@
         },
         "summary": "发送运行时消息（支持可选覆盖参数）",
         "tags": [
-          "platform-runtime"
+          "平台运行时"
         ]
       }
     },
@@ -4350,7 +4415,7 @@
         },
         "summary": "更新已持久化智能体模型",
         "tags": [
-          "platform-control"
+          "平台控制"
         ]
       }
     },
@@ -4392,7 +4457,7 @@
         },
         "summary": "清除已归档智能体（硬删除）",
         "tags": [
-          "platform-control"
+          "平台控制"
         ]
       }
     },
@@ -4434,7 +4499,7 @@
         },
         "summary": "恢复已归档智能体",
         "tags": [
-          "platform-control"
+          "平台控制"
         ]
       }
     },
@@ -4486,7 +4551,7 @@
         },
         "summary": "更新已持久化系统提示词",
         "tags": [
-          "platform-control"
+          "平台控制"
         ]
       }
     },
@@ -4537,7 +4602,7 @@
         },
         "summary": "为智能体挂载工具",
         "tags": [
-          "platform-tools"
+          "工具中心"
         ]
       }
     },
@@ -4588,7 +4653,7 @@
         },
         "summary": "从智能体卸载工具",
         "tags": [
-          "platform-tools"
+          "工具中心"
         ]
       }
     },
@@ -4609,7 +4674,7 @@
         },
         "summary": "获取平台能力矩阵",
         "tags": [
-          "platform-meta"
+          "平台元数据"
         ]
       }
     },
@@ -4652,7 +4717,7 @@
         },
         "summary": "获取提示词与 Persona 元数据",
         "tags": [
-          "platform-meta"
+          "平台元数据"
         ]
       }
     },
@@ -4727,7 +4792,7 @@
         },
         "summary": "获取提示词/Persona 修订历史时间线",
         "tags": [
-          "platform-meta"
+          "平台元数据"
         ]
       }
     },
@@ -4741,7 +4806,7 @@
             "required": false,
             "schema": {
               "default": false,
-              "title": "Refresh",
+              "title": "刷新",
               "type": "boolean"
             }
           }
@@ -4768,9 +4833,9 @@
             "description": "校验错误"
           }
         },
-        "summary": "Get unified model-catalog diagnostics",
+        "summary": "获取统一模型目录诊断",
         "tags": [
-          "platform-meta"
+          "平台元数据"
         ]
       }
     },
@@ -4829,7 +4894,7 @@
         },
         "summary": "列出 Persona 模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       },
       "post": {
@@ -4868,7 +4933,7 @@
         },
         "summary": "创建 Persona 模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       }
     },
@@ -4936,7 +5001,7 @@
         },
         "summary": "获取 Persona 模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       },
       "patch": {
@@ -4986,7 +5051,7 @@
         },
         "summary": "更新 Persona 模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       }
     },
@@ -5044,7 +5109,7 @@
         },
         "summary": "归档 Persona 模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       }
     },
@@ -5100,7 +5165,7 @@
         },
         "summary": "清除已归档 Persona 模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       }
     },
@@ -5158,7 +5223,7 @@
         },
         "summary": "恢复已归档 Persona 模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       }
     },
@@ -5217,7 +5282,7 @@
         },
         "summary": "列出系统提示词模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       },
       "post": {
@@ -5256,7 +5321,7 @@
         },
         "summary": "创建系统提示词模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       }
     },
@@ -5324,7 +5389,7 @@
         },
         "summary": "获取系统提示词模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       },
       "patch": {
@@ -5374,7 +5439,7 @@
         },
         "summary": "更新系统提示词模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       }
     },
@@ -5432,7 +5497,7 @@
         },
         "summary": "归档系统提示词模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       }
     },
@@ -5488,7 +5553,7 @@
         },
         "summary": "清除已归档系统提示词模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       }
     },
@@ -5546,7 +5611,7 @@
         },
         "summary": "恢复已归档系统提示词模板",
         "tags": [
-          "platform-prompts"
+          "提示词中心"
         ]
       }
     },
@@ -5587,9 +5652,9 @@
             "description": "校验错误"
           }
         },
-        "summary": "List Label Lab JSON schemas",
+        "summary": "列出 Label Lab JSON Schema",
         "tags": [
-          "platform-schemas"
+          "Schema 中心"
         ]
       },
       "post": {
@@ -5626,9 +5691,9 @@
             "description": "校验错误"
           }
         },
-        "summary": "Create Label Lab JSON schema",
+        "summary": "创建 Label Lab JSON Schema",
         "tags": [
-          "platform-schemas"
+          "Schema 中心"
         ]
       }
     },
@@ -5678,9 +5743,9 @@
             "description": "校验错误"
           }
         },
-        "summary": "Get Label Lab JSON schema",
+        "summary": "获取 Label Lab JSON Schema",
         "tags": [
-          "platform-schemas"
+          "Schema 中心"
         ]
       },
       "patch": {
@@ -5728,9 +5793,9 @@
             "description": "校验错误"
           }
         },
-        "summary": "Update Label Lab JSON schema",
+        "summary": "更新 Label Lab JSON Schema",
         "tags": [
-          "platform-schemas"
+          "Schema 中心"
         ]
       }
     },
@@ -5770,9 +5835,9 @@
             "description": "校验错误"
           }
         },
-        "summary": "Archive Label Lab JSON schema",
+        "summary": "归档 Label Lab JSON Schema",
         "tags": [
-          "platform-schemas"
+          "Schema 中心"
         ]
       }
     },
@@ -5810,9 +5875,9 @@
             "description": "校验错误"
           }
         },
-        "summary": "Purge archived Label Lab JSON schema",
+        "summary": "清除已归档 Label Lab JSON Schema",
         "tags": [
-          "platform-schemas"
+          "Schema 中心"
         ]
       }
     },
@@ -5852,9 +5917,9 @@
             "description": "校验错误"
           }
         },
-        "summary": "Restore archived Label Lab JSON schema",
+        "summary": "恢复已归档 Label Lab JSON Schema",
         "tags": [
-          "platform-schemas"
+          "Schema 中心"
         ]
       }
     },
@@ -5875,7 +5940,7 @@
         },
         "summary": "列出编排测试运行",
         "tags": [
-          "platform-tests"
+          "测试中心"
         ]
       },
       "post": {
@@ -5914,7 +5979,7 @@
         },
         "summary": "创建编排测试运行",
         "tags": [
-          "platform-tests"
+          "测试中心"
         ]
       }
     },
@@ -5956,7 +6021,7 @@
         },
         "summary": "获取编排测试运行",
         "tags": [
-          "platform-tests"
+          "测试中心"
         ]
       }
     },
@@ -5998,7 +6063,7 @@
         },
         "summary": "列出测试运行产物",
         "tags": [
-          "platform-tests"
+          "测试中心"
         ]
       }
     },
@@ -6030,7 +6095,7 @@
             "required": false,
             "schema": {
               "default": 400,
-              "title": "最大 Lines",
+              "title": "最大 行",
               "type": "integer"
             }
           }
@@ -6059,7 +6124,7 @@
         },
         "summary": "读取测试运行产物内容",
         "tags": [
-          "platform-tests"
+          "测试中心"
         ]
       }
     },
@@ -6101,7 +6166,7 @@
         },
         "summary": "取消编排测试运行",
         "tags": [
-          "platform-tests"
+          "测试中心"
         ]
       }
     },
@@ -6174,7 +6239,7 @@
         },
         "summary": "列出工具中心条目",
         "tags": [
-          "platform-tools"
+          "工具中心"
         ]
       },
       "post": {
@@ -6213,7 +6278,7 @@
         },
         "summary": "创建受管自定义工具",
         "tags": [
-          "platform-tools"
+          "工具中心"
         ]
       }
     },
@@ -6265,7 +6330,7 @@
         },
         "summary": "获取工具中心受管自定义工具",
         "tags": [
-          "platform-tools"
+          "工具中心"
         ]
       },
       "patch": {
@@ -6315,7 +6380,7 @@
         },
         "summary": "更新受管自定义工具",
         "tags": [
-          "platform-tools"
+          "工具中心"
         ]
       }
     },
@@ -6357,7 +6422,7 @@
         },
         "summary": "归档受管自定义工具",
         "tags": [
-          "platform-tools"
+          "工具中心"
         ]
       }
     },
@@ -6397,7 +6462,7 @@
         },
         "summary": "清除已归档受管自定义工具",
         "tags": [
-          "platform-tools"
+          "工具中心"
         ]
       }
     },
@@ -6439,7 +6504,7 @@
         },
         "summary": "恢复已归档受管自定义工具",
         "tags": [
-          "platform-tools"
+          "工具中心"
         ]
       }
     },
@@ -6508,7 +6573,7 @@
         },
         "summary": "列出用于 Toolbench 发现的工具",
         "tags": [
-          "platform-tools"
+          "工具中心"
         ]
       }
     },
@@ -6549,7 +6614,7 @@
         },
         "summary": "发送运行时消息以验证工具调用行为",
         "tags": [
-          "platform-tools"
+          "工具中心"
         ]
       }
     }
@@ -6558,6 +6623,48 @@
     {
       "description": "Agent Platform API 本地服务",
       "url": "http://127.0.0.1:8284"
+    }
+  ],
+  "tags": [
+    {
+      "description": "持久化智能体的创建、检查与对话操作。",
+      "name": "智能体工作台"
+    },
+    {
+      "description": "使用模型路由器可见模型生成无状态评论。",
+      "name": "评论实验室"
+    },
+    {
+      "description": "使用 Label Lab Schema 进行无状态分组实体抽取。",
+      "name": "标注实验室"
+    },
+    {
+      "description": "基于文件的提示词与 Persona 模板管理。",
+      "name": "提示词中心"
+    },
+    {
+      "description": "基于文件的 Label Lab JSON Schema 管理。",
+      "name": "Schema 中心"
+    },
+    {
+      "description": "工具发现、工具中心 CRUD，以及工具挂载/卸载操作。",
+      "name": "工具中心"
+    },
+    {
+      "description": "编排式实时检查与测试运行产物访问。",
+      "name": "测试中心"
+    },
+    {
+      "description": "支持可选覆盖参数的底层运行时消息端点。",
+      "name": "平台运行时"
+    },
+    {
+      "description": "持久化智能体生命周期与配置控制端点。",
+      "name": "平台控制"
+    },
+    {
+      "description": "平台能力、模型目录诊断与共享运行时选项。",
+      "name": "平台元数据"
     }
   ]
 }

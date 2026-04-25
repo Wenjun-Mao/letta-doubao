@@ -33,6 +33,39 @@ const COPY = {
 } as const;
 
 const OPENAPI_ENDPOINT = "/api/openapi";
+const HIDDEN_HTTP_CLIENTS = [
+  "c",
+  "clojure",
+  "csharp",
+  "dart",
+  "fsharp",
+  "go",
+  "http",
+  "java",
+  "js",
+  "kotlin",
+  "node",
+  "objc",
+  "ocaml",
+  "php",
+  "powershell",
+  "python",
+  "r",
+  "ruby",
+  "rust",
+  "swift",
+  "httpie",
+  "wget",
+];
+const SCALAR_CUSTOM_CSS = `
+  .scalar-reference-intro-clients {
+    display: none !important;
+  }
+
+  .scalar-api-reference {
+    --refs-viewport-offset: 76px;
+  }
+`;
 
 export default function ApiDocsPage() {
   const { locale } = useI18n();
@@ -41,9 +74,9 @@ export default function ApiDocsPage() {
 
   return (
     <section className="api-docs-section">
-      <div className="kicker">{copy.kicker}</div>
-      <h1 className="section-title">{copy.title}</h1>
-      <div className="card">
+      <div className="api-docs-intro">
+        <div className="kicker">{copy.kicker}</div>
+        <h1 className="section-title">{copy.title}</h1>
         <p>{copy.description}</p>
         <ul className="list">
           <li>{copy.locale}: {locale === "zh" ? "zh" : "en"}</li>
@@ -54,11 +87,21 @@ export default function ApiDocsPage() {
           <li>{copy.manualGenerator}: scripts/generate_openapi_zh_manual.py</li>
         </ul>
       </div>
-      <div className="card api-docs-reference" style={{ marginTop: 12, padding: 0, overflow: "hidden" }}>
+      <div className="api-docs-reference">
         <ApiReferenceReact
           key={locale}
           configuration={{
             url: localizedSpecUrl,
+            layout: "modern",
+            showSidebar: true,
+            darkMode: false,
+            forceDarkModeState: "light",
+            hideDarkModeToggle: true,
+            hideClientButton: true,
+            hideTestRequestButton: false,
+            defaultHttpClient: { targetKey: "shell", clientKey: "curl" },
+            hiddenClients: HIDDEN_HTTP_CLIENTS,
+            customCss: SCALAR_CUSTOM_CSS,
           }}
         />
       </div>

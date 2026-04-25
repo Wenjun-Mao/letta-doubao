@@ -11,6 +11,7 @@ from agent_platform_api.models.templates import (
     ToolCenterCreateRequest,
     ToolCenterUpdateRequest,
 )
+from agent_platform_api.openapi_metadata import TAG_TOOL_CENTER
 from agent_platform_api.runtime import agent_platform, custom_tool_registry, ensure_platform_api_enabled
 from agent_platform_api.registries.custom_tool import ToolRegistryError
 
@@ -20,7 +21,7 @@ router = APIRouter()
 @router.get(
     "/api/v1/platform/tool-center/tools",
     response_model=ApiToolCenterListResponse,
-    tags=["platform-tools"],
+    tags=[TAG_TOOL_CENTER],
     summary="List Tool Center entries",
 )
 async def api_tool_center_list_tools(
@@ -102,7 +103,7 @@ async def api_tool_center_list_tools(
 @router.get(
     "/api/v1/platform/tool-center/tools/{slug}",
     response_model=ApiToolCenterItemResponse,
-    tags=["platform-tools"],
+    tags=[TAG_TOOL_CENTER],
     summary="Get Tool Center managed custom tool",
 )
 async def api_tool_center_get_tool(slug: str, include_source: bool = True):
@@ -135,7 +136,7 @@ async def api_tool_center_get_tool(slug: str, include_source: bool = True):
 @router.post(
     "/api/v1/platform/tool-center/tools",
     response_model=ApiToolCenterItemResponse,
-    tags=["platform-tools"],
+    tags=[TAG_TOOL_CENTER],
     summary="Create managed custom tool",
 )
 async def api_tool_center_create_tool(request: ToolCenterCreateRequest):
@@ -177,7 +178,7 @@ async def api_tool_center_create_tool(request: ToolCenterCreateRequest):
 @router.patch(
     "/api/v1/platform/tool-center/tools/{slug}",
     response_model=ApiToolCenterItemResponse,
-    tags=["platform-tools"],
+    tags=[TAG_TOOL_CENTER],
     summary="Update managed custom tool",
 )
 async def api_tool_center_update_tool(slug: str, request: ToolCenterUpdateRequest):
@@ -255,7 +256,7 @@ async def api_tool_center_update_tool(slug: str, request: ToolCenterUpdateReques
 @router.post(
     "/api/v1/platform/tool-center/tools/{slug}/archive",
     response_model=ApiToolCenterItemResponse,
-    tags=["platform-tools"],
+    tags=[TAG_TOOL_CENTER],
     summary="Archive managed custom tool",
 )
 async def api_tool_center_archive_tool(slug: str):
@@ -287,7 +288,7 @@ async def api_tool_center_archive_tool(slug: str):
 @router.post(
     "/api/v1/platform/tool-center/tools/{slug}/restore",
     response_model=ApiToolCenterItemResponse,
-    tags=["platform-tools"],
+    tags=[TAG_TOOL_CENTER],
     summary="Restore archived managed custom tool",
 )
 async def api_tool_center_restore_tool(slug: str):
@@ -336,7 +337,7 @@ async def api_tool_center_restore_tool(slug: str):
 
 @router.delete(
     "/api/v1/platform/tool-center/tools/{slug}/purge",
-    tags=["platform-tools"],
+    tags=[TAG_TOOL_CENTER],
     summary="Purge archived managed custom tool",
 )
 async def api_tool_center_purge_tool(slug: str):

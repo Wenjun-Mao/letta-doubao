@@ -9,6 +9,7 @@ from agent_platform_api.models.schemas import (
     LabelSchemaPatchRequest,
     LabelSchemaWriteRequest,
 )
+from agent_platform_api.openapi_metadata import TAG_SCHEMA_CENTER
 from agent_platform_api.runtime import ensure_platform_api_enabled, invalidate_options_cache, label_schema_registry
 from agent_platform_api.registries.label_schema import LabelSchemaRegistryError
 
@@ -18,7 +19,7 @@ router = APIRouter()
 @router.get(
     "/api/v1/platform/schema-center/label-schemas",
     response_model=ApiLabelSchemaListResponse,
-    tags=["platform-schemas"],
+    tags=[TAG_SCHEMA_CENTER],
     summary="List Label Lab JSON schemas",
 )
 async def api_schema_center_list_label_schemas(include_archived: bool = False):
@@ -35,7 +36,7 @@ async def api_schema_center_list_label_schemas(include_archived: bool = False):
 @router.get(
     "/api/v1/platform/schema-center/label-schemas/{key}",
     response_model=ApiLabelSchemaRecordResponse,
-    tags=["platform-schemas"],
+    tags=[TAG_SCHEMA_CENTER],
     summary="Get Label Lab JSON schema",
 )
 async def api_schema_center_get_label_schema(key: str, archived: bool = False):
@@ -52,7 +53,7 @@ async def api_schema_center_get_label_schema(key: str, archived: bool = False):
 @router.post(
     "/api/v1/platform/schema-center/label-schemas",
     response_model=ApiLabelSchemaRecordResponse,
-    tags=["platform-schemas"],
+    tags=[TAG_SCHEMA_CENTER],
     summary="Create Label Lab JSON schema",
 )
 async def api_schema_center_create_label_schema(request: LabelSchemaWriteRequest):
@@ -73,7 +74,7 @@ async def api_schema_center_create_label_schema(request: LabelSchemaWriteRequest
 @router.patch(
     "/api/v1/platform/schema-center/label-schemas/{key}",
     response_model=ApiLabelSchemaRecordResponse,
-    tags=["platform-schemas"],
+    tags=[TAG_SCHEMA_CENTER],
     summary="Update Label Lab JSON schema",
 )
 async def api_schema_center_update_label_schema(key: str, request: LabelSchemaPatchRequest):
@@ -96,7 +97,7 @@ async def api_schema_center_update_label_schema(key: str, request: LabelSchemaPa
 @router.post(
     "/api/v1/platform/schema-center/label-schemas/{key}/archive",
     response_model=ApiLabelSchemaRecordResponse,
-    tags=["platform-schemas"],
+    tags=[TAG_SCHEMA_CENTER],
     summary="Archive Label Lab JSON schema",
 )
 async def api_schema_center_archive_label_schema(key: str):
@@ -112,7 +113,7 @@ async def api_schema_center_archive_label_schema(key: str):
 @router.post(
     "/api/v1/platform/schema-center/label-schemas/{key}/restore",
     response_model=ApiLabelSchemaRecordResponse,
-    tags=["platform-schemas"],
+    tags=[TAG_SCHEMA_CENTER],
     summary="Restore archived Label Lab JSON schema",
 )
 async def api_schema_center_restore_label_schema(key: str):
@@ -127,7 +128,7 @@ async def api_schema_center_restore_label_schema(key: str):
 
 @router.delete(
     "/api/v1/platform/schema-center/label-schemas/{key}/purge",
-    tags=["platform-schemas"],
+    tags=[TAG_SCHEMA_CENTER],
     summary="Purge archived Label Lab JSON schema",
 )
 async def api_schema_center_purge_label_schema(key: str):

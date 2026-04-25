@@ -19,6 +19,12 @@ from agent_platform_api.models.platform import (
     PlatformSystemUpdateRequest,
     PlatformTestRunRequest,
 )
+from agent_platform_api.openapi_metadata import (
+    TAG_PLATFORM_CONTROL,
+    TAG_PLATFORM_RUNTIME,
+    TAG_TEST_CENTER,
+    TAG_TOOL_CENTER,
+)
 from agent_platform_api.runtime import (
     agent_platform,
     ensure_agent_not_archived,
@@ -32,7 +38,7 @@ router = APIRouter()
 @router.post(
     "/api/v1/platform/agents/{agent_id}/messages",
     response_model=ApiRuntimeMessageResponse,
-    tags=["platform-runtime"],
+    tags=[TAG_PLATFORM_RUNTIME],
     summary="Send runtime message with optional overrides",
 )
 async def api_platform_send_message(agent_id: str, request: PlatformRuntimeMessageRequest):
@@ -59,7 +65,7 @@ async def api_platform_send_message(agent_id: str, request: PlatformRuntimeMessa
 @router.patch(
     "/api/v1/platform/agents/{agent_id}/system",
     response_model=ApiSystemUpdateResponse,
-    tags=["platform-control"],
+    tags=[TAG_PLATFORM_CONTROL],
     summary="Update persisted system prompt",
 )
 async def api_platform_update_system(agent_id: str, request: PlatformSystemUpdateRequest):
@@ -87,7 +93,7 @@ async def api_platform_update_system(agent_id: str, request: PlatformSystemUpdat
 @router.patch(
     "/api/v1/platform/agents/{agent_id}/model",
     response_model=ApiModelUpdateResponse,
-    tags=["platform-control"],
+    tags=[TAG_PLATFORM_CONTROL],
     summary="Update persisted agent model",
 )
 async def api_platform_update_model(agent_id: str, request: PlatformModelUpdateRequest):
@@ -107,7 +113,7 @@ async def api_platform_update_model(agent_id: str, request: PlatformModelUpdateR
 @router.patch(
     "/api/v1/platform/agents/{agent_id}/core-memory/blocks/{block_label}",
     response_model=ApiMemoryBlockUpdateResponse,
-    tags=["platform-control"],
+    tags=[TAG_PLATFORM_CONTROL],
     summary="Update core-memory block value",
 )
 async def api_platform_update_memory_block(
@@ -144,7 +150,7 @@ async def api_platform_update_memory_block(
 @router.patch(
     "/api/v1/platform/agents/{agent_id}/tools/attach/{tool_id}",
     response_model=ApiToolAttachDetachResponse,
-    tags=["platform-tools"],
+    tags=[TAG_TOOL_CENTER],
     summary="Attach tool to agent",
 )
 async def api_platform_attach_tool(agent_id: str, tool_id: str):
@@ -164,7 +170,7 @@ async def api_platform_attach_tool(agent_id: str, tool_id: str):
 @router.patch(
     "/api/v1/platform/agents/{agent_id}/tools/detach/{tool_id}",
     response_model=ApiToolAttachDetachResponse,
-    tags=["platform-tools"],
+    tags=[TAG_TOOL_CENTER],
     summary="Detach tool from agent",
 )
 async def api_platform_detach_tool(agent_id: str, tool_id: str):
@@ -184,7 +190,7 @@ async def api_platform_detach_tool(agent_id: str, tool_id: str):
 @router.get(
     "/api/v1/platform/test-runs",
     response_model=ApiTestRunListResponse,
-    tags=["platform-tests"],
+    tags=[TAG_TEST_CENTER],
     summary="List orchestrated test runs",
 )
 async def api_platform_list_test_runs():
@@ -195,7 +201,7 @@ async def api_platform_list_test_runs():
 @router.post(
     "/api/v1/platform/test-runs",
     response_model=ApiTestRunRecordResponse,
-    tags=["platform-tests"],
+    tags=[TAG_TEST_CENTER],
     summary="Create orchestrated test run",
 )
 async def api_platform_create_test_run(request: PlatformTestRunRequest):
@@ -214,7 +220,7 @@ async def api_platform_create_test_run(request: PlatformTestRunRequest):
 @router.get(
     "/api/v1/platform/test-runs/{run_id}",
     response_model=ApiTestRunRecordResponse,
-    tags=["platform-tests"],
+    tags=[TAG_TEST_CENTER],
     summary="Get orchestrated test run",
 )
 async def api_platform_get_test_run(run_id: str):
@@ -229,7 +235,7 @@ async def api_platform_get_test_run(run_id: str):
 @router.post(
     "/api/v1/platform/test-runs/{run_id}/cancel",
     response_model=ApiTestRunRecordResponse,
-    tags=["platform-tests"],
+    tags=[TAG_TEST_CENTER],
     summary="Cancel orchestrated test run",
 )
 async def api_platform_cancel_test_run(run_id: str):
@@ -244,7 +250,7 @@ async def api_platform_cancel_test_run(run_id: str):
 @router.get(
     "/api/v1/platform/test-runs/{run_id}/artifacts",
     response_model=ApiTestArtifactListResponse,
-    tags=["platform-tests"],
+    tags=[TAG_TEST_CENTER],
     summary="List test run artifacts",
 )
 async def api_platform_list_test_run_artifacts(run_id: str):
@@ -262,7 +268,7 @@ async def api_platform_list_test_run_artifacts(run_id: str):
 @router.get(
     "/api/v1/platform/test-runs/{run_id}/artifacts/{artifact_id}",
     response_model=ApiTestArtifactReadResponse,
-    tags=["platform-tests"],
+    tags=[TAG_TEST_CENTER],
     summary="Read test run artifact content",
 )
 async def api_platform_read_test_run_artifact(run_id: str, artifact_id: str, max_lines: int = 400):

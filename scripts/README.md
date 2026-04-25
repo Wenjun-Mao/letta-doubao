@@ -2,7 +2,7 @@
 
 This folder contains various automation and diagnostic scripts for managing both your local development environment and the Letta server.
 
-You should generally run these scripts from the **project root directory** (e.g., `letta-doubao/`), not from inside the `scripts/` folder.
+You should generally run these scripts from the **project root directory**, not from inside the `scripts/` folder.
 
 ## Scripts Overview
 

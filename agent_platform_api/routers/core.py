@@ -14,6 +14,7 @@ from agent_platform_api.helpers import (
     runtime_datetime_system_hint,
 )
 from agent_platform_api.models.agents import ApiChatResponse, ApiOptionsResponse, ChatRequest
+from agent_platform_api.openapi_metadata import TAG_AGENT_STUDIO, TAG_PLATFORM_META
 from agent_platform_api.runtime import (
     DEFAULT_EMBEDDING,
     agent_platform,
@@ -29,7 +30,12 @@ from agent_platform_api.runtime import (
 router = APIRouter()
 
 
-@router.get("/api/v1/options", response_model=ApiOptionsResponse)
+@router.get(
+    "/api/v1/options",
+    response_model=ApiOptionsResponse,
+    tags=[TAG_PLATFORM_META],
+    summary="List runtime options for an ADE scenario",
+)
 async def api_get_options(refresh: bool = False, scenario: str = "chat"):
     ensure_platform_api_enabled()
     resolved_scenario = normalize_scenario(scenario)
@@ -74,7 +80,12 @@ async def api_get_options(refresh: bool = False, scenario: str = "chat"):
     }
 
 
-@router.post("/api/v1/chat", response_model=ApiChatResponse)
+@router.post(
+    "/api/v1/chat",
+    response_model=ApiChatResponse,
+    tags=[TAG_AGENT_STUDIO],
+    summary="Send a chat message to a persistent Agent Studio agent",
+)
 async def api_chat(request: ChatRequest):
     ensure_platform_api_enabled()
     ensure_agent_not_archived(request.agent_id)

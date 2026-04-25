@@ -654,11 +654,20 @@ details summary {
 
 .api-docs-section {
   display: grid;
-  gap: 12px;
+  gap: 18px;
+  margin: -24px calc(50% - 50vw) -56px;
+}
+
+.api-docs-intro {
+  width: min(1460px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 24px 0 0;
 }
 
 .api-docs-reference {
-  min-height: 72vh;
+  min-height: calc(100vh - 64px);
+  border-top: 1px solid var(--border);
+  background: #fff;
 }
 
 .revision-item summary {

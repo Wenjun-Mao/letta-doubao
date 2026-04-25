@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 
 from agent_platform_api.helpers import normalize_scenario, prompt_record_map
 from agent_platform_api.models.labeling import ApiLabelingGenerateResponse, LabelingGenerateRequest
+from agent_platform_api.openapi_metadata import TAG_LABEL_LAB
 from agent_platform_api.runtime import (
     ensure_platform_api_enabled,
     labeling_service,
@@ -18,8 +19,31 @@ router = APIRouter()
 @router.post(
     "/api/v1/labeling/generate",
     response_model=ApiLabelingGenerateResponse,
-    tags=["labeling"],
+    tags=[TAG_LABEL_LAB],
     summary="Generate stateless grouped entity extraction for an input article",
+    openapi_extra={
+        "requestBody": {
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "football_entities": {
+                            "summary": "Extract football players and teams",
+                            "value": {
+                                "scenario": "label",
+                                "input": "Messi scored for Inter Miami against Orlando City.",
+                                "prompt_key": "label_football_entities_v1",
+                                "schema_key": "label_football_entity_groups_v1",
+                                "model_key": "local_llama_server::gemma4",
+                                "max_tokens": 1024,
+                                "timeout_seconds": 120,
+                                "repair_retry_count": 1,
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    },
 )
 async def api_labeling_generate(request: LabelingGenerateRequest):
     ensure_platform_api_enabled()

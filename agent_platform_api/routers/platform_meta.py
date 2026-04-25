@@ -26,6 +26,7 @@ from agent_platform_api.models.templates import (
     ApiPromptPersonaMetadataResponse,
     ApiPromptPersonaRevisionsResponse,
 )
+from agent_platform_api.openapi_metadata import TAG_PLATFORM_META, TAG_TOOL_CENTER
 from agent_platform_api.runtime import (
     agent_platform,
     client,
@@ -44,7 +45,7 @@ router = APIRouter()
 @router.get(
     "/api/v1/platform/capabilities",
     response_model=ApiPlatformCapabilitiesResponse,
-    tags=["platform-meta"],
+    tags=[TAG_PLATFORM_META],
     summary="Get platform capability matrix",
 )
 async def api_platform_capabilities():
@@ -60,7 +61,7 @@ async def api_platform_capabilities():
 @router.get(
     "/api/v1/platform/model-catalog",
     response_model=ApiPlatformModelCatalogResponse,
-    tags=["platform-meta"],
+    tags=[TAG_PLATFORM_META],
     summary="Get unified model-catalog diagnostics",
 )
 async def api_platform_model_catalog(refresh: bool = False):
@@ -71,7 +72,7 @@ async def api_platform_model_catalog(refresh: bool = False):
 @router.get(
     "/api/v1/platform/tools",
     response_model=ApiPlatformToolListResponse,
-    tags=["platform-tools"],
+    tags=[TAG_TOOL_CENTER],
     summary="List tools for Toolbench discovery",
 )
 async def api_platform_list_tools(search: str = "", limit: int = 100, agent_id: str | None = None):
@@ -117,7 +118,7 @@ async def api_platform_list_tools(search: str = "", limit: int = 100, agent_id: 
 @router.post(
     "/api/v1/platform/tools/test-invoke",
     response_model=ApiPlatformToolTestInvokeResponse,
-    tags=["platform-tools"],
+    tags=[TAG_TOOL_CENTER],
     summary="Invoke a runtime message to validate tool-call behavior",
 )
 async def api_platform_tool_test_invoke(request: PlatformToolTestInvokeRequest):
@@ -180,7 +181,7 @@ async def api_platform_tool_test_invoke(request: PlatformToolTestInvokeRequest):
 @router.get(
     "/api/v1/platform/metadata/prompts-personas",
     response_model=ApiPromptPersonaMetadataResponse,
-    tags=["platform-meta"],
+    tags=[TAG_PLATFORM_META],
     summary="Get prompt and persona metadata",
 )
 async def api_platform_prompt_persona_metadata(scenario: str = "chat"):
@@ -230,7 +231,7 @@ async def api_platform_prompt_persona_metadata(scenario: str = "chat"):
 @router.get(
     "/api/v1/platform/metadata/prompts-personas/revisions",
     response_model=ApiPromptPersonaRevisionsResponse,
-    tags=["platform-meta"],
+    tags=[TAG_PLATFORM_META],
     summary="Get prompt/persona revision history timeline",
 )
 async def api_platform_prompt_persona_revisions(

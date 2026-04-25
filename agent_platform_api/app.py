@@ -5,6 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from agent_platform_api.openapi_metadata import OPENAPI_TAGS
 from agent_platform_api.routers import (
     agents,
     commenting,
@@ -31,6 +32,7 @@ def create_app() -> FastAPI:
         version=APP_VERSION,
         summary="Runtime and control APIs for ADE and local Agent Platform workflows",
         lifespan=app_lifespan,
+        openapi_tags=OPENAPI_TAGS,
         description=(
             "Provides versioned API routes for Agent Platform runtime/control/test orchestration. "
             "Designed for backend-first API consumption and ADE frontend integration."

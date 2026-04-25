@@ -4,6 +4,7 @@ from fastapi import APIRouter, HTTPException
 
 from agent_platform_api.helpers import normalize_scenario, persona_content_map, prompt_content_map
 from agent_platform_api.models.commenting import ApiCommentingGenerateResponse, CommentingGenerateRequest
+from agent_platform_api.openapi_metadata import TAG_COMMENT_LAB
 from agent_platform_api.runtime import (
     commenting_runtime_defaults,
     commenting_service,
@@ -17,8 +18,32 @@ router = APIRouter()
 @router.post(
     "/api/v1/commenting/generate",
     response_model=ApiCommentingGenerateResponse,
-    tags=["commenting"],
+    tags=[TAG_COMMENT_LAB],
     summary="Generate a stateless comment for news/comment threads",
+    openapi_extra={
+        "requestBody": {
+            "content": {
+                "application/json": {
+                    "examples": {
+                        "llama_server_comment": {
+                            "summary": "Generate with local llama-server",
+                            "value": {
+                                "scenario": "comment",
+                                "input": "Summarize the reader reaction and write one concise editor-style reply.",
+                                "prompt_key": "comment_v20260418",
+                                "persona_key": "comment_linxiaotang",
+                                "model_key": "local_llama_server::gemma4",
+                                "max_tokens": 512,
+                                "timeout_seconds": 120,
+                                "retry_count": 1,
+                                "task_shape": "classic",
+                            },
+                        }
+                    }
+                }
+            }
+        }
+    },
 )
 async def api_commenting_generate(request: CommentingGenerateRequest):
     ensure_platform_api_enabled()
@@ -50,9 +75,10 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
         raise HTTPException(status_code=400, detail=f"Invalid persona key: {request.persona_key}")
 
     try:
+        legacy_model_selector = str(request.__dict__.get("model") or "").strip()
         model_selection = resolve_comment_model_selection(
             model_key=(request.model_key or "").strip() or None,
-            model_selector=(request.model or "").strip() or None,
+            model_selector=legacy_model_selector or None,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

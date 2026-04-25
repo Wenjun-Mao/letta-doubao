@@ -2774,8 +2774,22 @@
         "type": "object"
       },
       "CommentingGenerateRequest": {
+        "examples": [
+          {
+            "input": "Summarize the reader reaction and write one concise editor-style reply.",
+            "max_tokens": 512,
+            "model_key": "local_llama_server::gemma4",
+            "persona_key": "comment_linxiaotang",
+            "prompt_key": "comment_v20260418",
+            "retry_count": 1,
+            "scenario": "comment",
+            "task_shape": "classic",
+            "timeout_seconds": 120
+          }
+        ],
         "properties": {
           "input": {
+            "description": "News article, comment thread, or source text to comment on.",
             "title": "Input",
             "type": "string"
           },
@@ -2789,6 +2803,7 @@
                 "type": "null"
               }
             ],
+            "description": "Optional response token budget. Defaults to Comment Lab runtime settings.",
             "title": "Max Tokens"
           },
           "model": {
@@ -2800,6 +2815,8 @@
                 "type": "null"
               }
             ],
+            "deprecated": true,
+            "description": "Legacy selector kept for backward compatibility. Prefer `model_key`.",
             "title": "Model"
           },
           "model_key": {
@@ -2811,15 +2828,21 @@
                 "type": "null"
               }
             ],
+            "description": "Router-scoped model key from `/api/v1/options?scenario=comment`, for example `local_llama_server::gemma4`.",
+            "examples": [
+              "local_llama_server::gemma4"
+            ],
             "title": "Model Key"
           },
           "persona_key": {
             "default": "comment_linxiaotang",
+            "description": "Comment Lab persona key from `/api/v1/options?scenario=comment`.",
             "title": "Persona Key",
             "type": "string"
           },
           "prompt_key": {
             "default": "comment_v20260418",
+            "description": "Comment Lab prompt key from `/api/v1/options?scenario=comment`.",
             "title": "Prompt Key",
             "type": "string"
           },
@@ -2834,10 +2857,12 @@
                 "type": "null"
               }
             ],
+            "description": "Optional provider retry count for transient failures.",
             "title": "Retry Count"
           },
           "scenario": {
             "default": "comment",
+            "description": "Must be `comment` for this endpoint.",
             "enum": [
               "chat",
               "comment",
@@ -2860,6 +2885,7 @@
                 "type": "null"
               }
             ],
+            "description": "Prompt-packing strategy. Defaults to the Comment Lab runtime setting.",
             "title": "Task Shape"
           },
           "timeout_seconds": {
@@ -2872,6 +2898,7 @@
                 "type": "null"
               }
             ],
+            "description": "Optional provider timeout in seconds. Use a realistic local-model value such as 120.",
             "title": "Timeout Seconds"
           }
         },
@@ -2964,8 +2991,21 @@
         "type": "object"
       },
       "LabelingGenerateRequest": {
+        "examples": [
+          {
+            "input": "Messi scored for Inter Miami against Orlando City.",
+            "max_tokens": 1024,
+            "model_key": "local_llama_server::gemma4",
+            "prompt_key": "label_football_entities_v1",
+            "repair_retry_count": 1,
+            "scenario": "label",
+            "schema_key": "label_football_entity_groups_v1",
+            "timeout_seconds": 120
+          }
+        ],
         "properties": {
           "input": {
+            "description": "Article or text to extract grouped entity lists from.",
             "title": "Input",
             "type": "string"
           },
@@ -2979,14 +3019,20 @@
                 "type": "null"
               }
             ],
+            "description": "Optional response token budget. Defaults to Label Lab runtime settings.",
             "title": "Max Tokens"
           },
           "model_key": {
+            "description": "Router-scoped model key from `/api/v1/options?scenario=label`, for example `local_llama_server::gemma4`.",
+            "examples": [
+              "local_llama_server::gemma4"
+            ],
             "title": "Model Key",
             "type": "string"
           },
           "prompt_key": {
             "default": "label_generic_entities_v1",
+            "description": "Label Lab prompt key from `/api/v1/options?scenario=label`.",
             "title": "Prompt Key",
             "type": "string"
           },
@@ -3001,10 +3047,12 @@
                 "type": "null"
               }
             ],
+            "description": "Number of structured-output repair attempts after validation failure.",
             "title": "Repair Retry Count"
           },
           "scenario": {
             "default": "label",
+            "description": "Must be `label` for this endpoint.",
             "enum": [
               "chat",
               "comment",
@@ -3015,6 +3063,7 @@
           },
           "schema_key": {
             "default": "label_entity_groups_v1",
+            "description": "Label Schema Center key from `/api/v1/options?scenario=label`.",
             "title": "Schema Key",
             "type": "string"
           },
@@ -3028,6 +3077,7 @@
                 "type": "null"
               }
             ],
+            "description": "Optional provider timeout in seconds. Use a realistic local-model value such as 120.",
             "title": "Timeout Seconds"
           }
         },
@@ -3721,7 +3771,10 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Api List Agents"
+        "summary": "List Agent Studio agents",
+        "tags": [
+          "Agent Studio"
+        ]
       },
       "post": {
         "operationId": "api_create_agent_api_v1_agents_post",
@@ -3757,7 +3810,10 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Api Create Agent"
+        "summary": "Create an Agent Studio agent",
+        "tags": [
+          "Agent Studio"
+        ]
       }
     },
     "/api/v1/agents/{agent_id}": {
@@ -3798,7 +3854,7 @@
         },
         "summary": "Delete archived agent (hard delete)",
         "tags": [
-          "platform-control"
+          "Platform Control"
         ]
       }
     },
@@ -3838,7 +3894,10 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Api Get Agent Details"
+        "summary": "Get Agent Studio agent details",
+        "tags": [
+          "Agent Studio"
+        ]
       }
     },
     "/api/v1/agents/{agent_id}/persistent_state": {
@@ -3898,7 +3957,10 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Api Get Agent Persistent State"
+        "summary": "Get persisted Agent Studio state",
+        "tags": [
+          "Agent Studio"
+        ]
       }
     },
     "/api/v1/agents/{agent_id}/raw_prompt": {
@@ -3937,7 +3999,10 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Api Get Raw Prompt"
+        "summary": "Get raw prompt messages for an Agent Studio agent",
+        "tags": [
+          "Agent Studio"
+        ]
       }
     },
     "/api/v1/chat": {
@@ -3975,7 +4040,10 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Api Chat"
+        "summary": "Send a chat message to a persistent Agent Studio agent",
+        "tags": [
+          "Agent Studio"
+        ]
       }
     },
     "/api/v1/commenting/generate": {
@@ -3984,6 +4052,22 @@
         "requestBody": {
           "content": {
             "application/json": {
+              "examples": {
+                "llama_server_comment": {
+                  "summary": "Generate with local llama-server",
+                  "value": {
+                    "input": "Summarize the reader reaction and write one concise editor-style reply.",
+                    "max_tokens": 512,
+                    "model_key": "local_llama_server::gemma4",
+                    "persona_key": "comment_linxiaotang",
+                    "prompt_key": "comment_v20260418",
+                    "retry_count": 1,
+                    "scenario": "comment",
+                    "task_shape": "classic",
+                    "timeout_seconds": 120
+                  }
+                }
+              },
               "schema": {
                 "$ref": "#/components/schemas/CommentingGenerateRequest"
               }
@@ -4015,7 +4099,7 @@
         },
         "summary": "Generate a stateless comment for news/comment threads",
         "tags": [
-          "commenting"
+          "Comment Lab"
         ]
       }
     },
@@ -4025,6 +4109,21 @@
         "requestBody": {
           "content": {
             "application/json": {
+              "examples": {
+                "football_entities": {
+                  "summary": "Extract football players and teams",
+                  "value": {
+                    "input": "Messi scored for Inter Miami against Orlando City.",
+                    "max_tokens": 1024,
+                    "model_key": "local_llama_server::gemma4",
+                    "prompt_key": "label_football_entities_v1",
+                    "repair_retry_count": 1,
+                    "scenario": "label",
+                    "schema_key": "label_football_entity_groups_v1",
+                    "timeout_seconds": 120
+                  }
+                }
+              },
               "schema": {
                 "$ref": "#/components/schemas/LabelingGenerateRequest"
               }
@@ -4056,7 +4155,7 @@
         },
         "summary": "Generate stateless grouped entity extraction for an input article",
         "tags": [
-          "labeling"
+          "Label Lab"
         ]
       }
     },
@@ -4107,7 +4206,10 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Api Get Options"
+        "summary": "List runtime options for an ADE scenario",
+        "tags": [
+          "Platform Meta"
+        ]
       }
     },
     "/api/v1/platform/agents/{agent_id}/archive": {
@@ -4148,7 +4250,7 @@
         },
         "summary": "Archive agent (soft delete)",
         "tags": [
-          "platform-control"
+          "Platform Control"
         ]
       }
     },
@@ -4209,7 +4311,7 @@
         },
         "summary": "Update core-memory block value",
         "tags": [
-          "platform-control"
+          "Platform Control"
         ]
       }
     },
@@ -4261,7 +4363,7 @@
         },
         "summary": "Send runtime message with optional overrides",
         "tags": [
-          "platform-runtime"
+          "Platform Runtime"
         ]
       }
     },
@@ -4313,7 +4415,7 @@
         },
         "summary": "Update persisted agent model",
         "tags": [
-          "platform-control"
+          "Platform Control"
         ]
       }
     },
@@ -4355,7 +4457,7 @@
         },
         "summary": "Purge archived agent (hard delete)",
         "tags": [
-          "platform-control"
+          "Platform Control"
         ]
       }
     },
@@ -4397,7 +4499,7 @@
         },
         "summary": "Restore archived agent",
         "tags": [
-          "platform-control"
+          "Platform Control"
         ]
       }
     },
@@ -4449,7 +4551,7 @@
         },
         "summary": "Update persisted system prompt",
         "tags": [
-          "platform-control"
+          "Platform Control"
         ]
       }
     },
@@ -4500,7 +4602,7 @@
         },
         "summary": "Attach tool to agent",
         "tags": [
-          "platform-tools"
+          "Tool Center"
         ]
       }
     },
@@ -4551,7 +4653,7 @@
         },
         "summary": "Detach tool from agent",
         "tags": [
-          "platform-tools"
+          "Tool Center"
         ]
       }
     },
@@ -4572,7 +4674,7 @@
         },
         "summary": "Get platform capability matrix",
         "tags": [
-          "platform-meta"
+          "Platform Meta"
         ]
       }
     },
@@ -4615,7 +4717,7 @@
         },
         "summary": "Get prompt and persona metadata",
         "tags": [
-          "platform-meta"
+          "Platform Meta"
         ]
       }
     },
@@ -4690,7 +4792,7 @@
         },
         "summary": "Get prompt/persona revision history timeline",
         "tags": [
-          "platform-meta"
+          "Platform Meta"
         ]
       }
     },
@@ -4733,7 +4835,7 @@
         },
         "summary": "Get unified model-catalog diagnostics",
         "tags": [
-          "platform-meta"
+          "Platform Meta"
         ]
       }
     },
@@ -4792,7 +4894,7 @@
         },
         "summary": "List persona templates",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       },
       "post": {
@@ -4831,7 +4933,7 @@
         },
         "summary": "Create persona template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       }
     },
@@ -4899,7 +5001,7 @@
         },
         "summary": "Get persona template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       },
       "patch": {
@@ -4949,7 +5051,7 @@
         },
         "summary": "Update persona template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       }
     },
@@ -5007,7 +5109,7 @@
         },
         "summary": "Archive persona template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       }
     },
@@ -5063,7 +5165,7 @@
         },
         "summary": "Purge archived persona template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       }
     },
@@ -5121,7 +5223,7 @@
         },
         "summary": "Restore archived persona template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       }
     },
@@ -5180,7 +5282,7 @@
         },
         "summary": "List system prompt templates",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       },
       "post": {
@@ -5219,7 +5321,7 @@
         },
         "summary": "Create system prompt template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       }
     },
@@ -5287,7 +5389,7 @@
         },
         "summary": "Get system prompt template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       },
       "patch": {
@@ -5337,7 +5439,7 @@
         },
         "summary": "Update system prompt template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       }
     },
@@ -5395,7 +5497,7 @@
         },
         "summary": "Archive system prompt template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       }
     },
@@ -5451,7 +5553,7 @@
         },
         "summary": "Purge archived system prompt template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       }
     },
@@ -5509,7 +5611,7 @@
         },
         "summary": "Restore archived system prompt template",
         "tags": [
-          "platform-prompts"
+          "Prompt Center"
         ]
       }
     },
@@ -5552,7 +5654,7 @@
         },
         "summary": "List Label Lab JSON schemas",
         "tags": [
-          "platform-schemas"
+          "Schema Center"
         ]
       },
       "post": {
@@ -5591,7 +5693,7 @@
         },
         "summary": "Create Label Lab JSON schema",
         "tags": [
-          "platform-schemas"
+          "Schema Center"
         ]
       }
     },
@@ -5643,7 +5745,7 @@
         },
         "summary": "Get Label Lab JSON schema",
         "tags": [
-          "platform-schemas"
+          "Schema Center"
         ]
       },
       "patch": {
@@ -5693,7 +5795,7 @@
         },
         "summary": "Update Label Lab JSON schema",
         "tags": [
-          "platform-schemas"
+          "Schema Center"
         ]
       }
     },
@@ -5735,7 +5837,7 @@
         },
         "summary": "Archive Label Lab JSON schema",
         "tags": [
-          "platform-schemas"
+          "Schema Center"
         ]
       }
     },
@@ -5775,7 +5877,7 @@
         },
         "summary": "Purge archived Label Lab JSON schema",
         "tags": [
-          "platform-schemas"
+          "Schema Center"
         ]
       }
     },
@@ -5817,7 +5919,7 @@
         },
         "summary": "Restore archived Label Lab JSON schema",
         "tags": [
-          "platform-schemas"
+          "Schema Center"
         ]
       }
     },
@@ -5838,7 +5940,7 @@
         },
         "summary": "List orchestrated test runs",
         "tags": [
-          "platform-tests"
+          "Test Center"
         ]
       },
       "post": {
@@ -5877,7 +5979,7 @@
         },
         "summary": "Create orchestrated test run",
         "tags": [
-          "platform-tests"
+          "Test Center"
         ]
       }
     },
@@ -5919,7 +6021,7 @@
         },
         "summary": "Get orchestrated test run",
         "tags": [
-          "platform-tests"
+          "Test Center"
         ]
       }
     },
@@ -5961,7 +6063,7 @@
         },
         "summary": "List test run artifacts",
         "tags": [
-          "platform-tests"
+          "Test Center"
         ]
       }
     },
@@ -6022,7 +6124,7 @@
         },
         "summary": "Read test run artifact content",
         "tags": [
-          "platform-tests"
+          "Test Center"
         ]
       }
     },
@@ -6064,7 +6166,7 @@
         },
         "summary": "Cancel orchestrated test run",
         "tags": [
-          "platform-tests"
+          "Test Center"
         ]
       }
     },
@@ -6137,7 +6239,7 @@
         },
         "summary": "List Tool Center entries",
         "tags": [
-          "platform-tools"
+          "Tool Center"
         ]
       },
       "post": {
@@ -6176,7 +6278,7 @@
         },
         "summary": "Create managed custom tool",
         "tags": [
-          "platform-tools"
+          "Tool Center"
         ]
       }
     },
@@ -6228,7 +6330,7 @@
         },
         "summary": "Get Tool Center managed custom tool",
         "tags": [
-          "platform-tools"
+          "Tool Center"
         ]
       },
       "patch": {
@@ -6278,7 +6380,7 @@
         },
         "summary": "Update managed custom tool",
         "tags": [
-          "platform-tools"
+          "Tool Center"
         ]
       }
     },
@@ -6320,7 +6422,7 @@
         },
         "summary": "Archive managed custom tool",
         "tags": [
-          "platform-tools"
+          "Tool Center"
         ]
       }
     },
@@ -6360,7 +6462,7 @@
         },
         "summary": "Purge archived managed custom tool",
         "tags": [
-          "platform-tools"
+          "Tool Center"
         ]
       }
     },
@@ -6402,7 +6504,7 @@
         },
         "summary": "Restore archived managed custom tool",
         "tags": [
-          "platform-tools"
+          "Tool Center"
         ]
       }
     },
@@ -6471,7 +6573,7 @@
         },
         "summary": "List tools for Toolbench discovery",
         "tags": [
-          "platform-tools"
+          "Tool Center"
         ]
       }
     },
@@ -6512,7 +6614,7 @@
         },
         "summary": "Invoke a runtime message to validate tool-call behavior",
         "tags": [
-          "platform-tools"
+          "Tool Center"
         ]
       }
     }
@@ -6521,6 +6623,48 @@
     {
       "description": "Agent Platform API local",
       "url": "http://127.0.0.1:8284"
+    }
+  ],
+  "tags": [
+    {
+      "description": "Persistent-agent creation, inspection, and chat operations.",
+      "name": "Agent Studio"
+    },
+    {
+      "description": "Stateless comment generation using router-visible models.",
+      "name": "Comment Lab"
+    },
+    {
+      "description": "Stateless grouped entity extraction using Label Lab schemas.",
+      "name": "Label Lab"
+    },
+    {
+      "description": "File-backed prompt and persona template management.",
+      "name": "Prompt Center"
+    },
+    {
+      "description": "File-backed Label Lab JSON schema management.",
+      "name": "Schema Center"
+    },
+    {
+      "description": "Tool discovery, Tool Center CRUD, and tool attach/detach operations.",
+      "name": "Tool Center"
+    },
+    {
+      "description": "Orchestrated live checks and test-run artifact access.",
+      "name": "Test Center"
+    },
+    {
+      "description": "Low-level runtime message endpoints with optional overrides.",
+      "name": "Platform Runtime"
+    },
+    {
+      "description": "Persistent agent lifecycle and configuration control endpoints.",
+      "name": "Platform Control"
+    },
+    {
+      "description": "Platform capabilities, model catalog diagnostics, and shared runtime options.",
+      "name": "Platform Meta"
     }
   ]
 }

@@ -12,6 +12,7 @@ from agent_platform_api.models.templates import (
     PromptTemplatePatchRequest,
     PromptTemplateWriteRequest,
 )
+from agent_platform_api.openapi_metadata import TAG_PROMPT_CENTER
 from agent_platform_api.runtime import ensure_platform_api_enabled, invalidate_options_cache, prompt_persona_registry
 from agent_platform_api.registries.prompt_persona import RegistryError
 
@@ -27,7 +28,7 @@ def _is_label_persona_selector(*, scenario: str | None, key: str | None = None) 
 @router.get(
     "/api/v1/platform/prompt-center/prompts",
     response_model=ApiTemplateListResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="List system prompt templates",
 )
 async def api_prompt_center_list_prompts(include_archived: bool = False, scenario: str | None = None):
@@ -55,7 +56,7 @@ async def api_prompt_center_list_prompts(include_archived: bool = False, scenari
 @router.get(
     "/api/v1/platform/prompt-center/prompts/{key}",
     response_model=ApiTemplateRecordResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Get system prompt template",
 )
 async def api_prompt_center_get_prompt(key: str, archived: bool = False, scenario: str | None = None):
@@ -80,7 +81,7 @@ async def api_prompt_center_get_prompt(key: str, archived: bool = False, scenari
 @router.post(
     "/api/v1/platform/prompt-center/prompts",
     response_model=ApiTemplateRecordResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Create system prompt template",
 )
 async def api_prompt_center_create_prompt(request: PromptTemplateWriteRequest):
@@ -107,7 +108,7 @@ async def api_prompt_center_create_prompt(request: PromptTemplateWriteRequest):
 @router.patch(
     "/api/v1/platform/prompt-center/prompts/{key}",
     response_model=ApiTemplateRecordResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Update system prompt template",
 )
 async def api_prompt_center_update_prompt(key: str, request: PromptTemplatePatchRequest):
@@ -133,7 +134,7 @@ async def api_prompt_center_update_prompt(key: str, request: PromptTemplatePatch
 @router.post(
     "/api/v1/platform/prompt-center/prompts/{key}/archive",
     response_model=ApiTemplateRecordResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Archive system prompt template",
 )
 async def api_prompt_center_archive_prompt(key: str, scenario: str | None = None):
@@ -152,7 +153,7 @@ async def api_prompt_center_archive_prompt(key: str, scenario: str | None = None
 @router.post(
     "/api/v1/platform/prompt-center/prompts/{key}/restore",
     response_model=ApiTemplateRecordResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Restore archived system prompt template",
 )
 async def api_prompt_center_restore_prompt(key: str, scenario: str | None = None):
@@ -170,7 +171,7 @@ async def api_prompt_center_restore_prompt(key: str, scenario: str | None = None
 
 @router.delete(
     "/api/v1/platform/prompt-center/prompts/{key}/purge",
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Purge archived system prompt template",
 )
 async def api_prompt_center_purge_prompt(key: str, scenario: str | None = None):
@@ -189,7 +190,7 @@ async def api_prompt_center_purge_prompt(key: str, scenario: str | None = None):
 @router.get(
     "/api/v1/platform/prompt-center/personas",
     response_model=ApiTemplateListResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="List persona templates",
 )
 async def api_prompt_center_list_personas(include_archived: bool = False, scenario: str | None = None):
@@ -224,7 +225,7 @@ async def api_prompt_center_list_personas(include_archived: bool = False, scenar
 @router.get(
     "/api/v1/platform/prompt-center/personas/{key}",
     response_model=ApiTemplateRecordResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Get persona template",
 )
 async def api_prompt_center_get_persona(key: str, archived: bool = False, scenario: str | None = None):
@@ -251,7 +252,7 @@ async def api_prompt_center_get_persona(key: str, archived: bool = False, scenar
 @router.post(
     "/api/v1/platform/prompt-center/personas",
     response_model=ApiTemplateRecordResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Create persona template",
 )
 async def api_prompt_center_create_persona(request: PersonaTemplateWriteRequest):
@@ -280,7 +281,7 @@ async def api_prompt_center_create_persona(request: PersonaTemplateWriteRequest)
 @router.patch(
     "/api/v1/platform/prompt-center/personas/{key}",
     response_model=ApiTemplateRecordResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Update persona template",
 )
 async def api_prompt_center_update_persona(key: str, request: PersonaTemplatePatchRequest):
@@ -308,7 +309,7 @@ async def api_prompt_center_update_persona(key: str, request: PersonaTemplatePat
 @router.post(
     "/api/v1/platform/prompt-center/personas/{key}/archive",
     response_model=ApiTemplateRecordResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Archive persona template",
 )
 async def api_prompt_center_archive_persona(key: str, scenario: str | None = None):
@@ -329,7 +330,7 @@ async def api_prompt_center_archive_persona(key: str, scenario: str | None = Non
 @router.post(
     "/api/v1/platform/prompt-center/personas/{key}/restore",
     response_model=ApiTemplateRecordResponse,
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Restore archived persona template",
 )
 async def api_prompt_center_restore_persona(key: str, scenario: str | None = None):
@@ -349,7 +350,7 @@ async def api_prompt_center_restore_persona(key: str, scenario: str | None = Non
 
 @router.delete(
     "/api/v1/platform/prompt-center/personas/{key}/purge",
-    tags=["platform-prompts"],
+    tags=[TAG_PROMPT_CENTER],
     summary="Purge archived persona template",
 )
 async def api_prompt_center_purge_persona(key: str, scenario: str | None = None):

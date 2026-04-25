@@ -28,6 +28,7 @@ from agent_platform_api.models.agents import (
     ApiPersistentStateResponse,
     ApiRawPromptResponse,
 )
+from agent_platform_api.openapi_metadata import TAG_AGENT_STUDIO, TAG_PLATFORM_CONTROL
 from agent_platform_api.runtime import (
     agent_lifecycle_registry,
     agent_platform,
@@ -62,7 +63,12 @@ def _router_llm_config_for_model(model_handle: str) -> dict[str, Any] | None:
     }
 
 
-@router.get("/api/v1/agents", response_model=ApiAgentListResponse)
+@router.get(
+    "/api/v1/agents",
+    response_model=ApiAgentListResponse,
+    tags=[TAG_AGENT_STUDIO],
+    summary="List Agent Studio agents",
+)
 async def api_list_agents(
     limit: int = 100,
     include_last_interaction: bool = False,
@@ -108,7 +114,12 @@ async def api_list_agents(
     }
 
 
-@router.post("/api/v1/agents", response_model=ApiAgentCreateResponse)
+@router.post(
+    "/api/v1/agents",
+    response_model=ApiAgentCreateResponse,
+    tags=[TAG_AGENT_STUDIO],
+    summary="Create an Agent Studio agent",
+)
 async def api_create_agent(request: AgentCreateRequest):
     ensure_platform_api_enabled()
     resolved_scenario = normalize_scenario(request.scenario)
@@ -200,7 +211,7 @@ async def api_create_agent(request: AgentCreateRequest):
 @router.post(
     "/api/v1/platform/agents/{agent_id}/archive",
     response_model=ApiAgentLifecycleResponse,
-    tags=["platform-control"],
+    tags=[TAG_PLATFORM_CONTROL],
     summary="Archive agent (soft delete)",
 )
 async def api_platform_archive_agent(agent_id: str):
@@ -229,7 +240,7 @@ async def api_platform_archive_agent(agent_id: str):
 @router.post(
     "/api/v1/platform/agents/{agent_id}/restore",
     response_model=ApiAgentLifecycleResponse,
-    tags=["platform-control"],
+    tags=[TAG_PLATFORM_CONTROL],
     summary="Restore archived agent",
 )
 async def api_platform_restore_agent(agent_id: str):
@@ -288,7 +299,7 @@ def purge_archived_agent(agent_id: str) -> dict[str, Any]:
 @router.delete(
     "/api/v1/platform/agents/{agent_id}/purge",
     response_model=ApiAgentPurgeResponse,
-    tags=["platform-control"],
+    tags=[TAG_PLATFORM_CONTROL],
     summary="Purge archived agent (hard delete)",
 )
 async def api_platform_purge_agent(agent_id: str):
@@ -299,7 +310,7 @@ async def api_platform_purge_agent(agent_id: str):
 @router.delete(
     "/api/v1/agents/{agent_id}",
     response_model=ApiAgentPurgeResponse,
-    tags=["platform-control"],
+    tags=[TAG_PLATFORM_CONTROL],
     summary="Delete archived agent (hard delete)",
 )
 async def api_delete_agent(agent_id: str):
@@ -307,7 +318,12 @@ async def api_delete_agent(agent_id: str):
     return purge_archived_agent(agent_id)
 
 
-@router.get("/api/v1/agents/{agent_id}/details", response_model=ApiAgentDetailsResponse)
+@router.get(
+    "/api/v1/agents/{agent_id}/details",
+    response_model=ApiAgentDetailsResponse,
+    tags=[TAG_AGENT_STUDIO],
+    summary="Get Agent Studio agent details",
+)
 async def api_get_agent_details(agent_id: str):
     ensure_platform_api_enabled()
 
@@ -339,7 +355,12 @@ async def api_get_agent_details(agent_id: str):
     }
 
 
-@router.get("/api/v1/agents/{agent_id}/persistent_state", response_model=ApiPersistentStateResponse)
+@router.get(
+    "/api/v1/agents/{agent_id}/persistent_state",
+    response_model=ApiPersistentStateResponse,
+    tags=[TAG_AGENT_STUDIO],
+    summary="Get persisted Agent Studio state",
+)
 async def api_get_agent_persistent_state(agent_id: str, limit: int = 120, include_system: bool = False):
     """
     Returns persisted state from Letta backend storage (Postgres/pgvector via Letta API):
@@ -418,7 +439,12 @@ async def api_get_agent_persistent_state(agent_id: str, limit: int = 120, includ
     }
 
 
-@router.get("/api/v1/agents/{agent_id}/raw_prompt", response_model=ApiRawPromptResponse)
+@router.get(
+    "/api/v1/agents/{agent_id}/raw_prompt",
+    response_model=ApiRawPromptResponse,
+    tags=[TAG_AGENT_STUDIO],
+    summary="Get raw prompt messages for an Agent Studio agent",
+)
 async def api_get_raw_prompt(agent_id: str):
     ensure_platform_api_enabled()
 
