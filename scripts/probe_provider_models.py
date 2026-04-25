@@ -11,9 +11,9 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from dotenv import load_dotenv
 
-from agent_platform_api.settings import get_settings
-from utils.model_allowlist import resolve_source_allowlist_path
-from utils.provider_model_probe import probe_source_chat_models, probe_source_label_models
+from ade_core.model_allowlist import resolve_source_allowlist_path
+from agent_platform_api.llm.provider_model_probe import probe_source_chat_models, probe_source_label_models
+from model_router.settings import get_settings
 
 
 def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
     settings = get_settings()
     source_id = str(args.source_id or "").strip()
-    source = next((item for item in settings.model_sources if item.id == source_id), None)
+    source = next((item for item in settings.sources if item.id == source_id), None)
     if source is None:
         print(f"Unknown source id: {source_id}", file=sys.stderr)
         return 2
@@ -45,12 +45,12 @@ def main(argv: list[str] | None = None) -> int:
     if args.mode == "label-structured":
         report = probe_source_label_models(
             source,
-            timeout_seconds=settings.model_discovery_timeout_seconds,
+            timeout_seconds=settings.discovery_timeout_seconds,
         )
     else:
         report = probe_source_chat_models(
             source,
-            timeout_seconds=settings.model_discovery_timeout_seconds,
+            timeout_seconds=settings.discovery_timeout_seconds,
         )
     payload = report.to_dict()
     if not args.write:

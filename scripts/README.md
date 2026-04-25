@@ -13,7 +13,7 @@ Wipes all existing Letta memory/agents inside the PostgreSQL volume and fully re
 * **Linux / Ubuntu (Bash):** `reset_database.sh`
 
 ### Letta Configuration & Tools
-* **`sync_tools.py`**: Connects to the running Letta server, pulls a list of *all* available tools, and generates `utils/letta_tools.py` for full IDE autocomplete and inline documentation. You should run this anytime a new tool is published.
+* **`sync_tools.py`**: Connects to the running Letta server, pulls a list of *all* available tools, and regenerates `agent_platform_api/letta/tools.py` for IDE autocomplete and inline documentation. You should run this anytime a new tool is published.
 * **`collect_diagnostics.sh`**: Collects Docker/Compose status, health checks, service logs, and connectivity probes into a timestamped diagnostics bundle. Designed for remote machine troubleshooting.
 * **`seed_nltk_data.sh`**: Pre-downloads NLTK `punkt_tab` into `data/nltk_data` so Letta startup can use local NLTK data in restricted/offline networks.
 * **`probe_provider_models.py`**: Re-runs provider chat probes, currently used to regenerate the persisted Ark allowlist at `agent_platform_api/catalog_data/ark_chat_probe_report.json`.

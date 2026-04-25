@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import agent_platform_api.runtime as runtime
+import agent_platform_api.model_options as model_options
 
 
 class _FakeRouterClient:
@@ -55,9 +56,9 @@ class _FakeRouterClient:
 
 
 def test_runtime_options_use_router_catalog_and_letta_intersection(monkeypatch) -> None:
-    monkeypatch.setattr(runtime, "model_router_client", _FakeRouterClient())
+    monkeypatch.setattr(model_options, "model_router_client", _FakeRouterClient())
     monkeypatch.setattr(
-        runtime,
+        model_options,
         "_resolve_letta_catalog_handles",
         lambda: ({"openai-proxy/local_llama_server::gemma4"}, {"letta/letta-free"}),
     )
@@ -72,9 +73,9 @@ def test_runtime_options_use_router_catalog_and_letta_intersection(monkeypatch) 
 
 
 def test_resolve_comment_selection_uses_router_base_url_and_key(monkeypatch) -> None:
-    monkeypatch.setattr(runtime, "model_router_client", _FakeRouterClient())
+    monkeypatch.setattr(model_options, "model_router_client", _FakeRouterClient())
     monkeypatch.setattr(
-        runtime,
+        model_options,
         "_resolve_letta_catalog_handles",
         lambda: ({"openai-proxy/local_llama_server::gemma4"}, set()),
     )
@@ -85,4 +86,3 @@ def test_resolve_comment_selection_uses_router_base_url_and_key(monkeypatch) -> 
     assert selection["provider_model_id"] == "local_llama_server::gemma4"
     assert selection["upstream_provider_model_id"] == "gemma4"
     assert selection["api_key"] == "router-token"
-

@@ -17,8 +17,6 @@ class AgentLifecycleRegistry:
         self.project_root = Path(project_root)
         self.base_dir = self.project_root / "data" / "agent_lifecycle"
         self.manifest_path = self.base_dir / "registry.json"
-        self.base_dir.mkdir(parents=True, exist_ok=True)
-        self._ensure_manifest()
 
     def archived_agent_ids(self) -> set[str]:
         manifest = self._read_manifest()
@@ -99,13 +97,9 @@ class AgentLifecycleRegistry:
         del agents[resolved_agent_id]
         self._write_manifest(manifest)
 
-    def _ensure_manifest(self) -> None:
-        if self.manifest_path.exists():
-            return
-        self._write_manifest({"version": 1, "agents": {}})
-
     def _read_manifest(self) -> dict[str, Any]:
-        self._ensure_manifest()
+        if not self.manifest_path.exists():
+            return {"version": 1, "agents": {}}
 
         try:
             payload = json.loads(self.manifest_path.read_text(encoding="utf-8"))

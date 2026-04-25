@@ -10,7 +10,7 @@ from agent_platform_api.runtime import (
     label_schema_record_map,
     resolve_label_model_selection,
 )
-from utils.labeling_service import LabelingValidationError
+from agent_platform_api.services.labeling import LabelingValidationError
 
 router = APIRouter()
 

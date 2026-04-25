@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 
-import utils.model_allowlist as model_allowlist
+import ade_core.model_allowlist as model_allowlist
 
 
 def test_load_configured_source_allowlist_parses_valid_report(monkeypatch, tmp_path) -> None:

@@ -2,13 +2,13 @@
 
 ## Code Style
 - Use Python 3.12+ and manage dependencies with `uv` (`pyproject.toml`, `uv.lock`).
-- For network/SDK calls in Python, follow the retry pattern used in `utils/agent_platform_service.py` (`tenacity`).
-- Keep API contracts typed (Pydantic models in `agent_platform_api/models/`) and prefer shared service wrappers in `utils/` over route-level SDK logic.
+- For network/SDK calls in Python, follow the retry pattern used in `agent_platform_api/services/agent_platform.py` (`tenacity`).
+- Keep API contracts typed (Pydantic models in `agent_platform_api/models/`) and prefer service/client wrappers over route-level SDK logic.
 - For frontend changes in `frontend-ade/`, follow existing Next.js App Router + TypeScript patterns.
 
 ## Architecture
 - Runtime stack is Docker Compose: Postgres + pgvector, Redis, Letta server, FastAPI `agent_platform_api`, and Next.js `frontend-ade`.
-- Backend API surface lives in `agent_platform_api/`; reusable Letta operations live in `utils/`.
+- Backend API surface lives in `agent_platform_api/`; cross-service helpers live in `ade_core/`; the router service lives in `model_router/`.
 - Prompt and persona assets live in `prompts/system_prompts/` and `prompts/persona/`.
 - Tests are split into:
   - `tests/test_*.py`: pytest coverage
@@ -41,4 +41,4 @@
 - Script catalog and command examples: `scripts/README.md`
 - Test layout and runner/check behavior: `tests/README.md`
 - API docs workflow and OpenAPI source: `docs/index.mdx`, `docs/openapi/agent-platform-openapi.json`
-- ADE scope and rollout status: `docs/ade-frontend-scope.mdx`, `docs/agent_platform_milestone_status.md`
+- Codebase map and ADE scope: `docs/codebase-map.md`, `docs/ade-frontend-scope.mdx`

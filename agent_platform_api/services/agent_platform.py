@@ -6,7 +6,7 @@ from typing import Any
 from letta_client import Letta
 from tenacity import retry, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from utils.message_parser import chat
+from agent_platform_api.letta.message_parser import chat
 
 _RETRY_KWARGS = {
     "stop": stop_after_attempt(3),

@@ -5,8 +5,8 @@ import json
 from pathlib import Path
 from types import SimpleNamespace
 
-from agent_platform_api.settings import ModelSourceConfig
-from utils.provider_model_probe import ProbedModelResult, SourceProbeReport
+from agent_platform_api.llm.provider_model_probe import ProbedModelResult, SourceProbeReport
+from model_router.settings import RouterSourceConfig
 
 
 def _load_script_module():
@@ -25,8 +25,8 @@ def test_probe_provider_models_script_writes_report(monkeypatch, tmp_path) -> No
         module,
         "get_settings",
         lambda: SimpleNamespace(
-            model_sources=[
-                ModelSourceConfig(
+            sources=[
+                RouterSourceConfig(
                     id="ark",
                     label="Ark",
                     base_url="https://ark.example/v3",
@@ -35,7 +35,7 @@ def test_probe_provider_models_script_writes_report(monkeypatch, tmp_path) -> No
                     letta_handle_prefix="openai-proxy",
                 )
             ],
-            model_discovery_timeout_seconds=5.0,
+            discovery_timeout_seconds=5.0,
         ),
     )
     monkeypatch.setattr(
@@ -85,8 +85,8 @@ def test_probe_provider_models_script_supports_label_structured_mode(monkeypatch
         module,
         "get_settings",
         lambda: SimpleNamespace(
-            model_sources=[
-                ModelSourceConfig(
+            sources=[
+                RouterSourceConfig(
                     id="ark",
                     label="Ark",
                     base_url="https://ark.example/v3",
@@ -95,7 +95,7 @@ def test_probe_provider_models_script_supports_label_structured_mode(monkeypatch
                     letta_handle_prefix="openai-proxy",
                 )
             ],
-            model_discovery_timeout_seconds=5.0,
+            discovery_timeout_seconds=5.0,
         ),
     )
     monkeypatch.setattr(

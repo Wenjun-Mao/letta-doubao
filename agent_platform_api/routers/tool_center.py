@@ -12,7 +12,7 @@ from agent_platform_api.models.templates import (
     ToolCenterUpdateRequest,
 )
 from agent_platform_api.runtime import agent_platform, custom_tool_registry, ensure_platform_api_enabled
-from utils.custom_tool_registry import ToolRegistryError
+from agent_platform_api.registries.custom_tool import ToolRegistryError
 
 router = APIRouter()
 

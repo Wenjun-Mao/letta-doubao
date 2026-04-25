@@ -1,7 +1,7 @@
 [project]
 name = "letta-myADE"
 version = "0.1.0"
-description = "Letta with LMStudio as a backend LLM provider."
+description = "Letta Open ADE with a first-party OpenAI-compatible model router."
 requires-python = ">=3.12,<3.13"
 dependencies = [
     "fastapi>=0.135.2",

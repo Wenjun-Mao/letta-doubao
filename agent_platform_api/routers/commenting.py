@@ -52,7 +52,7 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
     try:
         model_selection = resolve_comment_model_selection(
             model_key=(request.model_key or "").strip() or None,
-            legacy_model=(request.model or "").strip() or None,
+            model_selector=(request.model or "").strip() or None,
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

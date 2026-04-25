@@ -15,8 +15,8 @@ COPY pyproject.toml uv.lock ./
 RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev
 
+COPY ade_core ./ade_core
 COPY model_router ./model_router
-COPY utils ./utils
 COPY config ./config
 COPY agent_platform_api/catalog_data ./agent_platform_api/catalog_data
 

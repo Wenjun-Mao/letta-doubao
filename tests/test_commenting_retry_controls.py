@@ -7,7 +7,7 @@ import httpx
 import pytest
 from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_none
 
-from utils.commenting_service import (
+from agent_platform_api.services.commenting import (
     _RETRYABLE_COMMENTING_EXCEPTIONS,
     CommentingService,
 )

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from utils.prompt_persona_registry import PromptPersonaRegistry, RegistryError
+from agent_platform_api.registries.prompt_persona import PromptPersonaRegistry, RegistryError
 
 
 def test_create_comment_persona_infers_comment_scenario_from_key(tmp_path) -> None:

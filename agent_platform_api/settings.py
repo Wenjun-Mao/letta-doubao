@@ -6,139 +6,16 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Literal
 
-from pydantic import BaseModel, Field, field_validator, model_validator
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from utils.settings_file_loader import load_json_config_list
 
 
 CommentingTaskShapeSetting = Literal["classic", "all_in_system", "structured_output"]
-ModelSourceKind = Literal["openai-compatible"]
-ModelSourceAdapter = Literal["generic_openai", "ark_openai", "llama_cpp_server"]
-ScenarioName = Literal["chat", "comment", "label"]
-_KNOWN_MODEL_HANDLE_PREFIXES = ("lmstudio_openai/", "openai-proxy/", "openai/", "anthropic/")
 _DEFAULT_SECRETS_DIR = Path("/run/secrets")
-_PROJECT_ROOT = Path(__file__).resolve().parent.parent
 _VERSION_PATH_RE = re.compile(r"/v\d+(?:\.\d+)?$", re.IGNORECASE)
 
 
-class ModelSourceConfig(BaseModel):
-    id: str
-    label: str
-    base_url: str
-    kind: ModelSourceKind = "openai-compatible"
-    adapter: ModelSourceAdapter = "generic_openai"
-    enabled: bool = True
-    enabled_for: list[ScenarioName] = Field(default_factory=list)
-    letta_handle_prefix: str = ""
-    api_key_env: str = ""
-    api_key_secret: str = ""
-
-    @field_validator("id", "label", "base_url", "adapter", "letta_handle_prefix", "api_key_env", "api_key_secret")
-    @classmethod
-    def _strip_text_fields(cls, value: str) -> str:
-        return str(value or "").strip()
-
-    @field_validator("adapter")
-    @classmethod
-    def _normalize_adapter(cls, value: str) -> str:
-        normalized = str(value or "").strip().lower().replace("-", "_")
-        if not normalized:
-            return "generic_openai"
-        if normalized not in {"generic_openai", "ark_openai", "llama_cpp_server"}:
-            raise ValueError("adapter must be 'generic_openai', 'ark_openai', or 'llama_cpp_server'")
-        return normalized
-
-    @field_validator("enabled_for", mode="before")
-    @classmethod
-    def _normalize_enabled_for(cls, value: object) -> object:
-        if isinstance(value, str):
-            return [part.strip() for part in value.split(",") if part.strip()]
-        return value
-
-    @field_validator("enabled_for")
-    @classmethod
-    def _validate_enabled_for(cls, value: list[ScenarioName]) -> list[ScenarioName]:
-        normalized = [str(item or "").strip().lower() for item in value]
-        deduped: list[ScenarioName] = []
-        for item in normalized:
-            if item not in {"chat", "comment", "label"}:
-                raise ValueError("enabled_for entries must be 'chat', 'comment', and/or 'label'")
-            typed_item = item  # type: ignore[assignment]
-            if typed_item not in deduped:
-                deduped.append(typed_item)
-        if not deduped:
-            raise ValueError("enabled_for must include at least one scenario")
-        return deduped
-
-    def normalized_base_url(self) -> str:
-        return self.base_url.rstrip("/")
-
-    def models_endpoint(self) -> str:
-        base = self.normalized_base_url()
-        if not base:
-            return ""
-        if base.endswith("/models"):
-            return base
-        if base.endswith("/chat/completions"):
-            return f"{base[:-len('/chat/completions')]}/models"
-        if _VERSION_PATH_RE.search(base):
-            return f"{base}/models"
-        return f"{base}/v1/models"
-
-    def chat_completions_url(self) -> str:
-        base = self.normalized_base_url()
-        if not base:
-            return ""
-        if base.endswith("/chat/completions"):
-            return base
-        if _VERSION_PATH_RE.search(base):
-            return f"{base}/chat/completions"
-        return f"{base}/v1/chat/completions"
-
-    def derive_letta_handle(self, provider_model_id: str) -> str | None:
-        model_id = str(provider_model_id or "").strip().strip("/")
-        if not model_id:
-            return None
-        lowered = model_id.lower()
-        if lowered.startswith(_KNOWN_MODEL_HANDLE_PREFIXES):
-            return model_id
-        prefix = self.letta_handle_prefix.strip().strip("/")
-        if not prefix:
-            return None
-        return f"{prefix}/{model_id}"
-
-    def resolve_api_key(
-        self,
-        *,
-        secrets_dir: Path = _DEFAULT_SECRETS_DIR,
-        environ: dict[str, str] | None = None,
-    ) -> str:
-        env_map = os.environ if environ is None else environ
-        secret_name = self.api_key_secret.strip()
-        if secret_name:
-            secret_path = secrets_dir / secret_name
-            try:
-                if secret_path.is_file():
-                    secret_value = secret_path.read_text(encoding="utf-8").strip()
-                    if secret_value:
-                        return secret_value
-            except OSError:
-                pass
-
-        env_name = self.api_key_env.strip()
-        if env_name:
-            env_value = str(env_map.get(env_name, "") or "").strip()
-            if env_value:
-                return env_value
-        if self.adapter == "llama_cpp_server":
-            return str(env_map.get("UNSLOTH_API_KEY", "") or "").strip()
-        return ""
-
-
 class AgentPlatformSettings(BaseSettings):
-    model_sources: list[ModelSourceConfig] = Field(default_factory=list)
-    model_sources_file: str = "config/model_router_sources.json"
     model_router_base_url: str = ""
     model_router_api_key_env: str = "MODEL_ROUTER_API_KEY"
     model_router_api_key_secret: str = "model-router-api-key"
@@ -182,37 +59,6 @@ class AgentPlatformSettings(BaseSettings):
             env_settings,
             dotenv_settings,
         )
-
-    @field_validator("model_sources")
-    @classmethod
-    def _ensure_unique_source_ids(cls, value: list[ModelSourceConfig]) -> list[ModelSourceConfig]:
-        cls._validate_unique_model_sources(value)
-        return value
-
-    @field_validator("model_sources_file")
-    @classmethod
-    def _strip_model_sources_file(cls, value: str) -> str:
-        return str(value or "").strip()
-
-    @model_validator(mode="after")
-    def _load_model_sources_from_file_when_env_is_empty(self) -> "AgentPlatformSettings":
-        if self.model_sources:
-            return self
-        loaded_items = load_json_config_list(self.model_sources_file, project_root=_PROJECT_ROOT)
-        self.model_sources = [
-            ModelSourceConfig.model_validate(_coerce_router_source_to_agent_source(item))
-            for item in loaded_items
-        ]
-        self._validate_unique_model_sources(self.model_sources)
-        return self
-
-    @staticmethod
-    def _validate_unique_model_sources(value: list[ModelSourceConfig]) -> None:
-        seen: set[str] = set()
-        for source in value:
-            if source.id in seen:
-                raise ValueError(f"Duplicate model source id: {source.id}")
-            seen.add(source.id)
 
     @field_validator("model_router_base_url", "model_router_api_key_env", "model_router_api_key_secret")
     @classmethod
@@ -302,38 +148,3 @@ def get_settings() -> AgentPlatformSettings:
 
 def clear_settings_cache() -> None:
     get_settings.cache_clear()
-
-
-def _coerce_router_source_to_agent_source(item: dict[str, object]) -> dict[str, object]:
-    """Map the router's module tags to the legacy direct-catalog scenario names.
-
-    Agent Platform normally talks to the model router now. This adapter only exists
-    so the old direct-provider fallback can read the same source file instead of
-    maintaining a second, drift-prone configuration.
-    """
-
-    enabled_for = item.get("module_visibility") or item.get("enabled_for") or []
-    if isinstance(enabled_for, str):
-        raw_tags = [part.strip() for part in enabled_for.split(",") if part.strip()]
-    elif isinstance(enabled_for, list):
-        raw_tags = [str(part or "").strip() for part in enabled_for]
-    else:
-        raw_tags = []
-
-    mapped: list[str] = []
-    tag_map = {
-        "agent_studio": "chat",
-        "chat": "chat",
-        "comment_lab": "comment",
-        "comment": "comment",
-        "label_lab": "label",
-        "label": "label",
-    }
-    for tag in raw_tags:
-        scenario = tag_map.get(tag.lower())
-        if scenario and scenario not in mapped:
-            mapped.append(scenario)
-
-    coerced = dict(item)
-    coerced["enabled_for"] = mapped
-    return coerced

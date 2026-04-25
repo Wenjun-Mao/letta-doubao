@@ -1,39 +1,32 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Literal
+from typing import Any
 
 import httpx
 from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
-from agent_platform_api.settings import ModelSourceConfig
-from utils.labeling_helpers import (
+from agent_platform_api.llm.provider_probe_classifiers import (
+    classify_chat_probe_payload,
+    classify_label_probe_payload,
+)
+from agent_platform_api.llm.provider_probe_types import (
+    ProbeCatalogAuthError,
+    ProbedModelResult,
+    RetryableProbeError,
+    SourceProbeReport,
+)
+from agent_platform_api.services.labeling_helpers import (
     LABEL_PROBE_ARTICLE,
     build_label_probe_system_prompt,
     build_label_user_payload,
     label_probe_output_schema,
-    label_probe_success,
     label_response_format,
-    normalize_label_content,
-    parse_json_object,
 )
-from utils.model_catalog import CatalogModelRecord, ModelCatalogService
+from model_router.catalog import RouterCatalogService, RouterModelRecord
+from model_router.settings import RouterSourceConfig
 
 
-ProbeResultStatus = Literal[
-    "ok",
-    "skipped_non_llm",
-    "bad_request",
-    "auth_error",
-    "not_found",
-    "rate_limited",
-    "server_error",
-    "timeout",
-    "invalid_json",
-    "invalid_payload",
-    "network_error",
-]
 _RETRYABLE_PROBE_EXCEPTIONS = (
     httpx.TimeoutException,
     httpx.ConnectError,
@@ -43,62 +36,8 @@ _RETRYABLE_PROBE_EXCEPTIONS = (
 )
 
 
-class ProbeCatalogAuthError(RuntimeError):
-    def __init__(self, status_code: int, body: str = ""):
-        self.status_code = int(status_code)
-        self.body = str(body or "")
-        super().__init__(f"Authentication failed ({self.status_code})")
-
-
-class RetryableProbeError(RuntimeError):
-    def __init__(self, status_code: int, body: str = ""):
-        self.status_code = int(status_code)
-        self.body = str(body or "")
-        super().__init__(f"Temporary provider failure ({self.status_code})")
-
-
-@dataclass(frozen=True)
-class ProbedModelResult:
-    provider_model_id: str
-    model_type: str
-    status: ProbeResultStatus
-    usable: bool
-    http_status: int | None = None
-    detail: str = ""
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "provider_model_id": self.provider_model_id,
-            "model_type": self.model_type,
-            "status": self.status,
-            "usable": self.usable,
-            "http_status": self.http_status,
-            "detail": self.detail,
-        }
-
-
-@dataclass(frozen=True)
-class SourceProbeReport:
-    source_id: str
-    checked_at: str
-    probe_mode: str
-    raw_model_count: int
-    usable_models: tuple[str, ...]
-    results: tuple[ProbedModelResult, ...]
-
-    def to_dict(self) -> dict[str, Any]:
-        return {
-            "source_id": self.source_id,
-            "checked_at": self.checked_at,
-            "probe_mode": self.probe_mode,
-            "raw_model_count": self.raw_model_count,
-            "usable_models": list(self.usable_models),
-            "results": [result.to_dict() for result in self.results],
-        }
-
-
 def probe_source_chat_models(
-    source: ModelSourceConfig,
+    source: RouterSourceConfig,
     *,
     timeout_seconds: float,
 ) -> SourceProbeReport:
@@ -137,7 +76,7 @@ def probe_source_chat_models(
 
 
 def probe_source_label_models(
-    source: ModelSourceConfig,
+    source: RouterSourceConfig,
     *,
     timeout_seconds: float,
 ) -> SourceProbeReport:
@@ -176,17 +115,17 @@ def probe_source_label_models(
 
 
 def fetch_source_catalog_records(
-    source: ModelSourceConfig,
+    source: RouterSourceConfig,
     *,
     timeout_seconds: float,
-) -> list[CatalogModelRecord]:
+) -> list[RouterModelRecord]:
     payload = _fetch_models_payload(source, timeout_seconds=timeout_seconds)
-    return ModelCatalogService._extract_model_records(payload)
+    return RouterCatalogService._extract_model_records(payload)
 
 
 def probe_chat_model(
-    source: ModelSourceConfig,
-    record: CatalogModelRecord,
+    source: RouterSourceConfig,
+    record: RouterModelRecord,
     *,
     timeout_seconds: float,
 ) -> ProbedModelResult:
@@ -235,8 +174,8 @@ def probe_chat_model(
 
 
 def probe_label_model(
-    source: ModelSourceConfig,
-    record: CatalogModelRecord,
+    source: RouterSourceConfig,
+    record: RouterModelRecord,
     *,
     timeout_seconds: float,
 ) -> ProbedModelResult:
@@ -285,7 +224,7 @@ def probe_label_model(
 
 
 def _fetch_models_payload(
-    source: ModelSourceConfig,
+    source: RouterSourceConfig,
     *,
     timeout_seconds: float,
 ) -> Any:
@@ -302,7 +241,7 @@ def _fetch_models_payload(
 
 
 def _fetch_models_payload_once(
-    source: ModelSourceConfig,
+    source: RouterSourceConfig,
     *,
     timeout_seconds: float,
 ) -> Any:
@@ -324,7 +263,7 @@ def _fetch_models_payload_once(
 
 
 def _post_chat_probe_with_retries(
-    source: ModelSourceConfig,
+    source: RouterSourceConfig,
     *,
     model_id: str,
     timeout_seconds: float,
@@ -342,7 +281,7 @@ def _post_chat_probe_with_retries(
 
 
 def _post_chat_probe_once(
-    source: ModelSourceConfig,
+    source: RouterSourceConfig,
     *,
     model_id: str,
     timeout_seconds: float,
@@ -394,7 +333,7 @@ def _post_chat_probe_once(
 
 
 def _post_label_probe_with_retries(
-    source: ModelSourceConfig,
+    source: RouterSourceConfig,
     *,
     model_id: str,
     timeout_seconds: float,
@@ -412,7 +351,7 @@ def _post_label_probe_with_retries(
 
 
 def _post_label_probe_once(
-    source: ModelSourceConfig,
+    source: RouterSourceConfig,
     *,
     model_id: str,
     timeout_seconds: float,
@@ -468,7 +407,7 @@ def _post_label_probe_once(
 
 
 def _headers_for_source(
-    source: ModelSourceConfig,
+    source: RouterSourceConfig,
     *,
     include_json_content_type: bool = False,
 ) -> dict[str, str]:
@@ -479,171 +418,6 @@ def _headers_for_source(
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     return headers
-
-
-def classify_chat_probe_payload(
-    record: CatalogModelRecord,
-    payload: Any,
-) -> ProbedModelResult:
-    if isinstance(payload, dict) and payload.get("status") == "bad_request":
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="bad_request",
-            usable=False,
-            http_status=400,
-            detail=str(payload.get("detail", "") or ""),
-        )
-    if isinstance(payload, dict) and payload.get("status") == "not_found":
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="not_found",
-            usable=False,
-            http_status=404,
-            detail=str(payload.get("detail", "") or ""),
-        )
-    if isinstance(payload, dict) and payload.get("invalid_json"):
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="invalid_json",
-            usable=False,
-            http_status=200,
-            detail=str(payload.get("detail", "") or ""),
-        )
-    if isinstance(payload, dict) and payload.get("status") == "network_error":
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="network_error",
-            usable=False,
-            http_status=int(payload.get("http_status", 0) or 0) or None,
-            detail=str(payload.get("detail", "") or ""),
-        )
-
-    if not isinstance(payload, dict):
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="invalid_payload",
-            usable=False,
-            detail="Response payload must be an object.",
-        )
-
-    choices = payload.get("choices")
-    if not isinstance(choices, list) or not choices:
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="invalid_payload",
-            usable=False,
-            http_status=200,
-            detail="Response payload did not include any choices.",
-        )
-
-    return ProbedModelResult(
-        provider_model_id=record.provider_model_id,
-        model_type=record.model_type,
-        status="ok",
-        usable=True,
-        http_status=200,
-        detail="ok",
-    )
-
-
-def classify_label_probe_payload(
-    record: CatalogModelRecord,
-    payload: Any,
-) -> ProbedModelResult:
-    if isinstance(payload, dict) and payload.get("status") == "bad_request":
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="bad_request",
-            usable=False,
-            http_status=400,
-            detail=str(payload.get("detail", "") or ""),
-        )
-    if isinstance(payload, dict) and payload.get("status") == "not_found":
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="not_found",
-            usable=False,
-            http_status=404,
-            detail=str(payload.get("detail", "") or ""),
-        )
-    if isinstance(payload, dict) and payload.get("invalid_json"):
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="invalid_json",
-            usable=False,
-            http_status=200,
-            detail=str(payload.get("detail", "") or ""),
-        )
-    if isinstance(payload, dict) and payload.get("status") == "network_error":
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="network_error",
-            usable=False,
-            http_status=int(payload.get("http_status", 0) or 0) or None,
-            detail=str(payload.get("detail", "") or ""),
-        )
-
-    if not isinstance(payload, dict):
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="invalid_payload",
-            usable=False,
-            detail="Response payload must be an object.",
-        )
-
-    choices = payload.get("choices")
-    if not isinstance(choices, list) or not choices:
-        return ProbedModelResult(
-            provider_model_id=record.provider_model_id,
-            model_type=record.model_type,
-            status="invalid_payload",
-            usable=False,
-            http_status=200,
-            detail="Response payload did not include any choices.",
-        )
-
-    choice = choices[0] if isinstance(choices[0], dict) else {}
-    message = choice.get("message", {}) if isinstance(choice, dict) else {}
-    candidates = [
-        normalize_label_content(message.get("content", "")),
-        normalize_label_content(message.get("reasoning_content", "")),
-    ]
-    for candidate in candidates:
-        if not candidate:
-            continue
-        try:
-            parsed = parse_json_object(candidate)
-        except ValueError:
-            continue
-        if label_probe_success(parsed):
-            return ProbedModelResult(
-                provider_model_id=record.provider_model_id,
-                model_type=record.model_type,
-                status="ok",
-                usable=True,
-                http_status=200,
-                detail="ok",
-            )
-
-    return ProbedModelResult(
-        provider_model_id=record.provider_model_id,
-        model_type=record.model_type,
-        status="invalid_payload",
-        usable=False,
-        http_status=200,
-        detail="Structured output probe did not return the expected grouped JSON result.",
-    )
 
 
 def _short_text(value: str, *, limit: int = 240) -> str:

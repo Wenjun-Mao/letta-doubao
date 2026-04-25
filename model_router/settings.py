@@ -9,7 +9,7 @@ from typing import Literal
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from utils.settings_file_loader import load_json_config_list
+from ade_core.settings_file_loader import load_json_config_list
 
 
 RouterSourceKind = Literal["openai-compatible"]

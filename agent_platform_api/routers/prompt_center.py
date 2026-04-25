@@ -13,7 +13,7 @@ from agent_platform_api.models.templates import (
     PromptTemplateWriteRequest,
 )
 from agent_platform_api.runtime import ensure_platform_api_enabled, invalidate_options_cache, prompt_persona_registry
-from utils.prompt_persona_registry import RegistryError
+from agent_platform_api.registries.prompt_persona import RegistryError
 
 router = APIRouter()
 

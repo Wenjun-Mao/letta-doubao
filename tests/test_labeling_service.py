@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from utils.labeling_service import LabelingService, LabelingValidationError
+from agent_platform_api.services.labeling import LabelingService, LabelingValidationError
 
 
 def _build_service() -> LabelingService:

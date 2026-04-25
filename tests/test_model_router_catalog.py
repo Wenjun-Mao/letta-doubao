@@ -10,7 +10,7 @@ from model_router.catalog import (
     parse_router_model_id,
 )
 from model_router.settings import RouterSourceConfig
-from utils.model_allowlist import SourceAllowlistLoadResult
+from ade_core.model_allowlist import SourceAllowlistLoadResult
 import model_router.catalog as router_catalog_module
 
 
@@ -120,4 +120,3 @@ def test_extract_model_records_normalizes_gguf_paths() -> None:
     assert records == [
         RouterModelRecord(provider_model_id="gemma-4-26B-it-Q4_K_M", model_type="llm")
     ]
-

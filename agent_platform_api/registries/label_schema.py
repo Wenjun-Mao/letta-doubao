@@ -5,7 +5,7 @@ import re
 from pathlib import Path
 from typing import Any
 
-from utils.labeling_helpers import (
+from agent_platform_api.services.labeling_helpers import (
     default_label_output_schema,
     label_schema_group_names,
     validate_label_output_schema_contract,

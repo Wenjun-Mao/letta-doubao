@@ -9,7 +9,7 @@ import httpx
 from tenacity import Retrying, retry_if_exception_type, stop_after_attempt, wait_exponential
 
 from agent_platform_api.settings import get_settings
-from utils.commenting_helpers import (
+from agent_platform_api.services.commenting_helpers import (
     build_all_in_system_prompt,
     build_classic_user_payload,
     build_structured_system_prompt,

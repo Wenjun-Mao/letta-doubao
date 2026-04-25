@@ -15,7 +15,7 @@ from model_router.settings import (
     RouterSourceStatus,
     get_settings,
 )
-from utils.model_allowlist import load_configured_source_allowlist
+from ade_core.model_allowlist import load_configured_source_allowlist
 
 
 _RETRYABLE_DISCOVERY_EXCEPTIONS = (
@@ -434,4 +434,3 @@ class RouterCatalogService:
         if source.adapter == "ark_openai" or source.id == "ark":
             return "strict_json_schema"
         return "best_effort_prompt_json"
-

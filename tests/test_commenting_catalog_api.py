@@ -16,7 +16,7 @@ def test_commenting_generate_uses_model_key_and_selected_source_connection(monke
     monkeypatch.setattr(
         commenting,
         "resolve_comment_model_selection",
-        lambda model_key=None, legacy_model=None, force_refresh=False: {
+        lambda model_key=None, model_selector=None, force_refresh=False: {
             "model_key": "local_unsloth::qwen3.5-27b",
             "source_id": "local_unsloth",
             "source_label": "Local Unsloth",

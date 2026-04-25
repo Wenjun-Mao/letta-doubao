@@ -3,11 +3,11 @@ from __future__ import annotations
 import asyncio
 from types import SimpleNamespace
 
-import utils.agent_platform_service as agent_platform_service_module
+import agent_platform_api.services.agent_platform as agent_platform_service_module
 from agent_platform_api.models.agents import ChatRequest
 from agent_platform_api.models.platform import PlatformToolTestInvokeRequest
 from agent_platform_api.routers import core, platform_meta
-from utils.agent_platform_service import (
+from agent_platform_api.services.agent_platform import (
     DEFAULT_RUNTIME_RETRY_COUNT,
     DEFAULT_RUNTIME_TIMEOUT_SECONDS,
     AgentPlatformService,

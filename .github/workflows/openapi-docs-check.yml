@@ -6,7 +6,7 @@ on:
       - main
     paths:
       - agent_platform_api/**
-      - utils/**
+      - ade_core/**
       - scripts/export_openapi.py
       - scripts/generate_openapi_zh_manual.py
       - docs/**
@@ -17,7 +17,7 @@ on:
       - main
     paths:
       - agent_platform_api/**
-      - utils/**
+      - ade_core/**
       - scripts/export_openapi.py
       - scripts/generate_openapi_zh_manual.py
       - docs/**

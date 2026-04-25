@@ -5,9 +5,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from agent_platform_api.settings import ModelSourceConfig
-from utils.model_catalog import CatalogModelRecord
-from utils.provider_model_probe import (
+from agent_platform_api.llm.provider_model_probe import (
     ProbeCatalogAuthError,
     RetryableProbeError,
     SourceProbeReport,
@@ -15,11 +13,13 @@ from utils.provider_model_probe import (
     probe_chat_model,
     probe_source_chat_models,
 )
-import utils.provider_model_probe as provider_model_probe
+import agent_platform_api.llm.provider_model_probe as provider_model_probe
+from model_router.catalog import RouterModelRecord
+from model_router.settings import RouterSourceConfig
 
 
-def _source() -> ModelSourceConfig:
-    return ModelSourceConfig(
+def _source() -> RouterSourceConfig:
+    return RouterSourceConfig(
         id="ark",
         label="Ark",
         base_url="https://ark.example/v3",
@@ -31,7 +31,7 @@ def _source() -> ModelSourceConfig:
 
 def test_classify_chat_probe_payload_accepts_success() -> None:
     result = classify_chat_probe_payload(
-        CatalogModelRecord(provider_model_id="doubao-seed-1-8-251228", model_type="llm"),
+        RouterModelRecord(provider_model_id="doubao-seed-1-8-251228", model_type="llm"),
         {"choices": [{"message": {"role": "assistant", "content": "ok"}}]},
     )
 
@@ -50,7 +50,7 @@ def test_classify_chat_probe_payload_accepts_success() -> None:
 )
 def test_classify_chat_probe_payload_maps_non_success_cases(payload, expected_status: str) -> None:
     result = classify_chat_probe_payload(
-        CatalogModelRecord(provider_model_id="model-a", model_type="llm"),
+        RouterModelRecord(provider_model_id="model-a", model_type="llm"),
         payload,
     )
 
@@ -76,7 +76,7 @@ def test_probe_chat_model_maps_retry_and_timeout_errors(monkeypatch, exc: Except
 
     result = probe_chat_model(
         _source(),
-        CatalogModelRecord(provider_model_id="model-a", model_type="llm"),
+        RouterModelRecord(provider_model_id="model-a", model_type="llm"),
         timeout_seconds=5.0,
     )
 
@@ -89,8 +89,8 @@ def test_probe_source_chat_models_skips_non_llm_entries(monkeypatch) -> None:
         provider_model_probe,
         "fetch_source_catalog_records",
         lambda source, *, timeout_seconds: [
-            CatalogModelRecord(provider_model_id="doubao-seed-1-8-251228", model_type="llm"),
-            CatalogModelRecord(provider_model_id="doubao-embedding-text-240715", model_type="embedding"),
+            RouterModelRecord(provider_model_id="doubao-seed-1-8-251228", model_type="llm"),
+            RouterModelRecord(provider_model_id="doubao-embedding-text-240715", model_type="embedding"),
         ],
     )
     monkeypatch.setattr(

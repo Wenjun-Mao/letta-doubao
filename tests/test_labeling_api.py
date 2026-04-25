@@ -7,7 +7,7 @@ from fastapi import HTTPException
 
 from agent_platform_api.models.labeling import LabelingGenerateRequest
 from agent_platform_api.routers import labeling
-from utils.labeling_service import LabelingValidationError
+from agent_platform_api.services.labeling import LabelingValidationError
 
 
 def test_labeling_generate_uses_model_key_and_selected_source_connection(monkeypatch) -> None:

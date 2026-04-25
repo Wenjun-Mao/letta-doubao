@@ -10,7 +10,7 @@ from agent_platform_api.models.schemas import (
     LabelSchemaWriteRequest,
 )
 from agent_platform_api.runtime import ensure_platform_api_enabled, invalidate_options_cache, label_schema_registry
-from utils.label_schema_registry import LabelSchemaRegistryError
+from agent_platform_api.registries.label_schema import LabelSchemaRegistryError
 
 router = APIRouter()
 

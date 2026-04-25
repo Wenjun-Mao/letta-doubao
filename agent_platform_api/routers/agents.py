@@ -5,7 +5,7 @@ from typing import Any
 from fastapi import APIRouter, HTTPException
 
 from prompts.persona import HUMAN_TEMPLATE
-from utils.agent_lifecycle_registry import AgentLifecycleRegistryError
+from agent_platform_api.registries.agent_lifecycle import AgentLifecycleRegistryError
 
 from agent_platform_api.settings import get_settings
 from agent_platform_api.helpers import (

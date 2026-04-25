@@ -1,6 +1,6 @@
-# Letta + Doubao Standalone Bundle
+# Letta Open ADE
 
-This directory is self-contained. You can copy `standalone/letta-doubao` anywhere and run it without the rest of the Letta repo.
+This repo runs a local ADE stack around Letta with a first-party model router, an Agent Platform API, and the Next.js ADE frontend.
 
 ## What It Uses
 
@@ -20,7 +20,7 @@ Letta can start an internal Redis process when `LETTA_REDIS_HOST` is unset. That
 
 That line is normal by itself. It does not prove a failure. This standalone bundle now provides Redis as a separate Compose service anyway, because it is easier to debug, makes startup more deterministic across hosts, and avoids relying on the image's in-container Redis bootstrap path.
 
-## Why The Embedding Handle Is Not Doubao
+## Why The Embedding Handle Is Not Ark
 
 The tested Ark key worked for:
 
@@ -28,7 +28,7 @@ The tested Ark key worked for:
 - `POST /chat/completions`
 - OpenAI-style tool calling
 
-The same key did not expose a usable text embedding model through the tested OpenAI-compatible `/embeddings` path, so the end-to-end Letta stack uses Doubao for the chat model and Letta's built-in embedding service for embeddings.
+The same key did not expose a usable text embedding model through the tested OpenAI-compatible `/embeddings` path, so the end-to-end Letta stack uses router-backed chat models and Letta's built-in embedding service for embeddings.
 
 ## Quick Start
 
@@ -77,7 +77,7 @@ uv run marimo run notebooks\01_doubao_api_smoke.py --headless
 uv run marimo run notebooks\02_letta_e2e.py --headless
 ```
 
-8. Read [MANUAL.md](./MANUAL.md) before making changes or moving this directory. It captures the decisions, verified behavior, rejected paths, and next-step guidance so the setup can be reconstructed later without redoing the same investigation.
+8. Read [docs/codebase-map.md](./docs/codebase-map.md) when you need to find where a feature is wired. Use [MANUAL.md](./MANUAL.md) for longer operational notes and recovery details.
 
 ## Local Build Deployment
 
@@ -86,17 +86,11 @@ This repo currently defaults to local builds for first-party ADE services:
 - `letta_server` uses a pinned upstream image (`LETTA_SERVER_IMAGE`)
 - `model_router`, `agent_platform_api`, and `ade_frontend` build from this checkout
 
-The old GHCR publishing path is intentionally disabled for now:
-
-- `.github/workflows/publish-agent-platform-api-ghcr.yml`
-
 Local run sequence:
 
 ```bash
 docker compose up -d --build
 ```
-
-If registry deployment becomes useful again later, restore the publish workflow and reintroduce an `image:` tag for the service that should be pushed.
 
 ## Troubleshooting
 
@@ -124,10 +118,10 @@ docker compose up -d --force-recreate letta_server
 
 `compose.yaml` mounts `data/nltk_data` into the Letta container and enables a startup patch that prefers local `punkt_tab` data instead of network download.
 
-If `agent_platform_api` logs show runtime dependency install lines like `Creating virtual environment at: /opt/venv` or `Downloading pydantic-core`, pull the latest prebuilt image and recreate `agent_platform_api`:
+If `agent_platform_api` logs show runtime dependency install lines like `Creating virtual environment at: /opt/venv` or `Downloading pydantic-core`, rebuild the local image and recreate `agent_platform_api`:
 
 ```bash
-docker compose pull agent_platform_api
+docker compose build agent_platform_api
 docker compose up -d --force-recreate agent_platform_api
 ```
 
@@ -135,18 +129,20 @@ After this, `agent_platform_api` should start directly with Uvicorn and no start
 
 ## Files
 
-- `compose.yaml`: standalone Letta + Postgres + Redis stack
+- `compose.yaml`: Letta + Postgres + Redis + router + ADE app stack
 - `init.sql`: database bootstrap for the Letta schema and pgvector extension
 - `.env.example`: sanitized config template
 - `.env`: local runtime config
-- `pyproject.toml`: `uv` dependency manifest for the notebooks
+- `config/model_router_sources.json`: single model-source config for the router and ADE modules
+- `docs/codebase-map.md`: architecture and "where do I change X?" guide
+- `pyproject.toml`: `uv` dependency manifest for backend scripts and tests
 - `uv.lock`: `uv` lockfile
 - `.dockerignore`: future-proof build-context filter
 - `MANUAL.md`: detailed decision log and handoff guide
 - `scripts/probe_provider_models.py`: rerunnable Ark usability probe for regenerating the checked-in allowlist
 - `agent_platform_api/catalog_data/ark_chat_probe_report.json`: persisted Ark chat-usable model allowlist
 - `schemas/label/`: file-backed Label Schema Center storage for Label Lab output schemas
-- `notebooks/01_doubao_api_smoke.py`: direct Ark/Doubao validation
+- `notebooks/01_doubao_api_smoke.py`: direct Ark validation
 - `notebooks/02_letta_e2e.py`: Letta end-to-end validation against the running stack
 
 ## Developer Testing Workflow
@@ -278,18 +274,18 @@ Update Chinese docs pages manually under `docs/zh/` when major changes land.
 
 ## ADE Frontend (Separate Profile)
 
-The legacy in-package frontend has been removed. The Next.js ADE app is now the active UI and talks to `agent_platform_api` as its backend.
+The old in-package frontend has been removed. The Next.js ADE app is now the active UI and talks to `agent_platform_api` as its backend.
 
 Start ADE frontend profile:
 
 ```bash
-docker compose --profile ade up -d ade_frontend
+docker compose up -d ade_frontend
 ```
 
 Stop ADE frontend profile service:
 
 ```bash
-docker compose --profile ade stop ade_frontend
+docker compose stop ade_frontend
 ```
 
 Open ADE preview at `http://127.0.0.1:3000`.

@@ -1,5 +1,6 @@
 import os
 import sys
+from pathlib import Path
 
 # Add project root to sys.path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -16,9 +17,9 @@ def sync():
         print(f"Failed to fetch tools. Is the Letta server running? Error: {e}")
         return
 
-    out_file = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "utils", "letta_tools.py"))
+    out_file = Path(__file__).resolve().parents[1] / "agent_platform_api" / "letta" / "tools.py"
     
-    with open(out_file, "w", encoding="utf-8") as f:
+    with out_file.open("w", encoding="utf-8") as f:
         f.write('"""\n')
         f.write('Auto-generated Tool Registry.\n')
         f.write('Run `uv run scripts/sync_tools.py` to rebuild this file if you add custom tools to Letta.\n')

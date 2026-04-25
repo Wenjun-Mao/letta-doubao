@@ -11,8 +11,8 @@ RUN --mount=type=cache,target=/root/.cache/uv \
     uv sync --frozen --no-dev --no-install-project
 
 # Copy runtime source required by the Agent Platform API service.
+COPY ade_core ./ade_core
 COPY agent_platform_api ./agent_platform_api
-COPY utils ./utils
 COPY config ./config
 COPY prompts ./prompts
 COPY schemas ./schemas
