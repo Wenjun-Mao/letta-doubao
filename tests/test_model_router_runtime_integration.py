@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import agent_platform_api.runtime as runtime
-import agent_platform_api.model_options as model_options
+import agent_platform_api.options.catalog as options_catalog
+import agent_platform_api.options.letta_catalog as letta_catalog
+import agent_platform_api.options.selection as options_selection
 
 
 class _FakeRouterClient:
@@ -56,10 +58,10 @@ class _FakeRouterClient:
 
 
 def test_runtime_options_use_router_catalog_and_letta_intersection(monkeypatch) -> None:
-    monkeypatch.setattr(model_options, "model_router_client", _FakeRouterClient())
+    monkeypatch.setattr(options_catalog, "model_router_client", _FakeRouterClient())
     monkeypatch.setattr(
-        model_options,
-        "_resolve_letta_catalog_handles",
+        letta_catalog,
+        "resolve_letta_catalog_handles",
         lambda: ({"openai-proxy/local_llama_server::gemma4"}, {"letta/letta-free"}),
     )
 
@@ -73,10 +75,12 @@ def test_runtime_options_use_router_catalog_and_letta_intersection(monkeypatch) 
 
 
 def test_resolve_comment_selection_uses_router_base_url_and_key(monkeypatch) -> None:
-    monkeypatch.setattr(model_options, "model_router_client", _FakeRouterClient())
+    router_client = _FakeRouterClient()
+    monkeypatch.setattr(options_catalog, "model_router_client", router_client)
+    monkeypatch.setattr(options_selection, "model_router_client", router_client)
     monkeypatch.setattr(
-        model_options,
-        "_resolve_letta_catalog_handles",
+        letta_catalog,
+        "resolve_letta_catalog_handles",
         lambda: ({"openai-proxy/local_llama_server::gemma4"}, set()),
     )
 

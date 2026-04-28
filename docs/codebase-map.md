@@ -24,6 +24,7 @@ The router is the canonical LLM access layer. `agent_platform_api` should not tr
 - `agent_platform_api/`: the ADE backend API. It owns routes, Pydantic response/request models, feature services, registries, Letta orchestration, and router catalog consumption.
 - `agent_platform_api/services/`: feature services for Agent Studio/Letta operations, Comment Lab, and Label Lab.
 - `agent_platform_api/registries/`: file-backed registries for prompts/personas, label schemas, custom tools, and agent lifecycle metadata.
+- `agent_platform_api/options/`: router-backed model catalog enrichment, UI option building, model selection, and runtime defaults.
 - `agent_platform_api/clients/`: outbound service clients, currently the model router client.
 - `agent_platform_api/llm/`: LLM tooling that belongs to ADE, such as provider probe/report generation.
 - `agent_platform_api/letta/`: Letta SDK convenience helpers and generated Letta tool constants.
@@ -59,8 +60,8 @@ The router is the canonical LLM access layer. `agent_platform_api` should not tr
 | Change model discovery/routing behavior | `model_router/catalog.py` and `model_router/app.py` |
 | Change Comment Lab generation | `agent_platform_api/services/commenting.py` and `agent_platform_api/routers/commenting.py` |
 | Change Label Lab generation | `agent_platform_api/services/labeling.py`, `agent_platform_api/services/labeling_helpers.py`, and `agent_platform_api/routers/labeling.py` |
-| Change options returned to the UI | `agent_platform_api/model_options.py` |
-| Change Prompt Center behavior | `agent_platform_api/registries/prompt_persona.py` and `agent_platform_api/routers/prompt_center.py` |
+| Change options returned to the UI | `agent_platform_api/options/` |
+| Change Prompt Center behavior | `agent_platform_api/registries/prompt_persona_store/` and `agent_platform_api/routers/prompt_center.py` |
 | Change Schema Center behavior | `agent_platform_api/registries/label_schema.py` and `agent_platform_api/routers/schema_center.py` |
 | Change Agent Studio / Letta orchestration | `agent_platform_api/services/agent_platform.py` and `agent_platform_api/routers/agents.py` |
 | Change frontend page behavior | the matching `frontend-ade/app/<module>/page.tsx` file |
@@ -75,4 +76,3 @@ The router is the canonical LLM access layer. `agent_platform_api` should not tr
 - Do not reintroduce Agent Platform direct-provider traversal for normal model discovery or generation.
 - Keep generated build/cache/runtime artifacts out of git.
 - If a historical note becomes misleading, delete it or move the important fact into this map or `MANUAL.md`.
-

@@ -9,7 +9,7 @@ from agent_platform_api.clients.model_router import ModelRouterClient
 from agent_platform_api.registries.agent_lifecycle import AgentLifecycleRegistry
 from agent_platform_api.registries.custom_tool import CustomToolRegistry
 from agent_platform_api.registries.label_schema import LabelSchemaRegistry
-from agent_platform_api.registries.prompt_persona import PromptPersonaRegistry
+from agent_platform_api.registries.prompt_persona_store import PromptPersonaRegistry
 from agent_platform_api.services.agent_platform import AgentPlatformService
 from agent_platform_api.services.commenting import CommentingService
 from agent_platform_api.services.labeling import LabelingService
@@ -30,4 +30,3 @@ agent_lifecycle_registry = AgentLifecycleRegistry(PROJECT_ROOT)
 model_router_client = ModelRouterClient()
 commenting_service = CommentingService()
 labeling_service = LabelingService()
-

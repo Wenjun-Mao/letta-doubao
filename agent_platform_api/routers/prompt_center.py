@@ -14,7 +14,7 @@ from agent_platform_api.models.templates import (
 )
 from agent_platform_api.openapi_metadata import TAG_PROMPT_CENTER
 from agent_platform_api.runtime import ensure_platform_api_enabled, invalidate_options_cache, prompt_persona_registry
-from agent_platform_api.registries.prompt_persona import RegistryError
+from agent_platform_api.registries.prompt_persona_store import RegistryError
 
 router = APIRouter()
 

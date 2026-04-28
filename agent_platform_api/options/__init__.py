@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from agent_platform_api.options import (
+from agent_platform_api.options.builder import runtime_options
+from agent_platform_api.options.catalog import enriched_catalog_items, invalidate_options_cache, model_catalog
+from agent_platform_api.options.constants import (
     DEFAULT_CHAT_PERSONA_KEY,
     DEFAULT_CHAT_PROMPT_KEY,
     DEFAULT_COMMENT_PERSONA_KEY,
@@ -14,30 +16,16 @@ from agent_platform_api.options import (
     PROVIDER_MODEL_OPTION_OVERRIDES,
     PROVIDER_MODEL_OPTION_PRIORITY,
     SCENARIO_DEFAULTS,
+)
+from agent_platform_api.options.label_schemas import (
     active_label_schema_records,
-    commenting_runtime_defaults,
-    dedupe_options,
-    invalidate_options_cache,
     label_schema_option_entries,
     label_schema_record_map,
-    labeling_runtime_defaults,
-    model_catalog,
-    resolve_comment_model_selection,
     resolve_default_label_schema_key,
-    resolve_label_model_selection,
-    runtime_options,
 )
-from agent_platform_api.options.builder import (
-    embedding_options as _embedding_options,
-    model_option_metadata as _model_option_metadata,
-    model_option_sort_key as _model_option_sort_key,
-)
-from agent_platform_api.options.catalog import enriched_catalog_items as _enriched_catalog_items
-from agent_platform_api.options.letta_catalog import (
-    looks_like_embedding_handle as _looks_like_embedding_handle,
-    resolve_letta_catalog_handles as _resolve_letta_catalog_handles,
-    resolve_model_handle as _resolve_model_handle,
-)
+from agent_platform_api.options.runtime_defaults import commenting_runtime_defaults, labeling_runtime_defaults
+from agent_platform_api.options.selection import resolve_comment_model_selection, resolve_label_model_selection
+from agent_platform_api.options.utils import dedupe_options
 
 __all__ = [
     "DEFAULT_CHAT_PERSONA_KEY",
@@ -56,6 +44,7 @@ __all__ = [
     "active_label_schema_records",
     "commenting_runtime_defaults",
     "dedupe_options",
+    "enriched_catalog_items",
     "invalidate_options_cache",
     "label_schema_option_entries",
     "label_schema_record_map",

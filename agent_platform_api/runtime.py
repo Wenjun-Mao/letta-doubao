@@ -21,7 +21,7 @@ from agent_platform_api.dependencies import (
     prompt_persona_registry,
     test_orchestrator,
 )
-from agent_platform_api.model_options import (
+from agent_platform_api.options import (
     DEFAULT_EMBEDDING,
     DEFAULT_MODEL,
     SCENARIO_DEFAULTS,
@@ -117,4 +117,3 @@ def validate_platform_capabilities_startup() -> None:
     missing = missing_platform_capabilities(capabilities)
     if strict_mode and missing:
         raise RuntimeError(f"Missing required Agent Platform capabilities: {', '.join(missing)}")
-

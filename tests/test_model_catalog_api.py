@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
-import agent_platform_api.model_options as model_options
+import agent_platform_api.options.catalog as options_catalog
+import agent_platform_api.options.letta_catalog as letta_catalog
 import agent_platform_api.runtime as runtime
 from agent_platform_api.routers import core, platform_meta
 
@@ -93,10 +94,10 @@ class _FakeRouterClient:
 
 def test_options_api_uses_router_catalog_for_all_scenarios(monkeypatch) -> None:
     monkeypatch.setattr(core, "ensure_platform_api_enabled", lambda: None)
-    monkeypatch.setattr(model_options, "model_router_client", _FakeRouterClient())
+    monkeypatch.setattr(options_catalog, "model_router_client", _FakeRouterClient())
     monkeypatch.setattr(
-        model_options,
-        "_resolve_letta_catalog_handles",
+        letta_catalog,
+        "resolve_letta_catalog_handles",
         lambda: (
             {
                 "openai-proxy/local_llama_server::gemma4",
@@ -126,10 +127,10 @@ def test_options_api_uses_router_catalog_for_all_scenarios(monkeypatch) -> None:
 
 def test_model_catalog_api_reports_router_source_health_and_items(monkeypatch) -> None:
     monkeypatch.setattr(platform_meta, "ensure_platform_api_enabled", lambda: None)
-    monkeypatch.setattr(model_options, "model_router_client", _FakeRouterClient())
+    monkeypatch.setattr(options_catalog, "model_router_client", _FakeRouterClient())
     monkeypatch.setattr(
-        model_options,
-        "_resolve_letta_catalog_handles",
+        letta_catalog,
+        "resolve_letta_catalog_handles",
         lambda: ({"openai-proxy/local_llama_server::gemma4"}, {"letta/letta-free"}),
     )
 
