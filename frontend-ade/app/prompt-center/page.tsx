@@ -231,22 +231,26 @@ export default function PromptCenterPage() {
       const resolvedKey = editingExisting ? draftKey.trim() : normalizeScenarioKey(draftKey, scenario);
       setDraftKey(resolvedKey);
 
-      const payload = {
-        scenario,
-        key: resolvedKey,
+      const templateBody = {
         label: draftLabel.trim() || undefined,
         description: draftDescription.trim() || undefined,
         content: draftContent,
       };
+      const createPayload = {
+        scenario,
+        key: resolvedKey,
+        ...templateBody,
+      };
+      const updateScenario = selected?.scenario || scenario;
 
       const result =
         tab === "prompts"
           ? editingExisting
-            ? await updatePromptTemplate(draftKey.trim(), payload)
-            : await createPromptTemplate(payload)
+            ? await updatePromptTemplate(draftKey.trim(), templateBody, updateScenario)
+            : await createPromptTemplate(createPayload)
           : editingExisting
-            ? await updatePersonaTemplate(draftKey.trim(), payload)
-            : await createPersonaTemplate(payload);
+            ? await updatePersonaTemplate(draftKey.trim(), templateBody, updateScenario)
+            : await createPersonaTemplate(createPayload);
 
       hydrateDraft(result);
       setStatus(`${tab === "prompts" ? copy.promptsTab : copy.personasTab}: ${editingExisting ? copy.saveUpdate : copy.saveCreate} OK`);

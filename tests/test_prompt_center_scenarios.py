@@ -89,6 +89,50 @@ def test_comment_template_lifecycle_respects_scenario_filters(tmp_path) -> None:
     assert remaining == []
 
 
+def test_update_persona_template_can_change_only_content(tmp_path) -> None:
+    registry = PromptPersonaRegistry(tmp_path)
+    registry.create_template(
+        "persona",
+        key="chat_update_persona",
+        content="1",
+        label="Persona One",
+        description="Initial persona",
+    )
+
+    record = registry.update_template(
+        "persona",
+        key="chat_update_persona",
+        content="2",
+        scenario="chat",
+    )
+
+    assert record["content"] == "2"
+    assert record["label"] == "Persona One"
+    assert record["description"] == "Initial persona"
+
+
+def test_update_prompt_template_can_change_only_content(tmp_path) -> None:
+    registry = PromptPersonaRegistry(tmp_path)
+    registry.create_template(
+        "prompt",
+        key="chat_update_prompt",
+        content="1",
+        label="Prompt One",
+        description="Initial prompt",
+    )
+
+    record = registry.update_template(
+        "prompt",
+        key="chat_update_prompt",
+        content="2",
+        scenario="chat",
+    )
+
+    assert record["content"] == "2"
+    assert record["label"] == "Prompt One"
+    assert record["description"] == "Initial prompt"
+
+
 def test_custom_templates_can_omit_label_and_description_metadata(tmp_path) -> None:
     registry = PromptPersonaRegistry(tmp_path)
 

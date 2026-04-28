@@ -5015,6 +5015,22 @@
               "title": "Key",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
+            }
           }
         ],
         "requestBody": {
@@ -5402,6 +5418,22 @@
             "schema": {
               "title": "Key",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Scenario"
             }
           }
         ],

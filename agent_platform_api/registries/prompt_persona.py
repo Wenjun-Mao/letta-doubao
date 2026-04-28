@@ -157,10 +157,23 @@ class PromptPersonaRegistry:
         content: str | None = None,
         label: str | None = None,
         description: str | None = None,
+        scenario: ScenarioKind | None = None,
     ) -> dict[str, Any]:
         normalized = self._normalize_key(key)
-        existing_path = self._find_template_path(kind=kind, key=normalized, archived=False, scenario=None)
-        existing = self.get_template(kind=kind, key=normalized, archived=False)
+        resolved_scenario = self._normalize_scenario(scenario, allow_none=True)
+        self._ensure_supported_persona_scenario(kind, resolved_scenario)
+        existing_path = self._find_template_path(
+            kind=kind,
+            key=normalized,
+            archived=False,
+            scenario=resolved_scenario,
+        )
+        existing = self.get_template(
+            kind=kind,
+            key=normalized,
+            archived=False,
+            scenario=resolved_scenario,
+        )
         if not existing:
             raise RegistryError(f"{kind} '{normalized}' not found")
 

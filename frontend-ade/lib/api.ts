@@ -341,14 +341,21 @@ async function requestJson<T>(path: string, options: RequestOptions = {}): Promi
     }
   }
 
-  const response = await fetch(`${AGENT_PLATFORM_API_BASE_URL}${path}`, {
-    method,
-    cache: "no-store",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: options.body === undefined ? undefined : JSON.stringify(options.body),
-  });
+  const requestUrl = `${AGENT_PLATFORM_API_BASE_URL}${path}`;
+  let response: Response;
+  try {
+    response = await fetch(requestUrl, {
+      method,
+      cache: "no-store",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: options.body === undefined ? undefined : JSON.stringify(options.body),
+    });
+  } catch (exc) {
+    const message = exc instanceof Error ? exc.message : String(exc ?? "network request failed");
+    throw new Error(`${method} ${path} failed: ${message}`);
+  }
 
   if (!response.ok) {
     const payloadText = await response.text();
@@ -848,8 +855,14 @@ export function updatePromptTemplate(
     description?: string;
     content?: string;
   },
+  scenario?: Scenario,
 ) {
-  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/prompts/${key}`, {
+  const params = new URLSearchParams();
+  if (scenario) {
+    params.set("scenario", scenario);
+  }
+  const query = params.toString();
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/prompts/${key}${query ? `?${query}` : ""}`, {
     method: "PATCH",
     body: payload,
   }).then((record) => {
@@ -934,8 +947,14 @@ export function updatePersonaTemplate(
     description?: string;
     content?: string;
   },
+  scenario?: Scenario,
 ) {
-  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/personas/${key}`, {
+  const params = new URLSearchParams();
+  if (scenario) {
+    params.set("scenario", scenario);
+  }
+  const query = params.toString();
+  return requestJson<PromptTemplateRecord>(`/api/v1/platform/prompt-center/personas/${key}${query ? `?${query}` : ""}`, {
     method: "PATCH",
     body: payload,
   }).then((record) => {

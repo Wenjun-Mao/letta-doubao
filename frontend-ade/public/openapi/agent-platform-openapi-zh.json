@@ -5015,6 +5015,22 @@
               "title": "键",
               "type": "string"
             }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
+            }
           }
         ],
         "requestBody": {
@@ -5402,6 +5418,22 @@
             "schema": {
               "title": "键",
               "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "scenario",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "场景"
             }
           }
         ],

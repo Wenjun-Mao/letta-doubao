@@ -111,8 +111,13 @@ async def api_prompt_center_create_prompt(request: PromptTemplateWriteRequest):
     tags=[TAG_PROMPT_CENTER],
     summary="Update system prompt template",
 )
-async def api_prompt_center_update_prompt(key: str, request: PromptTemplatePatchRequest):
+async def api_prompt_center_update_prompt(
+    key: str,
+    request: PromptTemplatePatchRequest,
+    scenario: str | None = None,
+):
     ensure_platform_api_enabled()
+    resolved_scenario = normalize_scenario(scenario) if scenario else None
     if request.label is None and request.description is None and request.content is None:
         raise HTTPException(status_code=400, detail="At least one field must be provided")
 
@@ -123,6 +128,7 @@ async def api_prompt_center_update_prompt(key: str, request: PromptTemplatePatch
             content=request.content,
             label=request.label,
             description=request.description,
+            scenario=resolved_scenario,
         )
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -284,9 +290,14 @@ async def api_prompt_center_create_persona(request: PersonaTemplateWriteRequest)
     tags=[TAG_PROMPT_CENTER],
     summary="Update persona template",
 )
-async def api_prompt_center_update_persona(key: str, request: PersonaTemplatePatchRequest):
+async def api_prompt_center_update_persona(
+    key: str,
+    request: PersonaTemplatePatchRequest,
+    scenario: str | None = None,
+):
     ensure_platform_api_enabled()
-    if _is_label_persona_selector(key=key):
+    resolved_scenario = normalize_scenario(scenario) if scenario else None
+    if _is_label_persona_selector(scenario=resolved_scenario, key=key):
         raise HTTPException(status_code=400, detail="Label scenario does not support persona templates")
     if request.label is None and request.description is None and request.content is None:
         raise HTTPException(status_code=400, detail="At least one field must be provided")
@@ -298,6 +309,7 @@ async def api_prompt_center_update_persona(key: str, request: PersonaTemplatePat
             content=request.content,
             label=request.label,
             description=request.description,
+            scenario=resolved_scenario,
         )
     except RegistryError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
