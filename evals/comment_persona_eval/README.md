@@ -33,7 +33,7 @@ The default config is `evals/comment_persona_eval/config.toml`.
 | `persona_keys` | `[]` | Optional explicit list of persona keys to run. |
 | `persona_search` | `""` | Optional server-side Prompt Center persona search query. |
 | `limit` | `0` | Optional cap on matched personas; `0` means no cap. |
-| `model_key` | `local_llama_server::gemma4` | Router-scoped Comment Lab model key. |
+| `model_key` | `ark::doubao-seed-2-0-pro-260215` | Router-scoped Comment Lab model key. |
 | `prompt_key` | `comment_v20260418` | Comment Lab system prompt key. |
 | `max_tokens` | `0` | Comment Lab token budget; `0` means no `max_tokens` is sent. |
 | `timeout_seconds` | `180` | Provider timeout sent to Comment Lab. |
@@ -61,5 +61,6 @@ The JSONL sidecar preserves the full request, persona metadata, response payload
 ## Troubleshooting
 
 - If persona listing fails, make sure `agent_platform_api` is rebuilt/restarted and can open `data/personas/personas.sqlite3`.
+- If the script says `model_key ... is not available`, copy an exact key from `GET /api/v1/options?scenario=comment`; Ark model ids are exact, including version fragments such as `2-0`.
 - If model calls fail, check `http://127.0.0.1:8290/v1/router/model-catalog` and confirm `local_llama_server::gemma4` is healthy.
 - If the run is slow, lower `rounds`, use `--persona-key`, or use `--limit` for a pilot run.

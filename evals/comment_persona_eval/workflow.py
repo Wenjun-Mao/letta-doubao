@@ -170,6 +170,38 @@ def fetch_comment_personas(client: httpx.Client, config: EvalConfig) -> list[dic
     return personas
 
 
+def validate_comment_options(client: httpx.Client, config: EvalConfig) -> None:
+    payload = _request_json(
+        client,
+        "GET",
+        "/api/v1/options",
+        retry_count=config.api_retry_count,
+        params={"scenario": "comment"},
+    )
+    models = payload.get("models", []) if isinstance(payload, dict) else []
+    prompts = payload.get("prompts", []) if isinstance(payload, dict) else []
+    model_keys = {
+        str(item.get("key") or item.get("model_key") or "").strip()
+        for item in models
+        if isinstance(item, dict)
+    }
+    prompt_keys = {
+        str(item.get("key") or "").strip()
+        for item in prompts
+        if isinstance(item, dict)
+    }
+    if config.model_key not in model_keys:
+        raise ConfigError(
+            f"model_key '{config.model_key}' is not available from /api/v1/options?scenario=comment. "
+            f"Available examples: {', '.join(sorted(model_keys)[:10])}"
+        )
+    if config.prompt_key not in prompt_keys:
+        raise ConfigError(
+            f"prompt_key '{config.prompt_key}' is not available from /api/v1/options?scenario=comment. "
+            f"Available prompts: {', '.join(sorted(prompt_keys))}"
+        )
+
+
 def run_evaluation(config: EvalConfig, *, now: datetime | None = None) -> dict[str, Any]:
     run_timestamp = (now or datetime.now()).strftime("%Y%m%d_%H%M%S")
     run_id = f"comment-persona-eval-{run_timestamp}-{uuid4().hex[:8]}"
@@ -185,6 +217,7 @@ def run_evaluation(config: EvalConfig, *, now: datetime | None = None) -> dict[s
     rows: list[dict[str, Any]] = []
     raw_records: list[dict[str, Any]] = []
     with httpx.Client(base_url=config.api_base_url, timeout=timeout) as client:
+        validate_comment_options(client, config)
         personas = fetch_comment_personas(client, config)
         for round_number in range(1, config.rounds + 1):
             for persona in personas:

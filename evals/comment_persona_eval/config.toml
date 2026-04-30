@@ -16,7 +16,7 @@ persona_search = ""
 limit = 0
 
 # Comment Lab request options.
-model_key = "local_llama_server::gemma4"
+model_key = "ark::doubao-seed-2-0-pro-260215"
 prompt_key = "comment_v20260418"
 max_tokens = 0
 timeout_seconds = 180

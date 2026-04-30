@@ -327,12 +327,7 @@ class PersonaSqliteRegistry:
         conn = sqlite3.connect(self.db_path)
         conn.row_factory = sqlite3.Row
         conn.execute("PRAGMA foreign_keys = ON")
-        try:
-            conn.execute("PRAGMA journal_mode = WAL")
-        except sqlite3.OperationalError:
-            # Windows/WSL-style bind mounts can reject WAL sidecar files. The
-            # persona library is low-write, so rollback journaling is fine.
-            conn.execute("PRAGMA journal_mode = DELETE")
+        conn.execute("PRAGMA busy_timeout = 5000")
         return conn
 
     def _upsert_fts(self, conn: sqlite3.Connection, row: sqlite3.Row) -> None:

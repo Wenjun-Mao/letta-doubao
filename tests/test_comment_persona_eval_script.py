@@ -12,6 +12,7 @@ from evals.comment_persona_eval.workflow import (
     fetch_comment_personas,
     load_config,
     run_attempt,
+    validate_comment_options,
     write_artifacts,
 )
 
@@ -23,7 +24,7 @@ def _response(status_code: int, payload: dict[str, Any], request: httpx.Request)
 def test_default_config_loads_comment_lab_values() -> None:
     config = load_config(Path("evals/comment_persona_eval/config.toml"))
 
-    assert config.model_key == "local_llama_server::gemma4"
+    assert config.model_key == "ark::doubao-seed-2-0-pro-260215"
     assert config.prompt_key == "comment_v20260418"
     assert config.max_tokens == 0
     assert config.timeout_seconds == 180
@@ -60,6 +61,31 @@ def test_fetch_comment_personas_filters_by_key_search_and_limit() -> None:
         personas = fetch_comment_personas(client, config)
 
     assert [item["key"] for item in personas] == ["comment_second"]
+
+
+def test_validate_comment_options_rejects_unavailable_model_key() -> None:
+    def handler(request: httpx.Request) -> httpx.Response:
+        return _response(
+            200,
+            {
+                "models": [{"key": "ark::doubao-seed-2-0-pro-260215"}],
+                "prompts": [{"key": "comment_v20260418"}],
+            },
+            request,
+        )
+
+    config = EvalConfig(
+        news_path=Path("evals/comment_persona_eval/inputs/sports_news_demo.txt"),
+        model_key="ark::doubao-seed-2-pro-260215",
+    )
+    with httpx.Client(base_url="http://test", transport=httpx.MockTransport(handler)) as client:
+        try:
+            validate_comment_options(client, config)
+        except ValueError as exc:
+            assert "is not available" in str(exc)
+            assert "ark::doubao-seed-2-0-pro-260215" in str(exc)
+        else:
+            raise AssertionError("Expected unavailable model_key to fail preflight validation")
 
 
 def test_run_attempt_uses_comment_lab_payload_and_flattens_success() -> None:
