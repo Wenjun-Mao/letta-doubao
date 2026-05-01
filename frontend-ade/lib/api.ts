@@ -145,6 +145,9 @@ export type CommentingGenerateResponse = {
   max_tokens: number;
   timeout_seconds: number;
   task_shape: CommentingTaskShape;
+  cache_prompt: boolean;
+  temperature: number;
+  top_p: number;
   content_source?: string | null;
   selected_attempt: string;
   finish_reason?: string | null;
@@ -173,6 +176,8 @@ export type LabelingGenerateResponse = {
   raw_request: Record<string, unknown>;
   raw_reply: Record<string, unknown>;
   validation_errors: string[];
+  temperature: number;
+  top_p: number;
 };
 
 export type LabelSchemaRecord = {
@@ -455,11 +460,20 @@ export function fetchOptions(
       max_tokens: number;
       timeout_seconds: number;
       task_shape: CommentingTaskShape;
+      cache_prompt: boolean;
+      temperature: number;
+      top_p: number;
     };
     labeling?: {
       max_tokens: number;
       timeout_seconds: number;
       repair_retry_count: number;
+      temperature: number;
+      top_p: number;
+    };
+    agent_studio?: {
+      temperature?: number | null;
+      top_p?: number | null;
     };
   }>(`/api/v1/options?${params.toString()}`, requestOptions);
 }
@@ -487,6 +501,8 @@ export function createAgent(payload: {
   prompt_key: string;
   persona_key?: string;
   embedding?: string | null;
+  temperature?: number;
+  top_p?: number;
 }) {
   return requestJson<{
     id: string;
@@ -578,6 +594,9 @@ export function generateComment(payload: {
   timeout_seconds?: number;
   retry_count?: number;
   task_shape?: CommentingTaskShape;
+  cache_prompt?: boolean;
+  temperature?: number;
+  top_p?: number;
 }) {
   return requestJson<CommentingGenerateResponse>("/api/v1/commenting/generate", {
     method: "POST",
@@ -592,6 +611,9 @@ export function generateComment(payload: {
       timeout_seconds: payload.timeout_seconds,
       retry_count: payload.retry_count,
       task_shape: payload.task_shape,
+      cache_prompt: payload.cache_prompt,
+      temperature: payload.temperature,
+      top_p: payload.top_p,
     },
   });
 }
@@ -604,6 +626,8 @@ export function generateLabels(payload: {
   max_tokens?: number;
   timeout_seconds?: number;
   repair_retry_count?: number;
+  temperature?: number;
+  top_p?: number;
 }) {
   return requestJson<LabelingGenerateResponse>("/api/v1/labeling/generate", {
     method: "POST",
@@ -616,6 +640,8 @@ export function generateLabels(payload: {
       max_tokens: payload.max_tokens,
       timeout_seconds: payload.timeout_seconds,
       repair_retry_count: payload.repair_retry_count,
+      temperature: payload.temperature,
+      top_p: payload.top_p,
     },
   });
 }

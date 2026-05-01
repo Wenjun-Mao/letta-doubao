@@ -123,6 +123,12 @@ def test_options_api_uses_router_catalog_for_all_scenarios(monkeypatch) -> None:
     assert [item["key"] for item in label_payload["models"]] == ["local_llama_server::gemma4"]
     assert label_payload["models"][0]["structured_output_mode"] == "json_schema"
     assert label_payload["defaults"]["schema_key"] == "label_entity_groups_v1"
+    assert chat_payload["agent_studio"] == {"temperature": None, "top_p": None}
+    assert comment_payload["commenting"]["cache_prompt"] is False
+    assert comment_payload["commenting"]["temperature"] == 0.6
+    assert comment_payload["commenting"]["top_p"] == 1.0
+    assert label_payload["labeling"]["temperature"] == 0.0
+    assert label_payload["labeling"]["top_p"] == 1.0
 
 
 def test_model_catalog_api_reports_router_source_health_and_items(monkeypatch) -> None:

@@ -28,6 +28,9 @@ class _RetryableCommentingError(RuntimeError):
 
 DEFAULT_COMMENTING_RETRY_COUNT = 0
 MAX_COMMENTING_RETRY_COUNT = 5
+DEFAULT_COMMENTING_CACHE_PROMPT = False
+DEFAULT_COMMENTING_TEMPERATURE = 0.6
+DEFAULT_COMMENTING_TOP_P = 1.0
 _RETRYABLE_COMMENTING_EXCEPTIONS = (
     _RetryableCommentingError,
     httpx.TimeoutException,
@@ -50,11 +53,7 @@ class CommentingService:
     )
     _TASK_SHAPES = {"classic", "all_in_system", "structured_output"}
 
-    def __init__(
-        self,
-        *,
-        settings_factory=get_settings,
-    ):
+    def __init__(self, *, settings_factory=get_settings):
         self._settings_factory = settings_factory
 
     @staticmethod
@@ -74,6 +73,18 @@ class CommentingService:
             return DEFAULT_COMMENTING_RETRY_COUNT
         return max(0, min(MAX_COMMENTING_RETRY_COUNT, int(value)))
 
+    @staticmethod
+    def _clamp_temperature(value: float | None) -> float:
+        return DEFAULT_COMMENTING_TEMPERATURE if value is None else max(0.0, min(2.0, float(value)))
+
+    @staticmethod
+    def _clamp_top_p(value: float | None) -> float:
+        return DEFAULT_COMMENTING_TOP_P if value is None else max(0.01, min(1.0, float(value)))
+
+    @staticmethod
+    def _is_llama_cpp_adapter(source_adapter: str | None) -> bool:
+        return str(source_adapter or "").strip().lower() == "llama_cpp_server"
+
     @classmethod
     def _resolve_task_shape(cls, value: str | None) -> str:
         resolved = str(value or "").strip().lower()
@@ -89,6 +100,9 @@ class CommentingService:
             "max_tokens": self._clamp_max_tokens(settings.commenting_max_tokens),
             "timeout_seconds": self._clamp_timeout_seconds(settings.commenting_timeout_seconds),
             "task_shape": self._resolve_task_shape(settings.commenting_task_shape),
+            "cache_prompt": bool(settings.commenting_cache_prompt),
+            "temperature": self._clamp_temperature(settings.commenting_temperature),
+            "top_p": self._clamp_top_p(settings.commenting_top_p),
         }
 
     @staticmethod
@@ -170,6 +184,29 @@ class CommentingService:
             reraise=True,
         )
 
+    @staticmethod
+    def _generation_result(
+        *,
+        content: str,
+        content_source: str,
+        selected_attempt: str,
+        finish_reason: str,
+        data: dict[str, Any],
+        payload: dict[str, Any],
+        runtime: dict[str, Any],
+    ) -> dict[str, Any]:
+        return {
+            "content": content,
+            "content_source": content_source,
+            "selected_attempt": selected_attempt,
+            "finish_reason": finish_reason,
+            "usage": data.get("usage", {}) if isinstance(data.get("usage", {}), dict) else {},
+            "received_at": datetime.now(timezone.utc).isoformat(),
+            "raw_request": payload,
+            "raw_reply": data,
+            **runtime,
+        }
+
     def generate_comment(
         self,
         *,
@@ -183,6 +220,10 @@ class CommentingService:
         timeout_seconds: float | None = None,
         retry_count: int | None = None,
         task_shape: str | None = None,
+        source_adapter: str | None = None,
+        cache_prompt: bool | None = None,
+        temperature: float | None = None,
+        top_p: float | None = None,
     ) -> dict[str, Any]:
         resolved_base_url = str(base_url or "").strip()
         if not resolved_base_url:
@@ -201,6 +242,17 @@ class CommentingService:
         )
         resolved_retry_count = self._clamp_retry_count(retry_count)
         resolved_task_shape = runtime_defaults["task_shape"] if task_shape is None else self._resolve_task_shape(task_shape)
+        resolved_cache_prompt = bool(runtime_defaults["cache_prompt"]) if cache_prompt is None else bool(cache_prompt)
+        resolved_temperature = float(runtime_defaults["temperature"]) if temperature is None else self._clamp_temperature(temperature)
+        resolved_top_p = float(runtime_defaults["top_p"]) if top_p is None else self._clamp_top_p(top_p)
+        response_runtime = {
+            "max_tokens": resolved_max_tokens,
+            "timeout_seconds": resolved_timeout_seconds,
+            "task_shape": resolved_task_shape,
+            "cache_prompt": resolved_cache_prompt,
+            "temperature": resolved_temperature,
+            "top_p": resolved_top_p,
+        }
 
         classic_payload = {
             "model": resolved_model,
@@ -214,7 +266,8 @@ class CommentingService:
                     ),
                 },
             ],
-            "temperature": 0.6,
+            "temperature": resolved_temperature,
+            "top_p": resolved_top_p,
             "max_tokens": resolved_max_tokens,
         }
 
@@ -230,7 +283,8 @@ class CommentingService:
                 },
                 {"role": "user", "content": str(news_input or "").strip()},
             ],
-            "temperature": 0.6,
+            "temperature": resolved_temperature,
+            "top_p": resolved_top_p,
             "max_tokens": resolved_max_tokens,
         }
 
@@ -246,7 +300,8 @@ class CommentingService:
                 },
                 {"role": "user", "content": str(news_input or "").strip()},
             ],
-            "temperature": 0.2,
+            "temperature": resolved_temperature,
+            "top_p": resolved_top_p,
             "max_tokens": resolved_max_tokens,
             "response_format": structured_response_format(),
         }
@@ -261,6 +316,8 @@ class CommentingService:
 
         if resolved_max_tokens == 0:
             payload.pop("max_tokens", None)
+        if self._is_llama_cpp_adapter(source_adapter):
+            payload["cache_prompt"] = resolved_cache_prompt
 
         try:
             data = self._post_chat_completions(
@@ -308,54 +365,42 @@ class CommentingService:
                 if reasoning_structured:
                     cleaned_reasoning_structured = sanitize_comment(reasoning_structured)
                     if is_publishable_comment(cleaned_reasoning_structured):
-                        return {
-                            "content": cleaned_reasoning_structured,
-                            "content_source": "structured_json_reasoning_content",
-                            "selected_attempt": resolved_task_shape,
-                            "finish_reason": finish_reason,
-                            "usage": data.get("usage", {}) if isinstance(data.get("usage", {}), dict) else {},
-                            "received_at": datetime.now(timezone.utc).isoformat(),
-                            "raw_request": payload,
-                            "raw_reply": data,
-                            "max_tokens": resolved_max_tokens,
-                            "timeout_seconds": resolved_timeout_seconds,
-                            "task_shape": resolved_task_shape,
-                        }
+                        return self._generation_result(
+                            content=cleaned_reasoning_structured,
+                            content_source="structured_json_reasoning_content",
+                            selected_attempt=resolved_task_shape,
+                            finish_reason=finish_reason,
+                            data=data,
+                            payload=payload,
+                            runtime=response_runtime,
+                        )
 
         if content:
             cleaned_content = sanitize_comment(content)
             if is_publishable_comment(cleaned_content):
-                return {
-                    "content": cleaned_content,
-                    "content_source": "assistant_content",
-                    "selected_attempt": resolved_task_shape,
-                    "finish_reason": finish_reason,
-                    "usage": data.get("usage", {}) if isinstance(data.get("usage", {}), dict) else {},
-                    "received_at": datetime.now(timezone.utc).isoformat(),
-                    "raw_request": payload,
-                    "raw_reply": data,
-                    "max_tokens": resolved_max_tokens,
-                    "timeout_seconds": resolved_timeout_seconds,
-                    "task_shape": resolved_task_shape,
-                }
+                return self._generation_result(
+                    content=cleaned_content,
+                    content_source="assistant_content",
+                    selected_attempt=resolved_task_shape,
+                    finish_reason=finish_reason,
+                    data=data,
+                    payload=payload,
+                    runtime=response_runtime,
+                )
 
         recovered = extract_comment_from_reasoning(reasoning)
         if recovered:
             cleaned_recovered = sanitize_comment(recovered)
             if is_publishable_comment(cleaned_recovered):
-                return {
-                    "content": cleaned_recovered,
-                    "content_source": "reasoning_tail_extraction",
-                    "selected_attempt": resolved_task_shape,
-                    "finish_reason": finish_reason,
-                    "usage": data.get("usage", {}) if isinstance(data.get("usage", {}), dict) else {},
-                    "received_at": datetime.now(timezone.utc).isoformat(),
-                    "raw_request": payload,
-                    "raw_reply": data,
-                    "max_tokens": resolved_max_tokens,
-                    "timeout_seconds": resolved_timeout_seconds,
-                    "task_shape": resolved_task_shape,
-                }
+                return self._generation_result(
+                    content=cleaned_recovered,
+                    content_source="reasoning_tail_extraction",
+                    selected_attempt=resolved_task_shape,
+                    finish_reason=finish_reason,
+                    data=data,
+                    payload=payload,
+                    runtime=response_runtime,
+                )
 
         if finish_reason and finish_reason != "stop":
             raise ValueError(

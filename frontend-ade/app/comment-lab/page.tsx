@@ -28,6 +28,10 @@ const COPY = {
     taskShapeClassic: "Classic (persona in user)",
     taskShapeAllInSystem: "All in system",
     taskShapeStructuredOutput: "Structured output (JSON)",
+    cachePrompt: "Use prompt cache",
+    cachePromptHint: "Off by default for fair persona comparisons on llama-server.",
+    temperature: "Temperature",
+    topP: "Top P",
     userInput: "Input Text",
     userInputPlaceholder: "Paste a news summary, a thread excerpt, or your own draft context here...",
     generate: "Generate Comment",
@@ -41,6 +45,9 @@ const COPY = {
     maxTokensUsed: "Max Tokens Used",
     timeoutUsed: "Timeout Used",
     taskShapeUsed: "Task Shape Used",
+    cachePromptUsed: "Prompt Cache Used",
+    temperatureUsed: "Temperature Used",
+    topPUsed: "Top P Used",
     runtimeMetaTitle: "Runtime",
     timingMetaTitle: "Timing",
     tokenMetaTitle: "Token Usage",
@@ -70,6 +77,8 @@ const COPY = {
     invalidMaxTokens: "Max tokens must be a non-negative integer (0 means no limit).",
     invalidTimeout: "Timeout must be a positive number.",
     invalidRetryCount: "Retry count must be an integer between 0 and 5.",
+    invalidTemperature: "Temperature must be between 0 and 2.",
+    invalidTopP: "Top P must be greater than 0 and at most 1.",
     loadingError: "Failed to load commenting options",
     generateError: "Comment generation failed",
   },
@@ -94,6 +103,10 @@ const COPY = {
     taskShapeClassic: "经典模式（persona 放在 user）",
     taskShapeAllInSystem: "全部放在 system",
     taskShapeStructuredOutput: "结构化输出（JSON）",
+    cachePrompt: "使用 Prompt 缓存",
+    cachePromptHint: "默认关闭，便于在 llama-server 上公平比较 Persona。",
+    temperature: "Temperature",
+    topP: "Top P",
     userInput: "输入文本",
     userInputPlaceholder: "粘贴新闻摘要、评论串内容，或你的草稿上下文...",
     generate: "生成评论",
@@ -107,6 +120,9 @@ const COPY = {
     maxTokensUsed: "实际最大 Token",
     timeoutUsed: "实际超时",
     taskShapeUsed: "实际任务形状",
+    cachePromptUsed: "实际 Prompt 缓存",
+    temperatureUsed: "实际 Temperature",
+    topPUsed: "实际 Top P",
     runtimeMetaTitle: "运行参数",
     timingMetaTitle: "时序",
     tokenMetaTitle: "Token 使用",
@@ -136,6 +152,8 @@ const COPY = {
     invalidMaxTokens: "最大 Token 必须是非负整数（0 表示不限制）。",
     invalidTimeout: "超时时间必须是正数。",
     invalidRetryCount: "重试次数必须是 0 到 5 之间的整数。",
+    invalidTemperature: "Temperature 必须在 0 到 2 之间。",
+    invalidTopP: "Top P 必须大于 0 且不超过 1。",
     loadingError: "加载评论配置失败",
     generateError: "评论生成失败",
   },
@@ -183,6 +201,22 @@ function parsePositiveFloat(value: string): number | null {
 function parseRetryCount(value: string): number | null {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed < 0 || parsed > 5) {
+    return null;
+  }
+  return parsed;
+}
+
+function parseTemperature(value: string): number | null {
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 2) {
+    return null;
+  }
+  return parsed;
+}
+
+function parseTopP(value: string): number | null {
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 1) {
     return null;
   }
   return parsed;
@@ -249,6 +283,8 @@ function formatRawRequestForHuman(value: unknown): string {
   const lines: string[] = [];
   lines.push(`Model: ${String(payload.model ?? "-")}`);
   lines.push(`Temperature: ${String(payload.temperature ?? "-")}`);
+  lines.push(`Top P: ${String(payload.top_p ?? "-")}`);
+  lines.push(`Cache Prompt: ${String(payload.cache_prompt ?? "-")}`);
   lines.push(`Max Tokens: ${String(payload.max_tokens ?? "-")}`);
 
   const messages = Array.isArray(payload.messages) ? payload.messages : [];
@@ -339,6 +375,9 @@ export default function CommentLabPage() {
   const [timeoutSeconds, setTimeoutSeconds] = useState("180");
   const [retryCount, setRetryCount] = useState("0");
   const [taskShape, setTaskShape] = useState<CommentingTaskShape>("classic");
+  const [cachePrompt, setCachePrompt] = useState(false);
+  const [temperature, setTemperature] = useState("0.6");
+  const [topP, setTopP] = useState("1");
 
   const [userInput, setUserInput] = useState("");
   const [output, setOutput] = useState("");
@@ -347,6 +386,9 @@ export default function CommentLabPage() {
   const [maxTokensUsed, setMaxTokensUsed] = useState("");
   const [timeoutUsed, setTimeoutUsed] = useState("");
   const [taskShapeUsed, setTaskShapeUsed] = useState("");
+  const [cachePromptUsed, setCachePromptUsed] = useState("");
+  const [temperatureUsed, setTemperatureUsed] = useState("");
+  const [topPUsed, setTopPUsed] = useState("");
   const [usagePromptTokens, setUsagePromptTokens] = useState("");
   const [usageCompletionTokens, setUsageCompletionTokens] = useState("");
   const [usageTotalTokens, setUsageTotalTokens] = useState("");
@@ -402,6 +444,9 @@ export default function CommentLabPage() {
         setMaxTokens(`${payload.commenting.max_tokens}`);
         setTimeoutSeconds(`${payload.commenting.timeout_seconds}`);
         setTaskShape(payload.commenting.task_shape);
+        setCachePrompt(Boolean(payload.commenting.cache_prompt));
+        setTemperature(`${payload.commenting.temperature}`);
+        setTopP(`${payload.commenting.top_p}`);
       }
 
       setStatus(copy.optionsRefreshed);
@@ -448,6 +493,16 @@ export default function CommentLabPage() {
       setError(copy.invalidRetryCount);
       return;
     }
+    const parsedTemperature = parseTemperature(temperature);
+    if (parsedTemperature === null) {
+      setError(copy.invalidTemperature);
+      return;
+    }
+    const parsedTopP = parseTopP(topP);
+    if (parsedTopP === null) {
+      setError(copy.invalidTopP);
+      return;
+    }
 
     setSubmitting(true);
     const startedAtMs = performance.now();
@@ -461,6 +516,9 @@ export default function CommentLabPage() {
         timeout_seconds: parsedTimeoutSeconds,
         retry_count: parsedRetryCount,
         task_shape: taskShape,
+        cache_prompt: cachePrompt,
+        temperature: parsedTemperature,
+        top_p: parsedTopP,
       });
       setOutput(payload.content || "");
       setProvider(payload.provider || "");
@@ -468,6 +526,9 @@ export default function CommentLabPage() {
       setMaxTokensUsed(`${payload.max_tokens}`);
       setTimeoutUsed(`${payload.timeout_seconds}`);
       setTaskShapeUsed(payload.task_shape || "");
+      setCachePromptUsed(payload.cache_prompt ? "true" : "false");
+      setTemperatureUsed(`${payload.temperature}`);
+      setTopPUsed(`${payload.top_p}`);
       const usage = asObject(payload.usage);
       const completionTokensDetails = asObject(usage.completion_tokens_details);
       setUsagePromptTokens(asIntString(usage.prompt_tokens));
@@ -625,6 +686,48 @@ export default function CommentLabPage() {
                 <option value="structured_output">{copy.taskShapeStructuredOutput}</option>
               </select>
             </label>
+
+            <label className="field">
+              <span>{copy.temperature}</span>
+              <input
+                className="input"
+                type="number"
+                min={0}
+                max={2}
+                step={0.1}
+                value={temperature}
+                onChange={(event) => setTemperature(event.target.value)}
+                disabled={submitting}
+              />
+            </label>
+
+            <label className="field">
+              <span>{copy.topP}</span>
+              <input
+                className="input"
+                type="number"
+                min={0.01}
+                max={1}
+                step={0.05}
+                value={topP}
+                onChange={(event) => setTopP(event.target.value)}
+                disabled={submitting}
+              />
+            </label>
+
+            <label className="field">
+              <span>{copy.cachePrompt}</span>
+              <label className="muted" style={{ fontSize: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={cachePrompt}
+                  onChange={(event) => setCachePrompt(event.target.checked)}
+                  disabled={submitting}
+                  style={{ marginRight: 8 }}
+                />
+                {copy.cachePromptHint}
+              </label>
+            </label>
           </div>
 
           <div className="toolbar" style={{ marginTop: 12 }}>
@@ -679,6 +782,15 @@ export default function CommentLabPage() {
                 </div>
                 <div>
                   {copy.taskShapeUsed}: {taskShapeUsed || "-"}
+                </div>
+                <div>
+                  {copy.cachePromptUsed}: {cachePromptUsed || "-"}
+                </div>
+                <div>
+                  {copy.temperatureUsed}: {temperatureUsed || "-"}
+                </div>
+                <div>
+                  {copy.topPUsed}: {topPUsed || "-"}
                 </div>
                 <div>
                   {copy.maxTokensUsed}: {maxTokensUsed || "-"}

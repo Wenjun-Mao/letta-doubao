@@ -37,6 +37,8 @@ const COPY = {
     maxTokens: "Max Tokens",
     timeoutSeconds: "Timeout (seconds)",
     repairRetryCount: "Repair Retry Count",
+    temperature: "Temperature",
+    topP: "Top P",
     articleInput: "Article Text",
     articleInputPlaceholder: "Paste the article text that you want to extract entities from...",
     promptPreview: "Prompt Preview",
@@ -55,6 +57,8 @@ const COPY = {
     provider: "Provider",
     modelUsed: "Model Used",
     outputMode: "Output Mode",
+    temperatureUsed: "Temperature Used",
+    topPUsed: "Top P Used",
     selectedAttempt: "Selected Attempt",
     finishReason: "Finish Reason",
     responseSeconds: "Response Time (s)",
@@ -75,6 +79,8 @@ const COPY = {
     invalidMaxTokens: "Max tokens must be a non-negative integer (0 means no limit).",
     invalidTimeout: "Timeout must be a positive number.",
     invalidRepairRetryCount: "Repair retry count must be an integer between 0 and 3.",
+    invalidTemperature: "Temperature must be between 0 and 2.",
+    invalidTopP: "Top P must be greater than 0 and at most 1.",
     loadingError: "Failed to load labeling options",
     generateError: "Label generation failed",
     emptyGroup: "No matches returned.",
@@ -99,6 +105,8 @@ const COPY = {
     maxTokens: "最大 Token",
     timeoutSeconds: "超时时间（秒）",
     repairRetryCount: "修复重试次数",
+    temperature: "Temperature",
+    topP: "Top P",
     articleInput: "文章文本",
     articleInputPlaceholder: "粘贴需要提取实体的文章文本...",
     promptPreview: "Prompt 预览",
@@ -117,6 +125,8 @@ const COPY = {
     provider: "Provider",
     modelUsed: "使用模型",
     outputMode: "输出模式",
+    temperatureUsed: "实际 Temperature",
+    topPUsed: "实际 Top P",
     selectedAttempt: "命中尝试",
     finishReason: "完成原因",
     responseSeconds: "响应耗时（秒）",
@@ -137,6 +147,8 @@ const COPY = {
     invalidMaxTokens: "最大 Token 必须是非负整数（0 表示不限制）。",
     invalidTimeout: "超时时间必须是正数。",
     invalidRepairRetryCount: "修复重试次数必须是 0 到 3 之间的整数。",
+    invalidTemperature: "Temperature 必须在 0 到 2 之间。",
+    invalidTopP: "Top P 必须大于 0 且不超过 1。",
     loadingError: "加载标注配置失败",
     generateError: "标注生成失败",
     emptyGroup: "未返回匹配项。",
@@ -181,6 +193,22 @@ function parsePositiveFloat(value: string): number | null {
 function parseRepairRetryCount(value: string): number | null {
   const parsed = Number.parseInt(value, 10);
   if (!Number.isFinite(parsed) || parsed < 0 || parsed > 3) {
+    return null;
+  }
+  return parsed;
+}
+
+function parseTemperature(value: string): number | null {
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 2) {
+    return null;
+  }
+  return parsed;
+}
+
+function parseTopP(value: string): number | null {
+  const parsed = Number.parseFloat(value);
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 1) {
     return null;
   }
   return parsed;
@@ -255,6 +283,8 @@ export default function LabelLabPage() {
   const [maxTokens, setMaxTokens] = useState("1024");
   const [timeoutSeconds, setTimeoutSeconds] = useState("60");
   const [repairRetryCount, setRepairRetryCount] = useState("1");
+  const [temperature, setTemperature] = useState("0");
+  const [topP, setTopP] = useState("1");
 
   const [articleInput, setArticleInput] = useState("");
   const [resultJson, setResultJson] = useState("");
@@ -262,6 +292,8 @@ export default function LabelLabPage() {
   const [provider, setProvider] = useState("");
   const [modelUsed, setModelUsed] = useState("");
   const [outputMode, setOutputMode] = useState("");
+  const [temperatureUsed, setTemperatureUsed] = useState("");
+  const [topPUsed, setTopPUsed] = useState("");
   const [selectedAttempt, setSelectedAttempt] = useState("");
   const [finishReason, setFinishReason] = useState("");
   const [responseSeconds, setResponseSeconds] = useState("");
@@ -349,6 +381,8 @@ export default function LabelLabPage() {
         setMaxTokens(`${optionsPayload.labeling.max_tokens}`);
         setTimeoutSeconds(`${optionsPayload.labeling.timeout_seconds}`);
         setRepairRetryCount(`${optionsPayload.labeling.repair_retry_count}`);
+        setTemperature(`${optionsPayload.labeling.temperature}`);
+        setTopP(`${optionsPayload.labeling.top_p}`);
       }
 
       setStatus(copy.optionsRefreshed);
@@ -392,6 +426,16 @@ export default function LabelLabPage() {
       setError(copy.invalidRepairRetryCount);
       return;
     }
+    const parsedTemperature = parseTemperature(temperature);
+    if (parsedTemperature === null) {
+      setError(copy.invalidTemperature);
+      return;
+    }
+    const parsedTopP = parseTopP(topP);
+    if (parsedTopP === null) {
+      setError(copy.invalidTopP);
+      return;
+    }
 
     setSubmitting(true);
     const startedAtMs = performance.now();
@@ -404,6 +448,8 @@ export default function LabelLabPage() {
         max_tokens: parsedMaxTokens,
         timeout_seconds: parsedTimeoutSeconds,
         repair_retry_count: parsedRepairRetryCount,
+        temperature: parsedTemperature,
+        top_p: parsedTopP,
       });
       const nextResult = asObject(payload.result) as LabelExtractionResult;
       setResultJson(stringifyPretty(nextResult || {}));
@@ -411,6 +457,8 @@ export default function LabelLabPage() {
       setProvider(payload.source_label || "");
       setModelUsed(payload.provider_model_id || "");
       setOutputMode(payload.output_mode || "");
+      setTemperatureUsed(`${payload.temperature}`);
+      setTopPUsed(`${payload.top_p}`);
       setSelectedAttempt(payload.selected_attempt || "");
       setFinishReason(payload.finish_reason || "");
       setResponseSeconds((Math.max(0, performance.now() - startedAtMs) / 1000).toFixed(2));
@@ -508,6 +556,16 @@ export default function LabelLabPage() {
               <span>{copy.repairRetryCount}</span>
               <input className="input" type="number" min={0} max={3} step={1} value={repairRetryCount} onChange={(event) => setRepairRetryCount(event.target.value)} disabled={submitting} />
             </label>
+
+            <label className="field">
+              <span>{copy.temperature}</span>
+              <input className="input" type="number" min={0} max={2} step={0.1} value={temperature} onChange={(event) => setTemperature(event.target.value)} disabled={submitting} />
+            </label>
+
+            <label className="field">
+              <span>{copy.topP}</span>
+              <input className="input" type="number" min={0.01} max={1} step={0.05} value={topP} onChange={(event) => setTopP(event.target.value)} disabled={submitting} />
+            </label>
           </div>
 
           <div className="toolbar" style={{ marginTop: 12 }}>
@@ -570,6 +628,8 @@ export default function LabelLabPage() {
                 <div>{copy.provider}: {provider || "-"}</div>
                 <div>{copy.modelUsed}: {modelUsed || "-"}</div>
                 <div>{copy.outputMode}: {outputMode || "-"}</div>
+                <div>{copy.temperatureUsed}: {temperatureUsed || "-"}</div>
+                <div>{copy.topPUsed}: {topPUsed || "-"}</div>
                 <div>{copy.selectedAttempt}: {selectedAttempt || "-"}</div>
                 <div>{copy.finishReason}: {finishReason || "-"}</div>
                 <div>{copy.responseSeconds}: {responseSeconds || "-"}</div>

@@ -43,6 +43,32 @@
             ],
             "title": "场景",
             "type": "string"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top P"
           }
         },
         "title": "智能体创建请求",
@@ -339,6 +365,34 @@
         "title": "智能体清除响应",
         "type": "object"
       },
+      "ApiAgentStudioRuntimeDefaultsResponse": {
+        "properties": {
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top P"
+          }
+        },
+        "title": "API 智能体 工作台 运行时 默认值 响应",
+        "type": "object"
+      },
       "ApiChatResponse": {
         "properties": {
           "memory_diff": {
@@ -365,6 +419,10 @@
       },
       "ApiCommentingGenerateResponse": {
         "properties": {
+          "cache_prompt": {
+            "title": "缓存 提示词",
+            "type": "boolean"
+          },
           "content": {
             "title": "内容",
             "type": "string"
@@ -470,8 +528,16 @@
             "title": "任务形态",
             "type": "string"
           },
+          "temperature": {
+            "title": "Temperature",
+            "type": "number"
+          },
           "timeout_seconds": {
             "title": "超时秒数",
+            "type": "number"
+          },
+          "top_p": {
+            "title": "Top P",
             "type": "number"
           },
           "usage": {
@@ -494,6 +560,9 @@
           "max_tokens",
           "timeout_seconds",
           "task_shape",
+          "cache_prompt",
+          "temperature",
+          "top_p",
           "selected_attempt"
         ],
         "title": "API 评论 生成 响应",
@@ -501,6 +570,10 @@
       },
       "ApiCommentingRuntimeDefaultsResponse": {
         "properties": {
+          "cache_prompt": {
+            "title": "缓存 提示词",
+            "type": "boolean"
+          },
           "max_tokens": {
             "title": "最大 Token 数",
             "type": "integer"
@@ -514,15 +587,26 @@
             "title": "任务形态",
             "type": "string"
           },
+          "temperature": {
+            "title": "Temperature",
+            "type": "number"
+          },
           "timeout_seconds": {
             "title": "超时秒数",
+            "type": "number"
+          },
+          "top_p": {
+            "title": "Top P",
             "type": "number"
           }
         },
         "required": [
           "max_tokens",
           "timeout_seconds",
-          "task_shape"
+          "task_shape",
+          "cache_prompt",
+          "temperature",
+          "top_p"
         ],
         "title": "API 评论 运行时 默认值 响应",
         "type": "object"
@@ -794,6 +878,14 @@
             "title": "来源 标签",
             "type": "string"
           },
+          "temperature": {
+            "title": "Temperature",
+            "type": "number"
+          },
+          "top_p": {
+            "title": "Top P",
+            "type": "number"
+          },
           "usage": {
             "additionalProperties": true,
             "title": "用量",
@@ -816,7 +908,9 @@
           "prompt_key",
           "schema_key",
           "output_mode",
-          "selected_attempt"
+          "selected_attempt",
+          "temperature",
+          "top_p"
         ],
         "title": "API 标注 生成 响应",
         "type": "object"
@@ -831,15 +925,25 @@
             "title": "修复重试次数",
             "type": "integer"
           },
+          "temperature": {
+            "title": "Temperature",
+            "type": "number"
+          },
           "timeout_seconds": {
             "title": "超时秒数",
+            "type": "number"
+          },
+          "top_p": {
+            "title": "Top P",
             "type": "number"
           }
         },
         "required": [
           "max_tokens",
           "timeout_seconds",
-          "repair_retry_count"
+          "repair_retry_count",
+          "temperature",
+          "top_p"
         ],
         "title": "API 标注 运行时 默认值 响应",
         "type": "object"
@@ -1082,6 +1186,16 @@
       },
       "ApiOptionsResponse": {
         "properties": {
+          "agent_studio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiAgentStudioRuntimeDefaultsResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "commenting": {
             "anyOf": [
               {
@@ -2776,6 +2890,7 @@
       "CommentingGenerateRequest": {
         "examples": [
           {
+            "cache_prompt": false,
             "input": "Summarize the reader reaction and write one concise editor-style reply.",
             "max_tokens": 512,
             "model_key": "local_llama_server::gemma4",
@@ -2784,10 +2899,24 @@
             "retry_count": 1,
             "scenario": "comment",
             "task_shape": "classic",
-            "timeout_seconds": 120
+            "temperature": 0.6,
+            "timeout_seconds": 120,
+            "top_p": 1.0
           }
         ],
         "properties": {
+          "cache_prompt": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Comment Lab 的 llama.cpp 提示词缓存开关。默认关闭，并且只发送给 llama.cpp 后端来源。",
+            "title": "缓存 提示词"
+          },
           "input": {
             "description": "需要评论的新闻文章、评论线程或源文本。",
             "title": "输入",
@@ -2888,6 +3017,20 @@
             "description": "提示词打包策略。默认使用 Comment Lab 运行时设置。",
             "title": "任务形态"
           },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "采样 temperature。默认使用 Comment Lab 运行时设置。",
+            "title": "Temperature"
+          },
           "timeout_seconds": {
             "anyOf": [
               {
@@ -2900,6 +3043,20 @@
             ],
             "description": "可选供应商超时时间（秒）。本地模型建议使用类似 120 的实际值。",
             "title": "超时秒数"
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "核采样 top_p。默认使用 Comment Lab 运行时设置。",
+            "title": "Top P"
           }
         },
         "required": [
@@ -3000,7 +3157,9 @@
             "repair_retry_count": 1,
             "scenario": "label",
             "schema_key": "label_football_entity_groups_v1",
-            "timeout_seconds": 120
+            "temperature": 0.0,
+            "timeout_seconds": 120,
+            "top_p": 1.0
           }
         ],
         "properties": {
@@ -3067,6 +3226,20 @@
             "title": "Schema 键",
             "type": "string"
           },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "采样 temperature。默认使用 Label Lab 运行时设置。",
+            "title": "Temperature"
+          },
           "timeout_seconds": {
             "anyOf": [
               {
@@ -3079,6 +3252,20 @@
             ],
             "description": "可选供应商超时时间（秒）。本地模型建议使用类似 120 的实际值。",
             "title": "超时秒数"
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "核采样 top_p。默认使用 Label Lab 运行时设置。",
+            "title": "Top P"
           }
         },
         "required": [
@@ -4056,6 +4243,7 @@
                 "llama_server_comment": {
                   "summary": "使用本地 llama-server 生成",
                   "value": {
+                    "cache_prompt": false,
                     "input": "Summarize the reader reaction and write one concise editor-style reply.",
                     "max_tokens": 512,
                     "model_key": "local_llama_server::gemma4",
@@ -4064,7 +4252,9 @@
                     "retry_count": 1,
                     "scenario": "comment",
                     "task_shape": "classic",
-                    "timeout_seconds": 120
+                    "temperature": 0.6,
+                    "timeout_seconds": 120,
+                    "top_p": 1.0
                   }
                 }
               },
@@ -4120,7 +4310,9 @@
                     "repair_retry_count": 1,
                     "scenario": "label",
                     "schema_key": "label_football_entity_groups_v1",
-                    "timeout_seconds": 120
+                    "temperature": 0.0,
+                    "timeout_seconds": 120,
+                    "top_p": 1.0
                   }
                 }
               },

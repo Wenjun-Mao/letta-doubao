@@ -137,6 +137,30 @@ function parseRetryCount(value: string): number | null {
   return parsed;
 }
 
+function parseOptionalTemperature(value: string): number | undefined | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const parsed = Number.parseFloat(trimmed);
+  if (!Number.isFinite(parsed) || parsed < 0 || parsed > 2) {
+    return null;
+  }
+  return parsed;
+}
+
+function parseOptionalTopP(value: string): number | undefined | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const parsed = Number.parseFloat(trimmed);
+  if (!Number.isFinite(parsed) || parsed <= 0 || parsed > 1) {
+    return null;
+  }
+  return parsed;
+}
+
 function parseToolExamples(
   description: string,
   fallbackNoDescription = "No description.",
@@ -362,6 +386,8 @@ export default function AgentStudioPage() {
   const [createPromptKey, setCreatePromptKey] = useState("chat_v20260418");
   const [createPersonaKey, setCreatePersonaKey] = useState("chat_linxiaotang");
   const [createEmbedding, setCreateEmbedding] = useState("");
+  const [createTemperature, setCreateTemperature] = useState("");
+  const [createTopP, setCreateTopP] = useState("");
   const [modelEditValue, setModelEditValue] = useState("");
 
   const [chatInput, setChatInput] = useState("");
@@ -558,6 +584,8 @@ export default function AgentStudioPage() {
       }
       return optionsPayload.defaults?.embedding || "";
     });
+    setCreateTemperature((current) => current || String(optionsPayload.agent_studio?.temperature ?? ""));
+    setCreateTopP((current) => current || String(optionsPayload.agent_studio?.top_p ?? ""));
   };
 
   const refreshToolCatalog = async (agentId: string, searchValue = toolSearch) => {
@@ -792,6 +820,16 @@ export default function AgentStudioPage() {
       setError(t("Please select a model before creating an agent.", "创建智能体前请先选择模型。"));
       return;
     }
+    const parsedTemperature = parseOptionalTemperature(createTemperature);
+    if (parsedTemperature === null) {
+      setError(t("Temperature must be between 0 and 2.", "Temperature 必须在 0 到 2 之间。"));
+      return;
+    }
+    const parsedTopP = parseOptionalTopP(createTopP);
+    if (parsedTopP === null) {
+      setError(t("Top P must be greater than 0 and at most 1.", "Top P 必须大于 0 且不超过 1。"));
+      return;
+    }
 
     setBusy(true);
     setError("");
@@ -804,6 +842,8 @@ export default function AgentStudioPage() {
         prompt_key: createPromptKey,
         persona_key: createPersonaKey,
         embedding: createEmbedding.trim() || null,
+        temperature: parsedTemperature,
+        top_p: parsedTopP,
       });
 
       await refreshAgentList(includeArchivedAgents);
@@ -1230,6 +1270,32 @@ export default function AgentStudioPage() {
                   </option>
                 ))}
               </select>
+            </label>
+            <label className="field">
+              <span>{t("Temperature (optional)", "Temperature（可选）")}</span>
+              <input
+                className="input"
+                type="number"
+                min={0}
+                max={2}
+                step={0.1}
+                value={createTemperature}
+                onChange={(e) => setCreateTemperature(e.target.value)}
+                placeholder={t("Use model default", "使用模型默认值")}
+              />
+            </label>
+            <label className="field">
+              <span>{t("Top P (optional)", "Top P（可选）")}</span>
+              <input
+                className="input"
+                type="number"
+                min={0.01}
+                max={1}
+                step={0.05}
+                value={createTopP}
+                onChange={(e) => setCreateTopP(e.target.value)}
+                placeholder={t("Use model default", "使用模型默认值")}
+              />
             </label>
           </div>
 

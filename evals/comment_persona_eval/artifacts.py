@@ -24,10 +24,50 @@ CSV_FIELDS = [
     "model_key",
     "prompt_key",
     "task_shape",
+    "cache_prompt",
+    "temperature",
+    "top_p",
     "max_tokens",
     "timeout_seconds",
     "retry_count",
+    "timings_cache_n",
+    "timings_prompt_n",
+    "timings_predicted_n",
 ]
+
+
+class ArtifactWriter:
+    """Append CSV and JSONL records as each eval attempt finishes."""
+
+    def __init__(self, *, csv_path: Path, jsonl_path: Path):
+        self.csv_path = csv_path
+        self.jsonl_path = jsonl_path
+        self._csv_handle = None
+        self._jsonl_handle = None
+        self._writer = None
+
+    def __enter__(self) -> ArtifactWriter:
+        self.csv_path.parent.mkdir(parents=True, exist_ok=True)
+        self._csv_handle = self.csv_path.open("w", encoding="utf-8-sig", newline="")
+        self._jsonl_handle = self.jsonl_path.open("w", encoding="utf-8", newline="\n")
+        self._writer = csv.DictWriter(self._csv_handle, fieldnames=CSV_FIELDS, extrasaction="ignore")
+        self._writer.writeheader()
+        self._csv_handle.flush()
+        return self
+
+    def __exit__(self, exc_type: object, exc: object, traceback: object) -> None:
+        if self._csv_handle:
+            self._csv_handle.close()
+        if self._jsonl_handle:
+            self._jsonl_handle.close()
+
+    def write_attempt(self, row: dict[str, Any], raw_record: dict[str, Any]) -> None:
+        if self._writer is None or self._csv_handle is None or self._jsonl_handle is None:
+            raise RuntimeError("ArtifactWriter must be used as a context manager")
+        self._writer.writerow(row)
+        self._csv_handle.flush()
+        self._jsonl_handle.write(json.dumps(raw_record, ensure_ascii=False, sort_keys=True) + "\n")
+        self._jsonl_handle.flush()
 
 
 def write_artifacts(

@@ -17,6 +17,7 @@ from agent_platform_api.models.agents import ApiChatResponse, ApiOptionsResponse
 from agent_platform_api.openapi_metadata import TAG_AGENT_STUDIO, TAG_PLATFORM_META
 from agent_platform_api.runtime import (
     DEFAULT_EMBEDDING,
+    agent_studio_runtime_defaults,
     agent_platform,
     commenting_runtime_defaults,
     ensure_agent_not_archived,
@@ -75,8 +76,9 @@ async def api_get_options(refresh: bool = False, scenario: str = "chat"):
             "embedding": default_embedding,
             "schema_key": default_schema_key,
         },
-        "commenting": commenting_runtime_defaults() if resolved_scenario == "comment" else None,
-        "labeling": labeling_runtime_defaults() if resolved_scenario == "label" else None,
+        "agent_studio": agent_studio_runtime_defaults().model_dump() if resolved_scenario == "chat" else None,
+        "commenting": commenting_runtime_defaults().model_dump() if resolved_scenario == "comment" else None,
+        "labeling": labeling_runtime_defaults().model_dump() if resolved_scenario == "label" else None,
     }
 
 

@@ -37,6 +37,9 @@ router = APIRouter()
                                 "timeout_seconds": 120,
                                 "retry_count": 1,
                                 "task_shape": "classic",
+                                "cache_prompt": False,
+                                "temperature": 0.6,
+                                "top_p": 1.0,
                             },
                         }
                     }
@@ -96,6 +99,10 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
             timeout_seconds=request.timeout_seconds,
             retry_count=request.retry_count,
             task_shape=request.task_shape,
+            source_adapter=str(model_selection.get("source_adapter", "") or ""),
+            cache_prompt=request.cache_prompt,
+            temperature=request.temperature,
+            top_p=request.top_p,
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -130,6 +137,9 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
         "max_tokens": int(generation_result.get("max_tokens", runtime_defaults.max_tokens)),
         "timeout_seconds": float(generation_result.get("timeout_seconds", runtime_defaults.timeout_seconds)),
         "task_shape": str(generation_result.get("task_shape", runtime_defaults.task_shape)),
+        "cache_prompt": bool(generation_result.get("cache_prompt", runtime_defaults.cache_prompt)),
+        "temperature": float(generation_result.get("temperature", runtime_defaults.temperature)),
+        "top_p": float(generation_result.get("top_p", runtime_defaults.top_p)),
         "content_source": str(generation_result.get("content_source", "") or "") or None,
         "selected_attempt": selected_attempt,
         "finish_reason": str(generation_result.get("finish_reason", "") or "") or None,

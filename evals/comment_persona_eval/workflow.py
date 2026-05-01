@@ -21,7 +21,7 @@ if str(PROJECT_ROOT) not in sys.path:
 if str(WORKFLOW_ROOT) not in sys.path:
     sys.path.insert(0, str(WORKFLOW_ROOT))
 
-from artifacts import build_summary, print_summary, row_id, write_artifacts
+from artifacts import ArtifactWriter, build_summary, print_summary, row_id
 
 TASK_SHAPES = {"classic", "all_in_system", "structured_output"}
 
@@ -55,6 +55,9 @@ class EvalConfig:
     timeout_seconds: float = 180.0
     retry_count: int = 0
     task_shape: str = "all_in_system"
+    cache_prompt: bool = False
+    temperature: float = 0.6
+    top_p: float = 1.0
     api_retry_count: int = 2
 
 
@@ -87,6 +90,9 @@ def load_config(path: Path) -> EvalConfig:
         timeout_seconds=float(payload.get("timeout_seconds", EvalConfig.timeout_seconds)),
         retry_count=int(payload.get("retry_count", EvalConfig.retry_count)),
         task_shape=str(payload.get("task_shape", EvalConfig.task_shape) or "").strip().lower(),
+        cache_prompt=bool(payload.get("cache_prompt", EvalConfig.cache_prompt)),
+        temperature=float(payload.get("temperature", EvalConfig.temperature)),
+        top_p=float(payload.get("top_p", EvalConfig.top_p)),
         api_retry_count=int(payload.get("api_retry_count", EvalConfig.api_retry_count)),
     )
     validate_config(config)
@@ -114,6 +120,10 @@ def validate_config(config: EvalConfig) -> None:
         raise ConfigError("api_retry_count must be >= 0")
     if config.task_shape not in TASK_SHAPES:
         raise ConfigError(f"task_shape must be one of: {', '.join(sorted(TASK_SHAPES))}")
+    if not 0 <= config.temperature <= 2:
+        raise ConfigError("temperature must be between 0 and 2")
+    if not 0 < config.top_p <= 1:
+        raise ConfigError("top_p must be > 0 and <= 1")
     if not config.model_key:
         raise ConfigError("model_key is required")
     if not config.prompt_key:
@@ -215,27 +225,37 @@ def run_evaluation(config: EvalConfig, *, now: datetime | None = None) -> dict[s
 
     timeout = max(config.timeout_seconds + 30, 60)
     rows: list[dict[str, Any]] = []
-    raw_records: list[dict[str, Any]] = []
     with httpx.Client(base_url=config.api_base_url, timeout=timeout) as client:
         validate_comment_options(client, config)
         personas = fetch_comment_personas(client, config)
-        for round_number in range(1, config.rounds + 1):
-            for persona in personas:
-                row, raw_record = run_attempt(
-                    client,
-                    config=config,
-                    run_id=run_id,
-                    round_number=round_number,
-                    persona=persona,
-                    news_text=news_text,
-                )
-                rows.append(row)
-                raw_records.append(raw_record)
-                if row["status"] == "error" and config.stop_on_error:
-                    write_artifacts(csv_path=csv_path, jsonl_path=jsonl_path, rows=rows, raw_records=raw_records)
-                    return build_summary(run_id, csv_path, jsonl_path, rows)
-
-    write_artifacts(csv_path=csv_path, jsonl_path=jsonl_path, rows=rows, raw_records=raw_records)
+        total_attempts = len(personas) * config.rounds
+        attempt_number = 0
+        print(f"[INFO] Running {total_attempts} attempts across {len(personas)} personas x {config.rounds} rounds.")
+        print(f"[INFO] Streaming CSV to {csv_path}")
+        print(f"[INFO] Streaming JSONL to {jsonl_path}")
+        with ArtifactWriter(csv_path=csv_path, jsonl_path=jsonl_path) as artifact_writer:
+            for round_number in range(1, config.rounds + 1):
+                for persona in personas:
+                    attempt_number += 1
+                    persona_key = str(persona.get("key", "") or "")
+                    print(f"[{attempt_number}/{total_attempts}] round={round_number} persona={persona_key}", flush=True)
+                    row, raw_record = run_attempt(
+                        client,
+                        config=config,
+                        run_id=run_id,
+                        round_number=round_number,
+                        persona=persona,
+                        news_text=news_text,
+                    )
+                    rows.append(row)
+                    artifact_writer.write_attempt(row, raw_record)
+                    print(
+                        f"[{attempt_number}/{total_attempts}] status={row['status']} "
+                        f"elapsed={row['elapsed_seconds']}s",
+                        flush=True,
+                    )
+                    if row["status"] == "error" and config.stop_on_error:
+                        return build_summary(run_id, csv_path, jsonl_path, rows)
     return build_summary(run_id, csv_path, jsonl_path, rows)
 
 
@@ -259,6 +279,9 @@ def run_attempt(
         "timeout_seconds": config.timeout_seconds,
         "retry_count": config.retry_count,
         "task_shape": config.task_shape,
+        "cache_prompt": config.cache_prompt,
+        "temperature": config.temperature,
+        "top_p": config.top_p,
     }
     started = time.perf_counter()
     response_payload: dict[str, Any] | None = None
@@ -338,6 +361,8 @@ def _row_from_result(
 ) -> dict[str, Any]:
     response = response_payload or {}
     usage = response.get("usage", {}) if isinstance(response.get("usage", {}), dict) else {}
+    raw_reply = response.get("raw_reply", {}) if isinstance(response.get("raw_reply", {}), dict) else {}
+    timings = raw_reply.get("timings", {}) if isinstance(raw_reply.get("timings", {}), dict) else {}
     content = str(response.get("content", "") or "")
     return {
         "run_id": run_id,
@@ -358,9 +383,15 @@ def _row_from_result(
         "model_key": config.model_key,
         "prompt_key": config.prompt_key,
         "task_shape": config.task_shape,
+        "cache_prompt": config.cache_prompt,
+        "temperature": config.temperature,
+        "top_p": config.top_p,
         "max_tokens": config.max_tokens,
         "timeout_seconds": config.timeout_seconds,
         "retry_count": config.retry_count,
+        "timings_cache_n": _usage_int(timings, "cache_n"),
+        "timings_prompt_n": _usage_int(timings, "prompt_n"),
+        "timings_predicted_n": _usage_int(timings, "predicted_n"),
     }
 
 

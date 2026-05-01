@@ -14,6 +14,8 @@ def _build_service() -> LabelingService:
             labeling_timeout_seconds=60,
             labeling_max_tokens=1024,
             labeling_repair_retry_count=1,
+            labeling_temperature=0.0,
+            labeling_top_p=1.0,
         )
     )
 
@@ -122,10 +124,58 @@ def test_generate_labels_json_schema_sends_llama_server_response_format(monkeypa
 
     assert result["output_mode"] == "json_schema"
     assert captured["model"] == "gemma4"
+    assert captured["temperature"] == 0.0
+    assert captured["top_p"] == 1.0
     assert captured["response_format"]["type"] == "json_schema"
     assert captured["response_format"]["json_schema"]["name"] == "label_football_entity_groups_v1"
     assert captured["response_format"]["json_schema"]["strict"] is True
     assert captured["response_format"]["json_schema"]["schema"]["required"] == ["players", "teams"]
+
+
+def test_generate_labels_accepts_sampling_overrides(monkeypatch) -> None:
+    service = _build_service()
+    captured: dict[str, object] = {}
+
+    def fake_post(payload, *, base_url, api_key, timeout_seconds):
+        captured.update(payload)
+        return {
+            "choices": [
+                {
+                    "message": {"content": '{"players":["Messi"],"teams":["Inter Miami"]}'},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {},
+        }
+
+    monkeypatch.setattr(service, "_post_chat_completions", fake_post)
+
+    result = service.generate_labels(
+        base_url="http://127.0.0.1:8081/v1",
+        api_key="local-token",
+        model="gemma4",
+        system_prompt="Return grouped entities.",
+        article_input="Messi scored for Inter Miami.",
+        output_mode="json_schema",
+        output_schema_raw=json.dumps(
+            {
+                "type": "object",
+                "properties": {
+                    "players": {"type": "array", "items": {"type": "string"}},
+                    "teams": {"type": "array", "items": {"type": "string"}},
+                },
+                "required": ["players", "teams"],
+                "additionalProperties": False,
+            }
+        ),
+        temperature=0.2,
+        top_p=0.9,
+    )
+
+    assert captured["temperature"] == 0.2
+    assert captured["top_p"] == 0.9
+    assert result["temperature"] == 0.2
+    assert result["top_p"] == 0.9
 
 
 def test_generate_labels_best_effort_strips_think_tags(monkeypatch) -> None:

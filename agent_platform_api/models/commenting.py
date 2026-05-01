@@ -11,6 +11,9 @@ class ApiCommentingRuntimeDefaultsResponse(BaseModel):
     max_tokens: int
     timeout_seconds: float
     task_shape: CommentingTaskShape
+    cache_prompt: bool
+    temperature: float
+    top_p: float
 
 
 class CommentingGenerateRequest(BaseModel):
@@ -27,6 +30,9 @@ class CommentingGenerateRequest(BaseModel):
                     "timeout_seconds": 120,
                     "retry_count": 1,
                     "task_shape": "classic",
+                    "cache_prompt": False,
+                    "temperature": 0.6,
+                    "top_p": 1.0,
                 }
             ]
         }
@@ -50,6 +56,12 @@ class CommentingGenerateRequest(BaseModel):
     timeout_seconds: float | None = Field(default=None, gt=0, description="Optional provider timeout in seconds. Use a realistic local-model value such as 120.")
     retry_count: int | None = Field(default=None, ge=0, le=5, description="Optional provider retry count for transient failures.")
     task_shape: CommentingTaskShape | None = Field(default=None, description="Prompt-packing strategy. Defaults to the Comment Lab runtime setting.")
+    cache_prompt: bool | None = Field(
+        default=None,
+        description="llama.cpp prompt-cache toggle for Comment Lab. Defaults to false and is only sent to llama.cpp-backed sources.",
+    )
+    temperature: float | None = Field(default=None, ge=0, le=2, description="Sampling temperature. Defaults to Comment Lab runtime settings.")
+    top_p: float | None = Field(default=None, gt=0, le=1, description="Nucleus sampling top_p. Defaults to Comment Lab runtime settings.")
 
 
 class ApiCommentingGenerateResponse(BaseModel):
@@ -66,6 +78,9 @@ class ApiCommentingGenerateResponse(BaseModel):
     max_tokens: int
     timeout_seconds: float
     task_shape: CommentingTaskShape
+    cache_prompt: bool
+    temperature: float
+    top_p: float
     content_source: str | None = None
     selected_attempt: str
     finish_reason: str | None = None

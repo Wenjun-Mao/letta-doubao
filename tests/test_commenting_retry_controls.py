@@ -19,6 +19,9 @@ def _build_service() -> CommentingService:
             commenting_timeout_seconds=180,
             commenting_max_tokens=0,
             commenting_task_shape="classic",
+            commenting_cache_prompt=False,
+            commenting_temperature=0.6,
+            commenting_top_p=1.0,
         )
     )
 
@@ -236,6 +239,82 @@ def test_generate_comment_strips_think_tags_from_assistant_content(monkeypatch) 
     )
 
     assert result["content"] == "Public reply。"
+
+
+def test_generate_comment_sends_llama_cache_and_sampling_controls(monkeypatch) -> None:
+    service = _build_service()
+    captured: dict[str, object] = {}
+
+    def fake_post(payload, *, base_url, api_key, timeout_seconds, retry_count):
+        captured.update(payload)
+        return {
+            "choices": [
+                {
+                    "message": {"content": "Local reply"},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {},
+        }
+
+    monkeypatch.setattr(service, "_post_chat_completions", fake_post)
+
+    result = service.generate_comment(
+        base_url="http://127.0.0.1:8081/v1",
+        api_key="test-key",
+        model="local_llama_server::gemma4",
+        system_prompt="System",
+        persona_prompt="Persona",
+        news_input="News input",
+        timeout_seconds=45,
+        retry_count=0,
+        task_shape="all_in_system",
+        source_adapter="llama_cpp_server",
+        cache_prompt=False,
+        temperature=0.9,
+        top_p=0.85,
+    )
+
+    assert captured["cache_prompt"] is False
+    assert captured["temperature"] == 0.9
+    assert captured["top_p"] == 0.85
+    assert result["cache_prompt"] is False
+    assert result["temperature"] == 0.9
+    assert result["top_p"] == 0.85
+
+
+def test_generate_comment_omits_cache_prompt_for_generic_sources(monkeypatch) -> None:
+    service = _build_service()
+    captured: dict[str, object] = {}
+
+    def fake_post(payload, *, base_url, api_key, timeout_seconds, retry_count):
+        captured.update(payload)
+        return {
+            "choices": [
+                {
+                    "message": {"content": "Ark reply"},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {},
+        }
+
+    monkeypatch.setattr(service, "_post_chat_completions", fake_post)
+
+    service.generate_comment(
+        base_url="https://ark.example/api/v3",
+        api_key="test-key",
+        model="ark::doubao",
+        system_prompt="System",
+        persona_prompt="Persona",
+        news_input="News input",
+        source_adapter="ark_openai",
+        cache_prompt=False,
+    )
+
+    assert "cache_prompt" not in captured
+    assert captured["temperature"] == 0.6
+    assert captured["top_p"] == 1.0
 
 
 def test_generate_comment_rejects_removed_compact_task_shape(monkeypatch) -> None:

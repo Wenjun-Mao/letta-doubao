@@ -4,6 +4,7 @@ import asyncio
 
 import pytest
 from fastapi import HTTPException
+from pydantic import ValidationError
 
 from agent_platform_api.models.labeling import LabelingGenerateRequest
 from agent_platform_api.routers import labeling
@@ -70,6 +71,8 @@ def test_labeling_generate_uses_model_key_and_selected_source_connection(monkeyp
             "raw_request": {"model": kwargs["model"]},
             "raw_reply": {"choices": []},
             "validation_errors": [],
+            "temperature": kwargs["temperature"],
+            "top_p": kwargs["top_p"],
         }
 
     monkeypatch.setattr(labeling.labeling_service, "generate_labels", fake_generate_labels)
@@ -83,6 +86,8 @@ def test_labeling_generate_uses_model_key_and_selected_source_connection(monkeyp
                 max_tokens=256,
                 timeout_seconds=45,
                 repair_retry_count=1,
+                temperature=0.2,
+                top_p=0.9,
             )
         )
     )
@@ -90,12 +95,36 @@ def test_labeling_generate_uses_model_key_and_selected_source_connection(monkeyp
     assert captured["base_url"] == "http://127.0.0.1:8081/v1"
     assert captured["api_key"] == "local-token"
     assert captured["model"] == "gemma4"
+    assert captured["temperature"] == 0.2
+    assert captured["top_p"] == 0.9
     assert captured["output_mode"] == "json_schema"
     assert captured["output_schema_name"] == "label_entity_groups_v1"
     assert payload["source_label"] == "Local llama-server"
     assert payload["provider_model_id"] == "gemma4"
     assert payload["schema_key"] == "label_entity_groups_v1"
+    assert payload["temperature"] == 0.2
+    assert payload["top_p"] == 0.9
     assert payload["result"]["people"] == ["Messi"]
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("temperature", -0.1),
+        ("temperature", 2.1),
+        ("top_p", 0),
+        ("top_p", 1.1),
+    ],
+)
+def test_labeling_generate_request_rejects_invalid_sampling_ranges(field: str, value: float) -> None:
+    kwargs = {
+        "input": "Messi scored.",
+        "prompt_key": "label_generic_entities_v1",
+        "model_key": "local_llama_server::gemma4",
+        field: value,
+    }
+    with pytest.raises(ValidationError):
+        LabelingGenerateRequest(**kwargs)
 
 
 def test_labeling_generate_returns_validation_errors_on_failure(monkeypatch) -> None:

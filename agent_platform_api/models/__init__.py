@@ -1,6 +1,7 @@
 from .agents import (
     AgentCreateRequest,
     ApiAgentCreateResponse,
+    ApiAgentStudioRuntimeDefaultsResponse,
     ApiAgentDetailsResponse,
     ApiAgentLifecycleResponse,
     ApiAgentListItemResponse,
@@ -88,6 +89,7 @@ from .templates import (
 __all__ = [
     "AgentCreateRequest",
     "ApiAgentCreateResponse",
+    "ApiAgentStudioRuntimeDefaultsResponse",
     "ApiAgentDetailsResponse",
     "ApiAgentLifecycleResponse",
     "ApiAgentListItemResponse",

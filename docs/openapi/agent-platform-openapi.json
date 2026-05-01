@@ -43,6 +43,32 @@
             ],
             "title": "Scenario",
             "type": "string"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top P"
           }
         },
         "title": "AgentCreateRequest",
@@ -339,6 +365,34 @@
         "title": "ApiAgentPurgeResponse",
         "type": "object"
       },
+      "ApiAgentStudioRuntimeDefaultsResponse": {
+        "properties": {
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top P"
+          }
+        },
+        "title": "ApiAgentStudioRuntimeDefaultsResponse",
+        "type": "object"
+      },
       "ApiChatResponse": {
         "properties": {
           "memory_diff": {
@@ -365,6 +419,10 @@
       },
       "ApiCommentingGenerateResponse": {
         "properties": {
+          "cache_prompt": {
+            "title": "Cache Prompt",
+            "type": "boolean"
+          },
           "content": {
             "title": "Content",
             "type": "string"
@@ -470,8 +528,16 @@
             "title": "Task Shape",
             "type": "string"
           },
+          "temperature": {
+            "title": "Temperature",
+            "type": "number"
+          },
           "timeout_seconds": {
             "title": "Timeout Seconds",
+            "type": "number"
+          },
+          "top_p": {
+            "title": "Top P",
             "type": "number"
           },
           "usage": {
@@ -494,6 +560,9 @@
           "max_tokens",
           "timeout_seconds",
           "task_shape",
+          "cache_prompt",
+          "temperature",
+          "top_p",
           "selected_attempt"
         ],
         "title": "ApiCommentingGenerateResponse",
@@ -501,6 +570,10 @@
       },
       "ApiCommentingRuntimeDefaultsResponse": {
         "properties": {
+          "cache_prompt": {
+            "title": "Cache Prompt",
+            "type": "boolean"
+          },
           "max_tokens": {
             "title": "Max Tokens",
             "type": "integer"
@@ -514,15 +587,26 @@
             "title": "Task Shape",
             "type": "string"
           },
+          "temperature": {
+            "title": "Temperature",
+            "type": "number"
+          },
           "timeout_seconds": {
             "title": "Timeout Seconds",
+            "type": "number"
+          },
+          "top_p": {
+            "title": "Top P",
             "type": "number"
           }
         },
         "required": [
           "max_tokens",
           "timeout_seconds",
-          "task_shape"
+          "task_shape",
+          "cache_prompt",
+          "temperature",
+          "top_p"
         ],
         "title": "ApiCommentingRuntimeDefaultsResponse",
         "type": "object"
@@ -794,6 +878,14 @@
             "title": "Source Label",
             "type": "string"
           },
+          "temperature": {
+            "title": "Temperature",
+            "type": "number"
+          },
+          "top_p": {
+            "title": "Top P",
+            "type": "number"
+          },
           "usage": {
             "additionalProperties": true,
             "title": "Usage",
@@ -816,7 +908,9 @@
           "prompt_key",
           "schema_key",
           "output_mode",
-          "selected_attempt"
+          "selected_attempt",
+          "temperature",
+          "top_p"
         ],
         "title": "ApiLabelingGenerateResponse",
         "type": "object"
@@ -831,15 +925,25 @@
             "title": "Repair Retry Count",
             "type": "integer"
           },
+          "temperature": {
+            "title": "Temperature",
+            "type": "number"
+          },
           "timeout_seconds": {
             "title": "Timeout Seconds",
+            "type": "number"
+          },
+          "top_p": {
+            "title": "Top P",
             "type": "number"
           }
         },
         "required": [
           "max_tokens",
           "timeout_seconds",
-          "repair_retry_count"
+          "repair_retry_count",
+          "temperature",
+          "top_p"
         ],
         "title": "ApiLabelingRuntimeDefaultsResponse",
         "type": "object"
@@ -1082,6 +1186,16 @@
       },
       "ApiOptionsResponse": {
         "properties": {
+          "agent_studio": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ApiAgentStudioRuntimeDefaultsResponse"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "commenting": {
             "anyOf": [
               {
@@ -2776,6 +2890,7 @@
       "CommentingGenerateRequest": {
         "examples": [
           {
+            "cache_prompt": false,
             "input": "Summarize the reader reaction and write one concise editor-style reply.",
             "max_tokens": 512,
             "model_key": "local_llama_server::gemma4",
@@ -2784,10 +2899,24 @@
             "retry_count": 1,
             "scenario": "comment",
             "task_shape": "classic",
-            "timeout_seconds": 120
+            "temperature": 0.6,
+            "timeout_seconds": 120,
+            "top_p": 1.0
           }
         ],
         "properties": {
+          "cache_prompt": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "llama.cpp prompt-cache toggle for Comment Lab. Defaults to false and is only sent to llama.cpp-backed sources.",
+            "title": "Cache Prompt"
+          },
           "input": {
             "description": "News article, comment thread, or source text to comment on.",
             "title": "Input",
@@ -2888,6 +3017,20 @@
             "description": "Prompt-packing strategy. Defaults to the Comment Lab runtime setting.",
             "title": "Task Shape"
           },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sampling temperature. Defaults to Comment Lab runtime settings.",
+            "title": "Temperature"
+          },
           "timeout_seconds": {
             "anyOf": [
               {
@@ -2900,6 +3043,20 @@
             ],
             "description": "Optional provider timeout in seconds. Use a realistic local-model value such as 120.",
             "title": "Timeout Seconds"
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nucleus sampling top_p. Defaults to Comment Lab runtime settings.",
+            "title": "Top P"
           }
         },
         "required": [
@@ -3000,7 +3157,9 @@
             "repair_retry_count": 1,
             "scenario": "label",
             "schema_key": "label_football_entity_groups_v1",
-            "timeout_seconds": 120
+            "temperature": 0.0,
+            "timeout_seconds": 120,
+            "top_p": 1.0
           }
         ],
         "properties": {
@@ -3067,6 +3226,20 @@
             "title": "Schema Key",
             "type": "string"
           },
+          "temperature": {
+            "anyOf": [
+              {
+                "maximum": 2.0,
+                "minimum": 0.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Sampling temperature. Defaults to Label Lab runtime settings.",
+            "title": "Temperature"
+          },
           "timeout_seconds": {
             "anyOf": [
               {
@@ -3079,6 +3252,20 @@
             ],
             "description": "Optional provider timeout in seconds. Use a realistic local-model value such as 120.",
             "title": "Timeout Seconds"
+          },
+          "top_p": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 1.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Nucleus sampling top_p. Defaults to Label Lab runtime settings.",
+            "title": "Top P"
           }
         },
         "required": [
@@ -4056,6 +4243,7 @@
                 "llama_server_comment": {
                   "summary": "Generate with local llama-server",
                   "value": {
+                    "cache_prompt": false,
                     "input": "Summarize the reader reaction and write one concise editor-style reply.",
                     "max_tokens": 512,
                     "model_key": "local_llama_server::gemma4",
@@ -4064,7 +4252,9 @@
                     "retry_count": 1,
                     "scenario": "comment",
                     "task_shape": "classic",
-                    "timeout_seconds": 120
+                    "temperature": 0.6,
+                    "timeout_seconds": 120,
+                    "top_p": 1.0
                   }
                 }
               },
@@ -4120,7 +4310,9 @@
                     "repair_retry_count": 1,
                     "scenario": "label",
                     "schema_key": "label_football_entity_groups_v1",
-                    "timeout_seconds": 120
+                    "temperature": 0.0,
+                    "timeout_seconds": 120,
+                    "top_p": 1.0
                   }
                 }
               },

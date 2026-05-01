@@ -11,6 +11,8 @@ class ApiLabelingRuntimeDefaultsResponse(BaseModel):
     max_tokens: int
     timeout_seconds: float
     repair_retry_count: int
+    temperature: float
+    top_p: float
 
 
 class LabelingGenerateRequest(BaseModel):
@@ -26,6 +28,8 @@ class LabelingGenerateRequest(BaseModel):
                     "max_tokens": 1024,
                     "timeout_seconds": 120,
                     "repair_retry_count": 1,
+                    "temperature": 0.0,
+                    "top_p": 1.0,
                 }
             ]
         }
@@ -43,6 +47,8 @@ class LabelingGenerateRequest(BaseModel):
     max_tokens: int | None = Field(default=None, ge=0, description="Optional response token budget. Defaults to Label Lab runtime settings.")
     timeout_seconds: float | None = Field(default=None, gt=0, description="Optional provider timeout in seconds. Use a realistic local-model value such as 120.")
     repair_retry_count: int | None = Field(default=None, ge=0, le=3, description="Number of structured-output repair attempts after validation failure.")
+    temperature: float | None = Field(default=None, ge=0, le=2, description="Sampling temperature. Defaults to Label Lab runtime settings.")
+    top_p: float | None = Field(default=None, gt=0, le=1, description="Nucleus sampling top_p. Defaults to Label Lab runtime settings.")
 
 
 class ApiLabelingGenerateResponse(BaseModel):
@@ -62,3 +68,5 @@ class ApiLabelingGenerateResponse(BaseModel):
     raw_request: dict[str, Any] = Field(default_factory=dict)
     raw_reply: dict[str, Any] = Field(default_factory=dict)
     validation_errors: list[str] = Field(default_factory=list)
+    temperature: float
+    top_p: float

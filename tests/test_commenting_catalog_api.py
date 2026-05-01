@@ -22,6 +22,7 @@ def test_commenting_generate_uses_model_key_and_selected_source_connection(monke
             "source_label": "Local Unsloth",
             "provider_model_id": "qwen3.5-27b",
             "base_url": "http://127.0.0.1:2234/v1",
+            "source_adapter": "llama_cpp_server",
             "api_key": "local-token",
         },
     )
@@ -40,6 +41,9 @@ def test_commenting_generate_uses_model_key_and_selected_source_connection(monke
             "max_tokens": 128,
             "timeout_seconds": 45.0,
             "task_shape": "classic",
+            "cache_prompt": kwargs["cache_prompt"],
+            "temperature": kwargs["temperature"],
+            "top_p": kwargs["top_p"],
         }
 
     monkeypatch.setattr(commenting.commenting_service, "generate_comment", fake_generate_comment)
@@ -55,6 +59,9 @@ def test_commenting_generate_uses_model_key_and_selected_source_connection(monke
                 timeout_seconds=45,
                 retry_count=0,
                 task_shape="classic",
+                cache_prompt=False,
+                temperature=0.8,
+                top_p=0.9,
             )
         )
     )
@@ -62,6 +69,10 @@ def test_commenting_generate_uses_model_key_and_selected_source_connection(monke
     assert captured["base_url"] == "http://127.0.0.1:2234/v1"
     assert captured["api_key"] == "local-token"
     assert captured["model"] == "qwen3.5-27b"
+    assert captured["source_adapter"] == "llama_cpp_server"
+    assert captured["cache_prompt"] is False
+    assert captured["temperature"] == 0.8
+    assert captured["top_p"] == 0.9
     assert payload["model_key"] == "local_unsloth::qwen3.5-27b"
     assert payload["source_label"] == "Local Unsloth"
     assert payload["provider_model_id"] == "qwen3.5-27b"
@@ -76,3 +87,24 @@ def test_commenting_generate_request_rejects_removed_compact_task_shape() -> Non
             model_key="local_unsloth::qwen3.5-27b",
             task_shape="compact",
         )
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("temperature", -0.1),
+        ("temperature", 2.1),
+        ("top_p", 0),
+        ("top_p", 1.1),
+    ],
+)
+def test_commenting_generate_request_rejects_invalid_sampling_ranges(field: str, value: float) -> None:
+    kwargs = {
+        "input": "Need one comment",
+        "prompt_key": "comment_v20260418",
+        "persona_key": "comment_linxiaotang",
+        "model_key": "local_unsloth::qwen3.5-27b",
+        field: value,
+    }
+    with pytest.raises(ValidationError):
+        CommentingGenerateRequest(**kwargs)

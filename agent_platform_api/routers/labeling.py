@@ -37,6 +37,8 @@ router = APIRouter()
                                 "max_tokens": 1024,
                                 "timeout_seconds": 120,
                                 "repair_retry_count": 1,
+                                "temperature": 0.0,
+                                "top_p": 1.0,
                             },
                         }
                     }
@@ -89,6 +91,8 @@ async def api_labeling_generate(request: LabelingGenerateRequest):
             max_tokens=request.max_tokens,
             timeout_seconds=request.timeout_seconds,
             repair_retry_count=request.repair_retry_count,
+            temperature=request.temperature,
+            top_p=request.top_p,
         )
     except LabelingValidationError as exc:
         raise HTTPException(
@@ -128,6 +132,8 @@ async def api_labeling_generate(request: LabelingGenerateRequest):
         "raw_request": raw_request,
         "raw_reply": raw_reply,
         "validation_errors": generation_result.get("validation_errors", []) or [],
+        "temperature": float(generation_result.get("temperature", 0.0)),
+        "top_p": float(generation_result.get("top_p", 1.0)),
     }
 
 

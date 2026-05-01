@@ -42,7 +42,12 @@ from agent_platform_api.runtime import (
 router = APIRouter()
 
 
-def _router_llm_config_for_model(model_handle: str) -> dict[str, Any] | None:
+def _router_llm_config_for_model(
+    model_handle: str,
+    *,
+    temperature: float | None = None,
+    top_p: float | None = None,
+) -> dict[str, Any] | None:
     handle = str(model_handle or "").strip()
     if not handle.startswith("openai-proxy/") or "::" not in handle:
         return None
@@ -52,7 +57,7 @@ def _router_llm_config_for_model(model_handle: str) -> dict[str, Any] | None:
     provider_model_id = handle.split("/", 1)[1].strip()
     if not provider_model_id:
         return None
-    return {
+    config: dict[str, Any] = {
         "context_window": 16384,
         "model": provider_model_id,
         "model_endpoint_type": "openai",
@@ -61,6 +66,11 @@ def _router_llm_config_for_model(model_handle: str) -> dict[str, Any] | None:
         "max_tokens": 16384,
         "parallel_tool_calls": False,
     }
+    if temperature is not None:
+        config["temperature"] = float(temperature)
+    if top_p is not None:
+        config["top_p"] = float(top_p)
+    return config
 
 
 @router.get(
@@ -179,7 +189,11 @@ async def api_create_agent(request: AgentCreateRequest):
     }
     if request.embedding:
         create_args["embedding"] = request.embedding
-    router_llm_config = _router_llm_config_for_model(request.model)
+    router_llm_config = _router_llm_config_for_model(
+        request.model,
+        temperature=request.temperature,
+        top_p=request.top_p,
+    )
     if router_llm_config is not None:
         create_args["llm_config"] = router_llm_config
 

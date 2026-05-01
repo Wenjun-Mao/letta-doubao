@@ -16,7 +16,7 @@ Run the full matrix:
 uv run python evals/comment_persona_eval/run.py --config evals/comment_persona_eval/config.toml
 ```
 
-Outputs are written to `evals/comment_persona_eval/outputs/` as timestamped CSV and JSONL files.
+Outputs are streamed to `evals/comment_persona_eval/outputs/` as timestamped CSV and JSONL files. The console prints simple attempt progress like `[35/200]`, and each completed attempt is flushed to disk immediately so partial results survive an interrupted run.
 
 ## Config
 
@@ -33,12 +33,15 @@ The default config is `evals/comment_persona_eval/config.toml`.
 | `persona_keys` | `[]` | Optional explicit list of persona keys to run. |
 | `persona_search` | `""` | Optional server-side Prompt Center persona search query. |
 | `limit` | `0` | Optional cap on matched personas; `0` means no cap. |
-| `model_key` | `ark::doubao-seed-2-0-pro-260215` | Router-scoped Comment Lab model key. |
+| `model_key` | `local_llama_server::gemma4` | Router-scoped Comment Lab model key. |
 | `prompt_key` | `comment_v20260418` | Comment Lab system prompt key. |
 | `max_tokens` | `0` | Comment Lab token budget; `0` means no `max_tokens` is sent. |
 | `timeout_seconds` | `180` | Provider timeout sent to Comment Lab. |
 | `retry_count` | `0` | Comment Lab provider retry count. |
 | `task_shape` | `all_in_system` | Prompt packing strategy. |
+| `cache_prompt` | `false` | llama.cpp prompt-cache toggle. Keep off for fair persona comparison runs. |
+| `temperature` | `0.6` | Comment Lab sampling temperature. |
+| `top_p` | `1.0` | Comment Lab nucleus sampling value. |
 | `api_retry_count` | `2` | Transport retry count for script-to-API calls. |
 
 CLI overrides:
@@ -54,9 +57,11 @@ CLI overrides:
 
 The CSV is for comparison and spreadsheet review. It includes:
 
-`run_id`, `round`, `persona_key`, `persona_label`, `persona_description`, `status`, `elapsed_seconds`, `content`, `content_length`, `finish_reason`, `content_source`, `usage_prompt_tokens`, `usage_completion_tokens`, `usage_total_tokens`, `error`, `model_key`, `prompt_key`, `task_shape`, `max_tokens`, `timeout_seconds`, `retry_count`.
+`run_id`, `round`, `persona_key`, `persona_label`, `persona_description`, `status`, `elapsed_seconds`, `content`, `content_length`, `finish_reason`, `content_source`, `usage_prompt_tokens`, `usage_completion_tokens`, `usage_total_tokens`, `error`, `model_key`, `prompt_key`, `task_shape`, `cache_prompt`, `temperature`, `top_p`, `max_tokens`, `timeout_seconds`, `retry_count`, `timings_cache_n`, `timings_prompt_n`, `timings_predicted_n`.
 
 The JSONL sidecar preserves the full request, persona metadata, response payload, error text, and timing for each attempt.
+
+Both files are written incrementally. If a run is stopped early, open the latest timestamped CSV/JSONL and you should still see all attempts that completed before the interruption.
 
 ## Troubleshooting
 

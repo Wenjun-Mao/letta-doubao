@@ -23,7 +23,11 @@ from agent_platform_api.options.label_schemas import (
     label_schema_record_map,
     resolve_default_label_schema_key,
 )
-from agent_platform_api.options.runtime_defaults import commenting_runtime_defaults, labeling_runtime_defaults
+from agent_platform_api.options.runtime_defaults import (
+    agent_studio_runtime_defaults,
+    commenting_runtime_defaults,
+    labeling_runtime_defaults,
+)
 from agent_platform_api.options.selection import resolve_comment_model_selection, resolve_label_model_selection
 from agent_platform_api.options.utils import dedupe_options
 
@@ -42,6 +46,7 @@ __all__ = [
     "PROVIDER_MODEL_OPTION_PRIORITY",
     "SCENARIO_DEFAULTS",
     "active_label_schema_records",
+    "agent_studio_runtime_defaults",
     "commenting_runtime_defaults",
     "dedupe_options",
     "enriched_catalog_items",

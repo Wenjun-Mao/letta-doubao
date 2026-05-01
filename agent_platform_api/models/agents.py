@@ -23,6 +23,8 @@ class AgentCreateRequest(BaseModel):
     prompt_key: str = "chat_v20260418"
     persona_key: str = "chat_linxiaotang"
     embedding: str | None = None
+    temperature: float | None = Field(default=None, ge=0, le=2)
+    top_p: float | None = Field(default=None, gt=0, le=1)
 
 
 class ApiOptionEntryResponse(BaseModel):
@@ -48,6 +50,11 @@ class ApiOptionsDefaultsResponse(BaseModel):
     schema_key: str = ""
 
 
+class ApiAgentStudioRuntimeDefaultsResponse(BaseModel):
+    temperature: float | None = None
+    top_p: float | None = None
+
+
 class ApiOptionsResponse(BaseModel):
     scenario: ScenarioType
     models: list[ApiOptionEntryResponse]
@@ -56,6 +63,7 @@ class ApiOptionsResponse(BaseModel):
     personas: list[ApiOptionEntryResponse]
     schemas: list[ApiOptionEntryResponse] = Field(default_factory=list)
     defaults: ApiOptionsDefaultsResponse
+    agent_studio: ApiAgentStudioRuntimeDefaultsResponse | None = None
     commenting: ApiCommentingRuntimeDefaultsResponse | None = None
     labeling: ApiLabelingRuntimeDefaultsResponse | None = None
 
