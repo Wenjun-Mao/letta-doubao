@@ -461,6 +461,11 @@
             ],
             "title": "Content Source"
           },
+          "enable_thinking": {
+            "default": false,
+            "title": "Enable Thinking",
+            "type": "boolean"
+          },
           "finish_reason": {
             "anyOf": [
               {
@@ -1256,6 +1261,17 @@
             ],
             "title": "Structured Output Mode"
           },
+          "supports_thinking": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supports Thinking"
+          },
           "supports_top_k": {
             "anyOf": [
               {
@@ -1266,6 +1282,17 @@
               }
             ],
             "title": "Supports Top K"
+          },
+          "thinking_default_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thinking Default Enabled"
           }
         },
         "required": [
@@ -1776,9 +1803,19 @@
             ],
             "title": "Structured Output Mode"
           },
+          "supports_thinking": {
+            "default": false,
+            "title": "Supports Thinking",
+            "type": "boolean"
+          },
           "supports_top_k": {
             "default": false,
             "title": "Supports Top K",
+            "type": "boolean"
+          },
+          "thinking_default_enabled": {
+            "default": false,
+            "title": "Thinking Default Enabled",
             "type": "boolean"
           }
         },
@@ -3064,6 +3101,7 @@
         "examples": [
           {
             "cache_prompt": false,
+            "enable_thinking": false,
             "input": "Summarize the reader reaction and write one concise editor-style reply.",
             "max_tokens": 512,
             "model_key": "local_llama_server::gemma4",
@@ -3090,6 +3128,18 @@
             ],
             "description": "llama.cpp prompt-cache toggle for Comment Lab. Defaults to false and is only sent to llama.cpp-backed sources.",
             "title": "Cache Prompt"
+          },
+          "enable_thinking": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional vLLM/Gemma thinking toggle. When true for supported vLLM sources, ADE sends `chat_template_kwargs.enable_thinking=true`.",
+            "title": "Enable Thinking"
           },
           "input": {
             "description": "News article, comment thread, or source text to comment on.",
@@ -4445,6 +4495,7 @@
                   "summary": "Generate with local llama-server",
                   "value": {
                     "cache_prompt": false,
+                    "enable_thinking": false,
                     "input": "Summarize the reader reaction and write one concise editor-style reply.",
                     "max_tokens": 512,
                     "model_key": "local_llama_server::gemma4",

@@ -247,6 +247,33 @@ def test_router_preserves_explicit_sampling_values(monkeypatch) -> None:
     assert captured["payload"]["top_k"] == 16
 
 
+def test_router_drops_non_positive_max_tokens_before_forwarding(monkeypatch) -> None:
+    captured: dict[str, Any] = {}
+
+    def fake_post(source: RouterSourceConfig, payload: dict[str, Any]):
+        captured["source_id"] = source.id
+        captured["payload"] = payload
+        return JSONResponse({"ok": True, "model": payload["model"]})
+
+    monkeypatch.setattr(router_app, "get_settings", lambda: _FakeSettings())
+    monkeypatch.setattr(router_app, "catalog_service", _FakeCatalog())
+    monkeypatch.setattr(router_app, "_post_chat_completion", fake_post)
+    client = TestClient(router_app.app)
+
+    response = client.post(
+        "/v1/chat/completions",
+        json={
+            "model": "local_llama_server::gemma4",
+            "messages": [{"role": "user", "content": "hi"}],
+            "max_tokens": 0,
+        },
+        headers={"Authorization": "Bearer router-token"},
+    )
+
+    assert response.status_code == 200
+    assert "max_tokens" not in captured["payload"]
+
+
 def test_router_does_not_inject_top_k_for_generic_sources(monkeypatch) -> None:
     captured: dict[str, Any] = {}
     source = RouterSourceConfig(

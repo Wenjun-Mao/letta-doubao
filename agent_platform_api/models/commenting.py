@@ -32,6 +32,7 @@ class CommentingGenerateRequest(BaseModel):
                     "retry_count": 1,
                     "task_shape": "classic",
                     "cache_prompt": False,
+                    "enable_thinking": False,
                     "temperature": 0.6,
                     "top_p": 1.0,
                     "top_k": 64,
@@ -62,6 +63,10 @@ class CommentingGenerateRequest(BaseModel):
         default=None,
         description="llama.cpp prompt-cache toggle for Comment Lab. Defaults to false and is only sent to llama.cpp-backed sources.",
     )
+    enable_thinking: bool | None = Field(
+        default=None,
+        description="Optional vLLM/Gemma thinking toggle. When true for supported vLLM sources, ADE sends `chat_template_kwargs.enable_thinking=true`.",
+    )
     temperature: float | None = Field(default=None, ge=0, le=2, description="Sampling temperature. Defaults to Comment Lab runtime settings.")
     top_p: float | None = Field(default=None, gt=0, le=1, description="Nucleus sampling top_p. Defaults to Comment Lab runtime settings.")
     top_k: int | None = Field(default=None, gt=0, description="Optional top_k sampling value. Defaults to model profile or Comment Lab runtime settings.")
@@ -82,6 +87,7 @@ class ApiCommentingGenerateResponse(BaseModel):
     timeout_seconds: float
     task_shape: CommentingTaskShape
     cache_prompt: bool
+    enable_thinking: bool = False
     temperature: float
     top_p: float
     top_k: int | None = None

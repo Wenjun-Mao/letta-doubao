@@ -88,6 +88,8 @@ class _FakeRouterClient:
                     "sampling_defaults": {},
                     "scenario_sampling_defaults": {},
                     "supports_top_k": True,
+                    "supports_thinking": False,
+                    "thinking_default_enabled": False,
                     "profile_applied": False,
                     "profile_source": "",
                     "agent_studio_candidate": False,
@@ -112,6 +114,8 @@ class _FakeRouterClient:
                     "sampling_defaults": {},
                     "scenario_sampling_defaults": {},
                     "supports_top_k": False,
+                    "supports_thinking": False,
+                    "thinking_default_enabled": False,
                     "profile_applied": False,
                     "profile_source": "",
                     "agent_studio_candidate": False,
@@ -139,6 +143,8 @@ class _FakeRouterClient:
                         "label_lab": {"temperature": 0.0, "top_p": 0.95, "top_k": 64},
                     },
                     "supports_top_k": True,
+                    "supports_thinking": True,
+                    "thinking_default_enabled": False,
                     "profile_applied": True,
                     "profile_source": "https://huggingface.co/google/gemma-4-31B-it",
                     "agent_studio_candidate": True,
@@ -231,5 +237,7 @@ def test_model_catalog_api_reports_router_source_health_and_items(monkeypatch) -
     assert ark_model["agent_studio_available"] is False
     assert dgx_model["profile_applied"] is True
     assert dgx_model["supports_top_k"] is True
+    assert dgx_model["supports_thinking"] is True
+    assert dgx_model["thinking_default_enabled"] is False
     assert dgx_model["agent_studio_candidate"] is True
     assert dgx_model["agent_studio_compatible"] is False

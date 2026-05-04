@@ -63,6 +63,8 @@ def enriched_catalog_items(force_refresh: bool = False) -> list[dict[str, Any]]:
                     else {}
                 ),
                 "supports_top_k": bool(raw_item.get("supports_top_k", False)),
+                "supports_thinking": bool(raw_item.get("supports_thinking", False)),
+                "thinking_default_enabled": bool(raw_item.get("thinking_default_enabled", False)),
                 "profile_applied": bool(raw_item.get("profile_applied", False)),
                 "profile_source": str(raw_item.get("profile_source", "") or ""),
                 "agent_studio_candidate": bool(raw_item.get("agent_studio_candidate", False)),

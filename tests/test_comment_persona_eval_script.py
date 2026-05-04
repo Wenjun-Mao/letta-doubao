@@ -24,13 +24,14 @@ def _response(status_code: int, payload: dict[str, Any], request: httpx.Request)
 def test_default_config_loads_comment_lab_values() -> None:
     config = load_config(Path("evals/comment_persona_eval/config.toml"))
 
-    assert config.model_key == "local_llama_server::gemma4"
+    assert config.model_key == "dgx_vllm::gemma4-31b-nvfp4"
     assert config.prompt_key == "comment_v20260418"
     assert config.max_tokens == 0
     assert config.timeout_seconds == 180
     assert config.retry_count == 0
     assert config.task_shape == "all_in_system"
     assert config.cache_prompt is False
+    assert config.enable_thinking is False
     assert config.temperature == 1.0
     assert config.top_p == 0.95
     assert config.top_k == 64
@@ -144,6 +145,7 @@ def test_run_attempt_uses_comment_lab_payload_and_flattens_success() -> None:
         "retry_count": 0,
         "task_shape": "all_in_system",
         "cache_prompt": False,
+        "enable_thinking": False,
         "temperature": 0.7,
         "top_p": 0.95,
         "top_k": 64,
@@ -153,6 +155,7 @@ def test_run_attempt_uses_comment_lab_payload_and_flattens_success() -> None:
     assert row["content_length"] == len("这条新闻确实值得继续观察。")
     assert row["usage_total_tokens"] == 18
     assert row["cache_prompt"] is False
+    assert row["enable_thinking"] is False
     assert row["temperature"] == 0.7
     assert row["top_p"] == 0.95
     assert row["top_k"] == 64
@@ -185,12 +188,15 @@ def test_write_artifacts_preserves_csv_and_raw_jsonl(tmp_path) -> None:
             "prompt_key": "comment_v20260418",
             "task_shape": "all_in_system",
             "cache_prompt": False,
+            "enable_thinking": False,
             "temperature": 0.6,
             "top_p": 1.0,
             "top_k": 64,
             "max_tokens": 0,
             "timeout_seconds": 180,
             "retry_count": 0,
+            "reasoning_length": 0,
+            "usage_reasoning_tokens": 0,
             "timings_cache_n": 0,
             "timings_prompt_n": 0,
             "timings_predicted_n": 0,
@@ -240,12 +246,15 @@ def test_artifact_writer_streams_attempts_before_context_closes(tmp_path) -> Non
         "prompt_key": "comment_v20260418",
         "task_shape": "all_in_system",
         "cache_prompt": False,
+        "enable_thinking": False,
         "temperature": 0.6,
         "top_p": 1.0,
         "top_k": 64,
         "max_tokens": 0,
         "timeout_seconds": 180,
         "retry_count": 0,
+        "reasoning_length": 0,
+        "usage_reasoning_tokens": 0,
         "timings_cache_n": 0,
         "timings_prompt_n": 10,
         "timings_predicted_n": 5,

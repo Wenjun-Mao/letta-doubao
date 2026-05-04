@@ -30,6 +30,8 @@ const COPY = {
     taskShapeStructuredOutput: "Structured output (JSON)",
     cachePrompt: "Use prompt cache",
     cachePromptHint: "Off by default for fair persona comparisons on llama-server.",
+    enableThinking: "Enable thinking",
+    enableThinkingHint: "For supported vLLM/Gemma models only; slower but exposes separated reasoning.",
     temperature: "Temperature",
     topP: "Top P",
     topK: "Top K",
@@ -47,6 +49,7 @@ const COPY = {
     timeoutUsed: "Timeout Used",
     taskShapeUsed: "Task Shape Used",
     cachePromptUsed: "Prompt Cache Used",
+    enableThinkingUsed: "Thinking Used",
     temperatureUsed: "Temperature Used",
     topPUsed: "Top P Used",
     topKUsed: "Top K Used",
@@ -108,6 +111,8 @@ const COPY = {
     taskShapeStructuredOutput: "结构化输出（JSON）",
     cachePrompt: "使用 Prompt 缓存",
     cachePromptHint: "默认关闭，便于在 llama-server 上公平比较 Persona。",
+    enableThinking: "启用 Thinking",
+    enableThinkingHint: "仅支持部分 vLLM/Gemma 模型；速度更慢，但会返回分离的 reasoning。",
     temperature: "Temperature",
     topP: "Top P",
     topK: "Top K",
@@ -125,6 +130,7 @@ const COPY = {
     timeoutUsed: "实际超时",
     taskShapeUsed: "实际任务形状",
     cachePromptUsed: "实际 Prompt 缓存",
+    enableThinkingUsed: "实际 Thinking",
     temperatureUsed: "实际 Temperature",
     topPUsed: "实际 Top P",
     topKUsed: "实际 Top K",
@@ -310,6 +316,8 @@ function formatRawRequestForHuman(value: unknown): string {
   lines.push(`Top P: ${String(payload.top_p ?? "-")}`);
   lines.push(`Top K: ${String(payload.top_k ?? "-")}`);
   lines.push(`Cache Prompt: ${String(payload.cache_prompt ?? "-")}`);
+  const chatTemplateKwargs = asObject(payload.chat_template_kwargs);
+  lines.push(`Enable Thinking: ${String(chatTemplateKwargs.enable_thinking ?? "-")}`);
   lines.push(`Max Tokens: ${String(payload.max_tokens ?? "-")}`);
 
   const messages = Array.isArray(payload.messages) ? payload.messages : [];
@@ -352,7 +360,7 @@ function formatRawReplyForHuman(value: unknown): string {
     const finishReason = String(choiceObj.finish_reason ?? "-");
     const message = asObject(choiceObj.message);
     const content = normalizeChatContent(message.content);
-    const reasoning = normalizeChatContent(message.reasoning_content);
+    const reasoning = normalizeChatContent(message.reasoning_content || message.reasoning);
 
     lines.push("");
     lines.push(`Choice ${index + 1}`);
@@ -401,6 +409,7 @@ export default function CommentLabPage() {
   const [retryCount, setRetryCount] = useState("0");
   const [taskShape, setTaskShape] = useState<CommentingTaskShape>("classic");
   const [cachePrompt, setCachePrompt] = useState(false);
+  const [enableThinking, setEnableThinking] = useState(false);
   const [temperature, setTemperature] = useState("0.6");
   const [topP, setTopP] = useState("1");
   const [topK, setTopK] = useState("");
@@ -413,6 +422,7 @@ export default function CommentLabPage() {
   const [timeoutUsed, setTimeoutUsed] = useState("");
   const [taskShapeUsed, setTaskShapeUsed] = useState("");
   const [cachePromptUsed, setCachePromptUsed] = useState("");
+  const [enableThinkingUsed, setEnableThinkingUsed] = useState("");
   const [temperatureUsed, setTemperatureUsed] = useState("");
   const [topPUsed, setTopPUsed] = useState("");
   const [topKUsed, setTopKUsed] = useState("");
@@ -504,6 +514,7 @@ export default function CommentLabPage() {
       setTopP(nextTopP);
     }
     setTopK(nextTopK ?? "");
+    setEnableThinking(Boolean(selected.thinking_default_enabled));
   }, [model, models]);
 
   const onGenerate = async () => {
@@ -567,6 +578,7 @@ export default function CommentLabPage() {
         retry_count: parsedRetryCount,
         task_shape: taskShape,
         cache_prompt: cachePrompt,
+        enable_thinking: enableThinking,
         temperature: parsedTemperature,
         top_p: parsedTopP,
         top_k: parsedTopK,
@@ -578,6 +590,7 @@ export default function CommentLabPage() {
       setTimeoutUsed(`${payload.timeout_seconds}`);
       setTaskShapeUsed(payload.task_shape || "");
       setCachePromptUsed(payload.cache_prompt ? "true" : "false");
+      setEnableThinkingUsed(payload.enable_thinking ? "true" : "false");
       setTemperatureUsed(`${payload.temperature}`);
       setTopPUsed(`${payload.top_p}`);
       setTopKUsed(payload.top_k === null || payload.top_k === undefined ? "" : `${payload.top_k}`);
@@ -794,6 +807,20 @@ export default function CommentLabPage() {
                 {copy.cachePromptHint}
               </label>
             </label>
+
+            <label className="field">
+              <span>{copy.enableThinking}</span>
+              <label className="muted" style={{ fontSize: 12 }}>
+                <input
+                  type="checkbox"
+                  checked={enableThinking}
+                  onChange={(event) => setEnableThinking(event.target.checked)}
+                  disabled={submitting}
+                  style={{ marginRight: 8 }}
+                />
+                {copy.enableThinkingHint}
+              </label>
+            </label>
           </div>
 
           <div className="toolbar" style={{ marginTop: 12 }}>
@@ -851,6 +878,9 @@ export default function CommentLabPage() {
                 </div>
                 <div>
                   {copy.cachePromptUsed}: {cachePromptUsed || "-"}
+                </div>
+                <div>
+                  {copy.enableThinkingUsed}: {enableThinkingUsed || "-"}
                 </div>
                 <div>
                   {copy.temperatureUsed}: {temperatureUsed || "-"}

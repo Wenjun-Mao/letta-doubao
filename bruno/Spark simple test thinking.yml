@@ -1,0 +1,30 @@
+info:
+  name: Spark simple test thinking
+  type: http
+  seq: 5
+
+http:
+  method: POST
+  url: http://100.64.35.71:8000/v1/chat/completions
+  headers:
+    - name: Content-Type
+      value: application/json
+  body:
+    type: json
+    data: |-
+      {
+          "messages": [{"role":"user", "content": "Solve 17*23 and explain briefly."}],
+          "stream": false,
+          "chat_template_kwargs": {
+          "enable_thinking": true
+        }
+      }
+  auth:
+    type: bearer
+    token: "{{UNSLOTH_API_KEY}}"
+
+settings:
+  encodeUrl: true
+  timeout: 0
+  followRedirects: true
+  maxRedirects: 5

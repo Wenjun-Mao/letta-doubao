@@ -40,6 +40,7 @@ The default config is `evals/comment_persona_eval/config.toml`.
 | `retry_count` | `0` | Comment Lab provider retry count. |
 | `task_shape` | `all_in_system` | Prompt packing strategy. |
 | `cache_prompt` | `false` | llama.cpp prompt-cache toggle. Keep off for fair persona comparison runs. |
+| `enable_thinking` | `false` | vLLM/Gemma thinking toggle. Set `true` for `dgx_vllm::gemma4-31b-nvfp4` to request separated reasoning in `raw_reply.choices[0].message.reasoning`; expect much slower runs. Use an explicit `max_tokens` budget such as `1024` or `2048` instead of no-limit `0`. |
 | `temperature` | `0.6` | Comment Lab sampling temperature. |
 | `top_p` | `1.0` | Comment Lab nucleus sampling value. |
 | `top_k` | `64` | Optional top-k sampling value; set blank/omit in custom configs to leave unset. |
@@ -58,7 +59,7 @@ CLI overrides:
 
 The CSV is for comparison and spreadsheet review. It includes:
 
-`run_id`, `round`, `persona_key`, `persona_label`, `persona_description`, `status`, `elapsed_seconds`, `content`, `content_length`, `finish_reason`, `content_source`, `usage_prompt_tokens`, `usage_completion_tokens`, `usage_total_tokens`, `error`, `model_key`, `prompt_key`, `task_shape`, `cache_prompt`, `temperature`, `top_p`, `top_k`, `max_tokens`, `timeout_seconds`, `retry_count`, `timings_cache_n`, `timings_prompt_n`, `timings_predicted_n`.
+`run_id`, `round`, `persona_key`, `persona_label`, `persona_description`, `status`, `elapsed_seconds`, `content`, `content_length`, `finish_reason`, `content_source`, `usage_prompt_tokens`, `usage_completion_tokens`, `usage_total_tokens`, `error`, `model_key`, `prompt_key`, `task_shape`, `cache_prompt`, `enable_thinking`, `temperature`, `top_p`, `top_k`, `max_tokens`, `timeout_seconds`, `retry_count`, `reasoning_length`, `usage_reasoning_tokens`, `timings_cache_n`, `timings_prompt_n`, `timings_predicted_n`.
 
 The JSONL sidecar preserves the full request, persona metadata, response payload, error text, and timing for each attempt.
 

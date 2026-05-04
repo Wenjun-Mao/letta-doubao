@@ -284,6 +284,84 @@ def test_generate_comment_sends_llama_cache_and_sampling_controls(monkeypatch) -
     assert result["top_p"] == 0.85
 
 
+def test_generate_comment_treats_zero_max_tokens_as_omitted_provider_field(monkeypatch) -> None:
+    service = _build_service()
+    captured: dict[str, object] = {}
+
+    def fake_post(payload, *, base_url, api_key, timeout_seconds, retry_count):
+        captured.update(payload)
+        return {
+            "choices": [
+                {
+                    "message": {"content": "No explicit token cap"},
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {},
+        }
+
+    monkeypatch.setattr(service, "_post_chat_completions", fake_post)
+
+    result = service.generate_comment(
+        base_url="http://127.0.0.1:8290/v1",
+        api_key="router-token",
+        model="dgx_vllm::gemma4-31b-nvfp4",
+        system_prompt="System",
+        persona_prompt="Persona",
+        news_input="News input",
+        max_tokens=0,
+        timeout_seconds=45,
+        retry_count=0,
+        task_shape="all_in_system",
+        source_adapter="vllm_openai",
+        enable_thinking=True,
+    )
+
+    assert result["max_tokens"] == 0
+    assert "max_tokens" not in captured
+
+
+def test_generate_comment_sends_vllm_thinking_toggle_and_reads_reasoning_field(monkeypatch) -> None:
+    service = _build_service()
+    captured: dict[str, object] = {}
+
+    def fake_post(payload, *, base_url, api_key, timeout_seconds, retry_count):
+        captured.update(payload)
+        return {
+            "choices": [
+                {
+                    "message": {
+                        "content": "",
+                        "reasoning": "Private reasoning\nFinal recoverable reply",
+                    },
+                    "finish_reason": "stop",
+                }
+            ],
+            "usage": {},
+        }
+
+    monkeypatch.setattr(service, "_post_chat_completions", fake_post)
+
+    result = service.generate_comment(
+        base_url="http://100.64.35.71:8000/v1",
+        api_key="",
+        model="dgx_vllm::gemma4-31b-nvfp4",
+        system_prompt="System",
+        persona_prompt="Persona",
+        news_input="News input",
+        timeout_seconds=45,
+        retry_count=0,
+        task_shape="classic",
+        source_adapter="vllm_openai",
+        enable_thinking=True,
+    )
+
+    assert captured["chat_template_kwargs"] == {"enable_thinking": True}
+    assert result["enable_thinking"] is True
+    assert result["content"] == "Final recoverable reply。"
+    assert result["content_source"] == "reasoning_tail_extraction"
+
+
 def test_generate_comment_omits_cache_prompt_for_generic_sources(monkeypatch) -> None:
     service = _build_service()
     captured: dict[str, object] = {}

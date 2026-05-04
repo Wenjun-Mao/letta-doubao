@@ -179,10 +179,20 @@ async def chat_completions(
 
     upstream_payload = dict(payload)
     upstream_payload["model"] = routed_model.provider_model_id
+    upstream_payload = _normalize_openai_payload(upstream_payload)
     upstream_payload = _apply_sampling_defaults(routed_model, source, upstream_payload)
     if bool(upstream_payload.get("stream", False)):
         return _stream_chat_completion(source, upstream_payload)
     return _post_chat_completion(source, upstream_payload)
+
+
+def _normalize_openai_payload(payload: dict[str, Any]) -> dict[str, Any]:
+    """Normalize ADE convenience values before they reach upstream providers."""
+    next_payload = dict(payload)
+    max_tokens = next_payload.get("max_tokens")
+    if isinstance(max_tokens, int | float) and not isinstance(max_tokens, bool) and max_tokens <= 0:
+        next_payload.pop("max_tokens", None)
+    return next_payload
 
 
 def _apply_sampling_defaults(

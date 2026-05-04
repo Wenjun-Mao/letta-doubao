@@ -228,6 +228,8 @@ class ApiPlatformModelCatalogEntryResponse(BaseModel):
     sampling_defaults: dict[str, Any] = Field(default_factory=dict)
     scenario_sampling_defaults: dict[str, dict[str, Any]] = Field(default_factory=dict)
     supports_top_k: bool = False
+    supports_thinking: bool = False
+    thinking_default_enabled: bool = False
     profile_applied: bool = False
     profile_source: str = ""
     agent_studio_candidate: bool = False

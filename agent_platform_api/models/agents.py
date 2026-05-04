@@ -43,6 +43,8 @@ class ApiOptionEntryResponse(BaseModel):
     sampling_defaults: dict[str, Any] = Field(default_factory=dict)
     scenario_sampling_defaults: dict[str, dict[str, Any]] = Field(default_factory=dict)
     supports_top_k: bool | None = None
+    supports_thinking: bool | None = None
+    thinking_default_enabled: bool | None = None
     profile_applied: bool | None = None
     profile_source: str | None = None
     agent_studio_candidate: bool | None = None

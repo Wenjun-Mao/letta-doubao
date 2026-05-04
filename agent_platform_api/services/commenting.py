@@ -92,6 +92,10 @@ class CommentingService:
     def _is_llama_cpp_adapter(source_adapter: str | None) -> bool:
         return str(source_adapter or "").strip().lower() == "llama_cpp_server"
 
+    @staticmethod
+    def _is_vllm_adapter(source_adapter: str | None) -> bool:
+        return str(source_adapter or "").strip().lower() == "vllm_openai"
+
     @classmethod
     def _resolve_task_shape(cls, value: str | None) -> str:
         resolved = str(value or "").strip().lower()
@@ -230,6 +234,7 @@ class CommentingService:
         task_shape: str | None = None,
         source_adapter: str | None = None,
         cache_prompt: bool | None = None,
+        enable_thinking: bool | None = None,
         temperature: float | None = None,
         top_p: float | None = None,
         top_k: int | None = None,
@@ -252,6 +257,7 @@ class CommentingService:
         resolved_retry_count = self._clamp_retry_count(retry_count)
         resolved_task_shape = runtime_defaults["task_shape"] if task_shape is None else self._resolve_task_shape(task_shape)
         resolved_cache_prompt = bool(runtime_defaults["cache_prompt"]) if cache_prompt is None else bool(cache_prompt)
+        resolved_enable_thinking = False if enable_thinking is None else bool(enable_thinking)
         resolved_temperature = float(runtime_defaults["temperature"]) if temperature is None else self._clamp_temperature(temperature)
         resolved_top_p = float(runtime_defaults["top_p"]) if top_p is None else self._clamp_top_p(top_p)
         resolved_top_k = runtime_defaults["top_k"] if top_k is None else self._clamp_top_k(top_k)
@@ -260,6 +266,7 @@ class CommentingService:
             "timeout_seconds": resolved_timeout_seconds,
             "task_shape": resolved_task_shape,
             "cache_prompt": resolved_cache_prompt,
+            "enable_thinking": resolved_enable_thinking,
             "temperature": resolved_temperature,
             "top_p": resolved_top_p,
             "top_k": resolved_top_k,
@@ -331,6 +338,14 @@ class CommentingService:
             payload["top_k"] = resolved_top_k
         if self._is_llama_cpp_adapter(source_adapter):
             payload["cache_prompt"] = resolved_cache_prompt
+        if self._is_vllm_adapter(source_adapter) and enable_thinking is not None:
+            chat_template_kwargs = payload.get("chat_template_kwargs", {})
+            if not isinstance(chat_template_kwargs, dict):
+                chat_template_kwargs = {}
+            payload["chat_template_kwargs"] = {
+                **chat_template_kwargs,
+                "enable_thinking": resolved_enable_thinking,
+            }
 
         try:
             data = self._post_chat_completions(
@@ -369,7 +384,7 @@ class CommentingService:
         message = choices[0].get("message", {}) if isinstance(choices[0], dict) else {}
         finish_reason = str(choices[0].get("finish_reason", "") or "").strip().lower() if isinstance(choices[0], dict) else ""
         content = normalize_content(message.get("content", ""))
-        reasoning = normalize_content(message.get("reasoning_content", ""))
+        reasoning = normalize_content(message.get("reasoning_content", "") or message.get("reasoning", ""))
 
         if resolved_task_shape == "structured_output":
             content = extract_structured_comment(content)

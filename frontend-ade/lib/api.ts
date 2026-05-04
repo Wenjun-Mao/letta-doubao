@@ -40,6 +40,8 @@ export type OptionEntry = {
   sampling_defaults?: SamplingDefaults;
   scenario_sampling_defaults?: Record<string, SamplingDefaults>;
   supports_top_k?: boolean | null;
+  supports_thinking?: boolean | null;
+  thinking_default_enabled?: boolean | null;
   profile_applied?: boolean | null;
   profile_source?: string | null;
   agent_studio_candidate?: boolean | null;
@@ -158,6 +160,7 @@ export type CommentingGenerateResponse = {
   timeout_seconds: number;
   task_shape: CommentingTaskShape;
   cache_prompt: boolean;
+  enable_thinking: boolean;
   temperature: number;
   top_p: number;
   top_k?: number | null;
@@ -613,6 +616,7 @@ export function generateComment(payload: {
   retry_count?: number;
   task_shape?: CommentingTaskShape;
   cache_prompt?: boolean;
+  enable_thinking?: boolean;
   temperature?: number;
   top_p?: number;
   top_k?: number;
@@ -631,6 +635,7 @@ export function generateComment(payload: {
       retry_count: payload.retry_count,
       task_shape: payload.task_shape,
       cache_prompt: payload.cache_prompt,
+      enable_thinking: payload.enable_thinking,
       temperature: payload.temperature,
       top_p: payload.top_p,
       top_k: payload.top_k,

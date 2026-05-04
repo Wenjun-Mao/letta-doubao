@@ -461,6 +461,11 @@
             ],
             "title": "内容 来源"
           },
+          "enable_thinking": {
+            "default": false,
+            "title": "启用 Thinking",
+            "type": "boolean"
+          },
           "finish_reason": {
             "anyOf": [
               {
@@ -1256,6 +1261,17 @@
             ],
             "title": "结构化输出模式"
           },
+          "supports_thinking": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "支持 Thinking"
+          },
           "supports_top_k": {
             "anyOf": [
               {
@@ -1266,6 +1282,17 @@
               }
             ],
             "title": "支持 Top K"
+          },
+          "thinking_default_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thinking 默认启用"
           }
         },
         "required": [
@@ -1776,9 +1803,19 @@
             ],
             "title": "结构化输出模式"
           },
+          "supports_thinking": {
+            "default": false,
+            "title": "支持 Thinking",
+            "type": "boolean"
+          },
           "supports_top_k": {
             "default": false,
             "title": "支持 Top K",
+            "type": "boolean"
+          },
+          "thinking_default_enabled": {
+            "default": false,
+            "title": "Thinking 默认启用",
             "type": "boolean"
           }
         },
@@ -3064,6 +3101,7 @@
         "examples": [
           {
             "cache_prompt": false,
+            "enable_thinking": false,
             "input": "Summarize the reader reaction and write one concise editor-style reply.",
             "max_tokens": 512,
             "model_key": "local_llama_server::gemma4",
@@ -3090,6 +3128,18 @@
             ],
             "description": "Comment Lab 的 llama.cpp 提示词缓存开关。默认关闭，并且只发送给 llama.cpp 后端来源。",
             "title": "缓存 提示词"
+          },
+          "enable_thinking": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "可选 vLLM/Gemma thinking 开关。对支持的 vLLM 来源设为 true 时，ADE 会发送 `chat_template_kwargs.enable_thinking=true`。",
+            "title": "启用 Thinking"
           },
           "input": {
             "description": "需要评论的新闻文章、评论线程或源文本。",
@@ -4445,6 +4495,7 @@
                   "summary": "使用本地 llama-server 生成",
                   "value": {
                     "cache_prompt": false,
+                    "enable_thinking": false,
                     "input": "Summarize the reader reaction and write one concise editor-style reply.",
                     "max_tokens": 512,
                     "model_key": "local_llama_server::gemma4",

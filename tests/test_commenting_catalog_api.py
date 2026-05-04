@@ -42,6 +42,7 @@ def test_commenting_generate_uses_model_key_and_selected_source_connection(monke
             "timeout_seconds": 45.0,
             "task_shape": "classic",
             "cache_prompt": kwargs["cache_prompt"],
+            "enable_thinking": kwargs["enable_thinking"],
             "temperature": kwargs["temperature"],
             "top_p": kwargs["top_p"],
             "top_k": kwargs["top_k"],
@@ -61,6 +62,7 @@ def test_commenting_generate_uses_model_key_and_selected_source_connection(monke
                 retry_count=0,
                 task_shape="classic",
                 cache_prompt=False,
+                enable_thinking=True,
                 temperature=0.8,
                 top_p=0.9,
                 top_k=64,
@@ -73,12 +75,14 @@ def test_commenting_generate_uses_model_key_and_selected_source_connection(monke
     assert captured["model"] == "qwen3.5-27b"
     assert captured["source_adapter"] == "llama_cpp_server"
     assert captured["cache_prompt"] is False
+    assert captured["enable_thinking"] is True
     assert captured["temperature"] == 0.8
     assert captured["top_p"] == 0.9
     assert captured["top_k"] == 64
     assert payload["model_key"] == "local_unsloth::qwen3.5-27b"
     assert payload["source_label"] == "Local Unsloth"
     assert payload["provider_model_id"] == "qwen3.5-27b"
+    assert payload["enable_thinking"] is True
 
 
 def test_commenting_generate_request_rejects_removed_compact_task_shape() -> None:

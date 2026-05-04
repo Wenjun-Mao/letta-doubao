@@ -38,6 +38,7 @@ router = APIRouter()
                                 "retry_count": 1,
                                 "task_shape": "classic",
                                 "cache_prompt": False,
+                                "enable_thinking": False,
                                 "temperature": 0.6,
                                 "top_p": 1.0,
                                 "top_k": 64,
@@ -102,6 +103,7 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
             task_shape=request.task_shape,
             source_adapter=str(model_selection.get("source_adapter", "") or ""),
             cache_prompt=request.cache_prompt,
+            enable_thinking=request.enable_thinking,
             temperature=(
                 request.temperature
                 if request.temperature is not None
@@ -152,6 +154,7 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
         "timeout_seconds": float(generation_result.get("timeout_seconds", runtime_defaults.timeout_seconds)),
         "task_shape": str(generation_result.get("task_shape", runtime_defaults.task_shape)),
         "cache_prompt": bool(generation_result.get("cache_prompt", runtime_defaults.cache_prompt)),
+        "enable_thinking": bool(generation_result.get("enable_thinking", False)),
         "temperature": float(generation_result.get("temperature", runtime_defaults.temperature)),
         "top_p": float(generation_result.get("top_p", runtime_defaults.top_p)),
         "top_k": generation_result.get("top_k", runtime_defaults.top_k),

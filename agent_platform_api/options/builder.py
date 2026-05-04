@@ -107,6 +107,8 @@ def runtime_options(
                 "sampling_defaults": item.get("sampling_defaults", {}),
                 "scenario_sampling_defaults": item.get("scenario_sampling_defaults", {}),
                 "supports_top_k": item.get("supports_top_k", False),
+                "supports_thinking": item.get("supports_thinking", False),
+                "thinking_default_enabled": item.get("thinking_default_enabled", False),
                 "profile_applied": item.get("profile_applied", False),
                 "profile_source": item.get("profile_source", ""),
                 "agent_studio_candidate": item.get("agent_studio_candidate", False),

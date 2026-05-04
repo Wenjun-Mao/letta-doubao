@@ -117,6 +117,8 @@ def test_router_catalog_enriches_models_from_profiles_and_gates_agent_studio(mon
                     "base_model": "nvidia/Gemma-4-31B-IT-NVFP4",
                     "profile_source": "https://huggingface.co/google/gemma-4-31B-it",
                     "supports_top_k": True,
+                    "supports_thinking": True,
+                    "thinking_default_enabled": False,
                     "agent_studio_candidate": True,
                     "agent_studio_compatible": False,
                     "sampling_defaults": {"temperature": 1.0, "top_p": 0.95, "top_k": 64},
@@ -153,6 +155,8 @@ def test_router_catalog_enriches_models_from_profiles_and_gates_agent_studio(mon
     assert model.router_model_id == "dgx_vllm::gemma4-31b-nvfp4"
     assert model.profile_applied is True
     assert model.supports_top_k is True
+    assert model.supports_thinking is True
+    assert model.thinking_default_enabled is False
     assert model.sampling_defaults == {"temperature": 1.0, "top_p": 0.95, "top_k": 64}
     assert model.scenario_sampling_defaults["label_lab"]["temperature"] == 0.0
     assert model.agent_studio_candidate is True

@@ -3,6 +3,8 @@
     "base_model": "nvidia/Gemma-4-31B-IT-NVFP4",
     "profile_source": "https://huggingface.co/google/gemma-4-31B-it",
     "supports_top_k": true,
+    "supports_thinking": true,
+    "thinking_default_enabled": false,
     "agent_studio_candidate": true,
     "agent_studio_compatible": false,
     "sampling_defaults": {

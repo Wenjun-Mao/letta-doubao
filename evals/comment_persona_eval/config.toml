@@ -23,6 +23,9 @@ timeout_seconds = 180
 retry_count = 0
 task_shape = "all_in_system"
 cache_prompt = false
+# For DGX/vLLM thinking tests, set enable_thinking=true and use an explicit
+# max_tokens budget such as 1024 or 2048 instead of the no-limit value 0.
+enable_thinking = true
 temperature = 1
 top_p = 0.95
 top_k = 64

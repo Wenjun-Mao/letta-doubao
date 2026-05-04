@@ -71,6 +71,8 @@ class ModelProfile(BaseModel):
     base_model: str = ""
     profile_source: str = ""
     supports_top_k: bool = False
+    supports_thinking: bool = False
+    thinking_default_enabled: bool = False
     agent_studio_candidate: bool = False
     agent_studio_compatible: bool = True
     sampling_defaults: SamplingDefaults = Field(default_factory=SamplingDefaults)

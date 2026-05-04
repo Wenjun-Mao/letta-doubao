@@ -12,6 +12,8 @@ def _profile_payload(**overrides: object) -> dict[str, object]:
         "base_model": "nvidia/Gemma-4-31B-IT-NVFP4",
         "profile_source": "https://huggingface.co/google/gemma-4-31B-it",
         "supports_top_k": True,
+        "supports_thinking": True,
+        "thinking_default_enabled": False,
         "agent_studio_candidate": True,
         "agent_studio_compatible": False,
         "sampling_defaults": {"temperature": 1.0, "top_p": 0.95, "top_k": 64},
@@ -46,6 +48,8 @@ def test_load_model_profiles_resolves_sampling_defaults(tmp_path) -> None:
         "top_k": 64,
     }
     assert profile.scenario_defaults_payload()["agent_studio"]["top_k"] == 64
+    assert profile.supports_thinking is True
+    assert profile.thinking_default_enabled is False
     assert profile.agent_studio_compatible is False
 
 
@@ -80,4 +84,3 @@ def test_load_model_profiles_rejects_invalid_sampling_ranges(tmp_path) -> None:
 
     with pytest.raises(Exception, match="temperature"):
         load_model_profiles(profiles_path)
-

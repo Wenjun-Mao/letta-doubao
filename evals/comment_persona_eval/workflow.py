@@ -56,6 +56,7 @@ class EvalConfig:
     retry_count: int = 0
     task_shape: str = "all_in_system"
     cache_prompt: bool = False
+    enable_thinking: bool = False
     temperature: float = 0.6
     top_p: float = 1.0
     top_k: int | None = 64
@@ -92,6 +93,7 @@ def load_config(path: Path) -> EvalConfig:
         retry_count=int(payload.get("retry_count", EvalConfig.retry_count)),
         task_shape=str(payload.get("task_shape", EvalConfig.task_shape) or "").strip().lower(),
         cache_prompt=bool(payload.get("cache_prompt", EvalConfig.cache_prompt)),
+        enable_thinking=bool(payload.get("enable_thinking", EvalConfig.enable_thinking)),
         temperature=float(payload.get("temperature", EvalConfig.temperature)),
         top_p=float(payload.get("top_p", EvalConfig.top_p)),
         top_k=_optional_int(payload.get("top_k", EvalConfig.top_k)),
@@ -284,6 +286,7 @@ def run_attempt(
         "retry_count": config.retry_count,
         "task_shape": config.task_shape,
         "cache_prompt": config.cache_prompt,
+        "enable_thinking": config.enable_thinking,
         "temperature": config.temperature,
         "top_p": config.top_p,
         "top_k": config.top_k,
@@ -368,6 +371,7 @@ def _row_from_result(
     usage = response.get("usage", {}) if isinstance(response.get("usage", {}), dict) else {}
     raw_reply = response.get("raw_reply", {}) if isinstance(response.get("raw_reply", {}), dict) else {}
     timings = raw_reply.get("timings", {}) if isinstance(raw_reply.get("timings", {}), dict) else {}
+    reasoning_text = _reasoning_text(raw_reply)
     content = str(response.get("content", "") or "")
     return {
         "run_id": run_id,
@@ -389,12 +393,15 @@ def _row_from_result(
         "prompt_key": config.prompt_key,
         "task_shape": config.task_shape,
         "cache_prompt": config.cache_prompt,
+        "enable_thinking": config.enable_thinking,
         "temperature": config.temperature,
         "top_p": config.top_p,
         "top_k": config.top_k,
         "max_tokens": config.max_tokens,
         "timeout_seconds": config.timeout_seconds,
         "retry_count": config.retry_count,
+        "reasoning_length": len(reasoning_text),
+        "usage_reasoning_tokens": _usage_reasoning_tokens(usage),
         "timings_cache_n": _usage_int(timings, "cache_n"),
         "timings_prompt_n": _usage_int(timings, "prompt_n"),
         "timings_predicted_n": _usage_int(timings, "predicted_n"),
@@ -438,6 +445,24 @@ def _usage_int(usage: dict[str, Any], key: str) -> int:
         return int(usage.get(key, 0) or 0)
     except (TypeError, ValueError):
         return 0
+
+
+def _usage_reasoning_tokens(usage: dict[str, Any]) -> int:
+    details = usage.get("completion_tokens_details", {})
+    if not isinstance(details, dict):
+        return 0
+    return _usage_int(details, "reasoning_tokens")
+
+
+def _reasoning_text(raw_reply: dict[str, Any]) -> str:
+    choices = raw_reply.get("choices", [])
+    if not isinstance(choices, list) or not choices:
+        return ""
+    first_choice = choices[0] if isinstance(choices[0], dict) else {}
+    message = first_choice.get("message", {})
+    if not isinstance(message, dict):
+        return ""
+    return str(message.get("reasoning") or message.get("reasoning_content") or "")
 
 
 def _optional_int(value: Any) -> int | None:

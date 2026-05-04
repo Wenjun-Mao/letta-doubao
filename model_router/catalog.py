@@ -89,6 +89,8 @@ class RoutedModel:
     sampling_defaults: dict[str, float | int] = field(default_factory=dict)
     scenario_sampling_defaults: dict[str, dict[str, float | int]] = field(default_factory=dict)
     supports_top_k: bool = False
+    supports_thinking: bool = False
+    thinking_default_enabled: bool = False
     profile_applied: bool = False
     profile_source: str = ""
     agent_studio_candidate: bool = False
@@ -116,6 +118,8 @@ class RoutedModel:
                 key: dict(value) for key, value in self.scenario_sampling_defaults.items()
             },
             "supports_top_k": self.supports_top_k,
+            "supports_thinking": self.supports_thinking,
+            "thinking_default_enabled": self.thinking_default_enabled,
             "profile_applied": self.profile_applied,
             "profile_source": self.profile_source,
             "agent_studio_candidate": self.agent_studio_candidate,
@@ -218,6 +222,8 @@ class RouterCatalogService:
                         sampling_defaults=profile.sampling_defaults.as_payload() if profile else {},
                         scenario_sampling_defaults=profile.scenario_defaults_payload() if profile else {},
                         supports_top_k=supports_top_k,
+                        supports_thinking=bool(profile and profile.supports_thinking),
+                        thinking_default_enabled=bool(profile and profile.thinking_default_enabled),
                         profile_applied=profile is not None,
                         profile_source=profile.profile_source if profile else "",
                         agent_studio_candidate=bool(profile and profile.agent_studio_candidate),
