@@ -13,7 +13,7 @@ from ade_core.settings_file_loader import load_json_config_list
 
 
 RouterSourceKind = Literal["openai-compatible"]
-RouterSourceAdapter = Literal["generic_openai", "ark_openai", "llama_cpp_server"]
+RouterSourceAdapter = Literal["generic_openai", "ark_openai", "llama_cpp_server", "vllm_openai"]
 RouterSourceStatus = Literal["healthy", "auth_error", "unreachable", "empty", "disabled"]
 RouterModelType = Literal["llm", "embedding", "unknown"]
 _DEFAULT_SECRETS_DIR = Path("/run/secrets")
@@ -58,8 +58,8 @@ class RouterSourceConfig(BaseModel):
         normalized = str(value or "").strip().lower().replace("-", "_")
         if not normalized:
             return "generic_openai"
-        if normalized not in {"generic_openai", "ark_openai", "llama_cpp_server"}:
-            raise ValueError("adapter must be 'generic_openai', 'ark_openai', or 'llama_cpp_server'")
+        if normalized not in {"generic_openai", "ark_openai", "llama_cpp_server", "vllm_openai"}:
+            raise ValueError("adapter must be 'generic_openai', 'ark_openai', 'llama_cpp_server', or 'vllm_openai'")
         return normalized
 
     @field_validator("enabled_for", "module_visibility", mode="before")
@@ -145,6 +145,7 @@ class RouterSourceConfig(BaseModel):
 class ModelRouterSettings(BaseSettings):
     sources: list[RouterSourceConfig] = Field(default_factory=list)
     sources_file: str = "config/model_router_sources.json"
+    model_profiles_file: str = "config/model_router_model_profiles.json"
     api_key: str = ""
     api_key_secret: str = "model-router-api-key"
     cache_ttl_seconds: int = 30
@@ -188,9 +189,9 @@ class ModelRouterSettings(BaseSettings):
         cls._validate_sources(value)
         return value
 
-    @field_validator("sources_file")
+    @field_validator("sources_file", "model_profiles_file")
     @classmethod
-    def _strip_sources_file(cls, value: str) -> str:
+    def _strip_config_file(cls, value: str) -> str:
         return str(value or "").strip()
 
     @model_validator(mode="after")

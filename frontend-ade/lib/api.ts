@@ -19,6 +19,11 @@ export type Scenario = "chat" | "comment" | "label";
 export type CommentingTaskShape = "classic" | "all_in_system" | "structured_output";
 export type LabelingOutputMode = "strict_json_schema" | "json_schema" | "best_effort_prompt_json";
 export type PlatformRunType = "platform_api_e2e_check" | "ade_mvp_smoke_e2e_check";
+export type SamplingDefaults = {
+  temperature?: number | null;
+  top_p?: number | null;
+  top_k?: number | null;
+};
 
 export type OptionEntry = {
   key: string;
@@ -32,6 +37,13 @@ export type OptionEntry = {
   provider_model_id?: string | null;
   label_lab_available?: boolean | null;
   structured_output_mode?: LabelingOutputMode | null;
+  sampling_defaults?: SamplingDefaults;
+  scenario_sampling_defaults?: Record<string, SamplingDefaults>;
+  supports_top_k?: boolean | null;
+  profile_applied?: boolean | null;
+  profile_source?: string | null;
+  agent_studio_candidate?: boolean | null;
+  agent_studio_compatible?: boolean | null;
 };
 
 export type AgentListItem = {
@@ -148,6 +160,7 @@ export type CommentingGenerateResponse = {
   cache_prompt: boolean;
   temperature: number;
   top_p: number;
+  top_k?: number | null;
   content_source?: string | null;
   selected_attempt: string;
   finish_reason?: string | null;
@@ -178,6 +191,7 @@ export type LabelingGenerateResponse = {
   validation_errors: string[];
   temperature: number;
   top_p: number;
+  top_k?: number | null;
 };
 
 export type LabelSchemaRecord = {
@@ -463,6 +477,7 @@ export function fetchOptions(
       cache_prompt: boolean;
       temperature: number;
       top_p: number;
+      top_k?: number | null;
     };
     labeling?: {
       max_tokens: number;
@@ -470,10 +485,12 @@ export function fetchOptions(
       repair_retry_count: number;
       temperature: number;
       top_p: number;
+      top_k?: number | null;
     };
     agent_studio?: {
       temperature?: number | null;
       top_p?: number | null;
+      top_k?: number | null;
     };
   }>(`/api/v1/options?${params.toString()}`, requestOptions);
 }
@@ -503,6 +520,7 @@ export function createAgent(payload: {
   embedding?: string | null;
   temperature?: number;
   top_p?: number;
+  top_k?: number;
 }) {
   return requestJson<{
     id: string;
@@ -597,6 +615,7 @@ export function generateComment(payload: {
   cache_prompt?: boolean;
   temperature?: number;
   top_p?: number;
+  top_k?: number;
 }) {
   return requestJson<CommentingGenerateResponse>("/api/v1/commenting/generate", {
     method: "POST",
@@ -614,6 +633,7 @@ export function generateComment(payload: {
       cache_prompt: payload.cache_prompt,
       temperature: payload.temperature,
       top_p: payload.top_p,
+      top_k: payload.top_k,
     },
   });
 }
@@ -628,6 +648,7 @@ export function generateLabels(payload: {
   repair_retry_count?: number;
   temperature?: number;
   top_p?: number;
+  top_k?: number;
 }) {
   return requestJson<LabelingGenerateResponse>("/api/v1/labeling/generate", {
     method: "POST",
@@ -642,6 +663,7 @@ export function generateLabels(payload: {
       repair_retry_count: payload.repair_retry_count,
       temperature: payload.temperature,
       top_p: payload.top_p,
+      top_k: payload.top_k,
     },
   });
 }

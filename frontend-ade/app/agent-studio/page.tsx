@@ -161,6 +161,24 @@ function parseOptionalTopP(value: string): number | undefined | null {
   return parsed;
 }
 
+function parseOptionalPositiveInt(value: string): number | undefined | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0 || String(parsed) !== trimmed) {
+    return null;
+  }
+  return parsed;
+}
+
+function samplingDefaultString(option: OptionEntry | undefined, field: "temperature" | "top_p" | "top_k"): string | null {
+  const scenarioDefaults = option?.scenario_sampling_defaults?.agent_studio;
+  const value = scenarioDefaults?.[field] ?? option?.sampling_defaults?.[field];
+  return value === undefined || value === null ? null : String(value);
+}
+
 function parseToolExamples(
   description: string,
   fallbackNoDescription = "No description.",
@@ -388,6 +406,7 @@ export default function AgentStudioPage() {
   const [createEmbedding, setCreateEmbedding] = useState("");
   const [createTemperature, setCreateTemperature] = useState("");
   const [createTopP, setCreateTopP] = useState("");
+  const [createTopK, setCreateTopK] = useState("");
   const [modelEditValue, setModelEditValue] = useState("");
 
   const [chatInput, setChatInput] = useState("");
@@ -586,6 +605,7 @@ export default function AgentStudioPage() {
     });
     setCreateTemperature((current) => current || String(optionsPayload.agent_studio?.temperature ?? ""));
     setCreateTopP((current) => current || String(optionsPayload.agent_studio?.top_p ?? ""));
+    setCreateTopK((current) => current || String(optionsPayload.agent_studio?.top_k ?? ""));
   };
 
   const refreshToolCatalog = async (agentId: string, searchValue = toolSearch) => {
@@ -799,6 +819,23 @@ export default function AgentStudioPage() {
   }, [chatHistory]);
 
   useEffect(() => {
+    const selected = models.find((item) => item.key === createModel);
+    if (!selected) {
+      return;
+    }
+    const nextTemperature = samplingDefaultString(selected, "temperature");
+    const nextTopP = samplingDefaultString(selected, "top_p");
+    const nextTopK = samplingDefaultString(selected, "top_k");
+    if (nextTemperature !== null) {
+      setCreateTemperature(nextTemperature);
+    }
+    if (nextTopP !== null) {
+      setCreateTopP(nextTopP);
+    }
+    setCreateTopK(nextTopK ?? "");
+  }, [createModel, models]);
+
+  useEffect(() => {
     if (!toolDetailTool) {
       return;
     }
@@ -830,6 +867,11 @@ export default function AgentStudioPage() {
       setError(t("Top P must be greater than 0 and at most 1.", "Top P 必须大于 0 且不超过 1。"));
       return;
     }
+    const parsedTopK = parseOptionalPositiveInt(createTopK);
+    if (parsedTopK === null) {
+      setError(t("Top K must be a positive integer, or blank to use the model default.", "Top K 必须是正整数，或留空使用模型默认值。"));
+      return;
+    }
 
     setBusy(true);
     setError("");
@@ -844,6 +886,7 @@ export default function AgentStudioPage() {
         embedding: createEmbedding.trim() || null,
         temperature: parsedTemperature,
         top_p: parsedTopP,
+        top_k: parsedTopK,
       });
 
       await refreshAgentList(includeArchivedAgents);
@@ -1294,6 +1337,18 @@ export default function AgentStudioPage() {
                 step={0.05}
                 value={createTopP}
                 onChange={(e) => setCreateTopP(e.target.value)}
+                placeholder={t("Use model default", "使用模型默认值")}
+              />
+            </label>
+            <label className="field">
+              <span>{t("Top K (optional)", "Top K（可选）")}</span>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                step={1}
+                value={createTopK}
+                onChange={(e) => setCreateTopK(e.target.value)}
                 placeholder={t("Use model default", "使用模型默认值")}
               />
             </label>

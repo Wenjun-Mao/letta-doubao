@@ -40,6 +40,7 @@ router = APIRouter()
                                 "cache_prompt": False,
                                 "temperature": 0.6,
                                 "top_p": 1.0,
+                                "top_k": 64,
                             },
                         }
                     }
@@ -101,8 +102,21 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
             task_shape=request.task_shape,
             source_adapter=str(model_selection.get("source_adapter", "") or ""),
             cache_prompt=request.cache_prompt,
-            temperature=request.temperature,
-            top_p=request.top_p,
+            temperature=(
+                request.temperature
+                if request.temperature is not None
+                else _scenario_sampling_default(model_selection, "comment_lab", "temperature")
+            ),
+            top_p=(
+                request.top_p
+                if request.top_p is not None
+                else _scenario_sampling_default(model_selection, "comment_lab", "top_p")
+            ),
+            top_k=(
+                request.top_k
+                if request.top_k is not None
+                else _scenario_sampling_default(model_selection, "comment_lab", "top_k")
+            ),
         )
     except Exception as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
@@ -140,6 +154,7 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
         "cache_prompt": bool(generation_result.get("cache_prompt", runtime_defaults.cache_prompt)),
         "temperature": float(generation_result.get("temperature", runtime_defaults.temperature)),
         "top_p": float(generation_result.get("top_p", runtime_defaults.top_p)),
+        "top_k": generation_result.get("top_k", runtime_defaults.top_k),
         "content_source": str(generation_result.get("content_source", "") or "") or None,
         "selected_attempt": selected_attempt,
         "finish_reason": str(generation_result.get("finish_reason", "") or "") or None,
@@ -148,4 +163,20 @@ async def api_commenting_generate(request: CommentingGenerateRequest):
         "raw_request": raw_request,
         "raw_reply": raw_reply,
     }
+
+
+def _scenario_sampling_default(
+    model_selection: dict[str, object],
+    scenario: str,
+    field: str,
+) -> object | None:
+    scenario_defaults = model_selection.get("scenario_sampling_defaults", {})
+    if isinstance(scenario_defaults, dict):
+        defaults = scenario_defaults.get(scenario)
+        if isinstance(defaults, dict) and defaults.get(field) is not None:
+            return defaults[field]
+    sampling_defaults = model_selection.get("sampling_defaults", {})
+    if isinstance(sampling_defaults, dict):
+        return sampling_defaults.get(field)
+    return None
 

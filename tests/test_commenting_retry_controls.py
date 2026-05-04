@@ -22,6 +22,7 @@ def _build_service() -> CommentingService:
             commenting_cache_prompt=False,
             commenting_temperature=0.6,
             commenting_top_p=1.0,
+            commenting_top_k=None,
         )
     )
 

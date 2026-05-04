@@ -8,7 +8,7 @@ This repo runs a local ADE stack around Letta with a first-party model router, a
 - `pgvector/pgvector:0.8.1-pg15` for Postgres + pgvector
 - `redis:7-alpine` for an explicit external Redis dependency
 - first-party `model_router` service as the single OpenAI-compatible front door
-- Ark, llama-server, LM Studio, and Unsloth Studio as configurable router upstreams
+- Ark, llama-server, DGX/vLLM, LM Studio, and Unsloth Studio as configurable router upstreams
 - Letta's built-in `letta/letta-free` embedding handle for agent memory
 - first-party ADE services built locally from this checkout
 
@@ -33,8 +33,9 @@ The same key did not expose a usable text embedding model through the tested Ope
 ## Quick Start
 
 1. Review `.env` or copy `.env.example` to `.env` and update values.
-   `config/model_router_sources.json` is the single ADE model-source config. Letta sees the router as one OpenAI-compatible provider at `http://model_router:8290/v1`, while Agent Studio, Comment Lab, and Label Lab read router diagnostics for module-specific visibility.
-   By default, `8081` is the active llama-server source for local Agent Studio, Comment Lab, and Label Lab work, while `2234` Unsloth Studio and `1234` LM Studio are disabled standby examples.
+   `config/model_router_sources.json` is the single ADE model-source config. `config/model_router_model_profiles.json` stores advisory model-specific defaults such as recommended `temperature`, `top_p`, and `top_k`.
+   Letta sees the router as one OpenAI-compatible provider at `http://model_router:8290/v1`, while Agent Studio, Comment Lab, and Label Lab read router diagnostics for module-specific visibility.
+   By default, `8081` is the active llama-server source for local Agent Studio, Comment Lab, and Label Lab work, `100.64.35.71:8000` is the DGX/vLLM source for Comment Lab and Label Lab, while `2234` Unsloth Studio and `1234` LM Studio are disabled standby examples.
    llama-server runtime settings, including loaded GGUF, context window, GPU layers, and reasoning mode, are host-managed on the machine running it rather than controlled by ADE.
 2. Start the stack:
 
@@ -134,6 +135,7 @@ After this, `agent_platform_api` should start directly with Uvicorn and no start
 - `.env.example`: sanitized config template
 - `.env`: local runtime config
 - `config/model_router_sources.json`: single model-source config for the router and ADE modules
+- `config/model_router_model_profiles.json`: model profile defaults and capability notes layered on top of discovered router models
 - `docs/codebase-map.md`: architecture and "where do I change X?" guide
 - `pyproject.toml`: `uv` dependency manifest for backend scripts and tests
 - `uv.lock`: `uv` lockfile

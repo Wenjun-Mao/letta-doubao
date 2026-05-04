@@ -108,7 +108,7 @@ def test_no_tracked_generated_or_stale_artifacts() -> None:
 
 
 def test_workflow_specific_config_stays_out_of_root_config() -> None:
-    allowed = {"model_router_sources.json"}
+    allowed = {"model_router_sources.json", "model_router_model_profiles.json"}
     config_dir = PROJECT_ROOT / "config"
     offenders = sorted(
         path.name

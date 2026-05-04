@@ -1,0 +1,31 @@
+{
+  "dgx_vllm::gemma4-31b-nvfp4": {
+    "base_model": "nvidia/Gemma-4-31B-IT-NVFP4",
+    "profile_source": "https://huggingface.co/google/gemma-4-31B-it",
+    "supports_top_k": true,
+    "agent_studio_candidate": true,
+    "agent_studio_compatible": false,
+    "sampling_defaults": {
+      "temperature": 1.0,
+      "top_p": 0.95,
+      "top_k": 64
+    },
+    "scenario_sampling_defaults": {
+      "agent_studio": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "comment_lab": {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 64
+      },
+      "label_lab": {
+        "temperature": 0.0,
+        "top_p": 0.95,
+        "top_k": 64
+      }
+    }
+  }
+}

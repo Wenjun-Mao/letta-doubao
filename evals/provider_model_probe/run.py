@@ -20,7 +20,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(
         description="Probe configured provider models and optionally write a checked-in allowlist report.",
     )
-    parser.add_argument("--source-id", required=True, help="Configured source id from the ADE model source settings.")
+    parser.add_argument("--source-id", required=True, help="Configured source id from config/model_router_sources.json.")
     parser.add_argument(
         "--mode",
         default="chat-probe",

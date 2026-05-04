@@ -39,6 +39,7 @@ router = APIRouter()
                                 "repair_retry_count": 1,
                                 "temperature": 0.0,
                                 "top_p": 1.0,
+                                "top_k": 64,
                             },
                         }
                     }
@@ -91,8 +92,21 @@ async def api_labeling_generate(request: LabelingGenerateRequest):
             max_tokens=request.max_tokens,
             timeout_seconds=request.timeout_seconds,
             repair_retry_count=request.repair_retry_count,
-            temperature=request.temperature,
-            top_p=request.top_p,
+            temperature=(
+                request.temperature
+                if request.temperature is not None
+                else _scenario_sampling_default(model_selection, "label_lab", "temperature")
+            ),
+            top_p=(
+                request.top_p
+                if request.top_p is not None
+                else _scenario_sampling_default(model_selection, "label_lab", "top_p")
+            ),
+            top_k=(
+                request.top_k
+                if request.top_k is not None
+                else _scenario_sampling_default(model_selection, "label_lab", "top_k")
+            ),
         )
     except LabelingValidationError as exc:
         raise HTTPException(
@@ -134,6 +148,7 @@ async def api_labeling_generate(request: LabelingGenerateRequest):
         "validation_errors": generation_result.get("validation_errors", []) or [],
         "temperature": float(generation_result.get("temperature", 0.0)),
         "top_p": float(generation_result.get("top_p", 1.0)),
+        "top_k": generation_result.get("top_k"),
     }
 
 
@@ -143,3 +158,19 @@ def json_dumps_schema(value: object) -> str | None:
     if not isinstance(value, dict):
         return None
     return json.dumps(value, ensure_ascii=False)
+
+
+def _scenario_sampling_default(
+    model_selection: dict[str, object],
+    scenario: str,
+    field: str,
+) -> object | None:
+    scenario_defaults = model_selection.get("scenario_sampling_defaults", {})
+    if isinstance(scenario_defaults, dict):
+        defaults = scenario_defaults.get(scenario)
+        if isinstance(defaults, dict) and defaults.get(field) is not None:
+            return defaults[field]
+    sampling_defaults = model_selection.get("sampling_defaults", {})
+    if isinstance(sampling_defaults, dict):
+        return sampling_defaults.get(field)
+    return None

@@ -27,6 +27,7 @@ CSV_FIELDS = [
     "cache_prompt",
     "temperature",
     "top_p",
+    "top_k",
     "max_tokens",
     "timeout_seconds",
     "retry_count",

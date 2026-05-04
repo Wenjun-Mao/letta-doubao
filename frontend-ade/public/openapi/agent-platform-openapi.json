@@ -57,6 +57,18 @@
             ],
             "title": "Temperature"
           },
+          "top_k": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
+          },
           "top_p": {
             "anyOf": [
               {
@@ -378,6 +390,17 @@
             ],
             "title": "Temperature"
           },
+          "top_k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
+          },
           "top_p": {
             "anyOf": [
               {
@@ -536,6 +559,17 @@
             "title": "Timeout Seconds",
             "type": "number"
           },
+          "top_k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
+          },
           "top_p": {
             "title": "Top P",
             "type": "number"
@@ -594,6 +628,17 @@
           "timeout_seconds": {
             "title": "Timeout Seconds",
             "type": "number"
+          },
+          "top_k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
           },
           "top_p": {
             "title": "Top P",
@@ -882,6 +927,17 @@
             "title": "Temperature",
             "type": "number"
           },
+          "top_k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
+          },
           "top_p": {
             "title": "Top P",
             "type": "number"
@@ -932,6 +988,17 @@
           "timeout_seconds": {
             "title": "Timeout Seconds",
             "type": "number"
+          },
+          "top_k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
           },
           "top_p": {
             "title": "Top P",
@@ -1022,6 +1089,28 @@
       },
       "ApiOptionEntryResponse": {
         "properties": {
+          "agent_studio_candidate": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Studio Candidate"
+          },
+          "agent_studio_compatible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Agent Studio Compatible"
+          },
           "available": {
             "anyOf": [
               {
@@ -1067,6 +1156,28 @@
             ],
             "title": "Label Lab Available"
           },
+          "profile_applied": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Applied"
+          },
+          "profile_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile Source"
+          },
           "provider_model_id": {
             "anyOf": [
               {
@@ -1077,6 +1188,11 @@
               }
             ],
             "title": "Provider Model Id"
+          },
+          "sampling_defaults": {
+            "additionalProperties": true,
+            "title": "Sampling Defaults",
+            "type": "object"
           },
           "scenario": {
             "anyOf": [
@@ -1093,6 +1209,14 @@
               }
             ],
             "title": "Scenario"
+          },
+          "scenario_sampling_defaults": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Scenario Sampling Defaults",
+            "type": "object"
           },
           "source_id": {
             "anyOf": [
@@ -1131,6 +1255,17 @@
               }
             ],
             "title": "Structured Output Mode"
+          },
+          "supports_top_k": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Supports Top K"
           }
         },
         "required": [
@@ -1544,6 +1679,16 @@
             "title": "Agent Studio Available",
             "type": "boolean"
           },
+          "agent_studio_candidate": {
+            "default": false,
+            "title": "Agent Studio Candidate",
+            "type": "boolean"
+          },
+          "agent_studio_compatible": {
+            "default": true,
+            "title": "Agent Studio Compatible",
+            "type": "boolean"
+          },
           "comment_lab_available": {
             "title": "Comment Lab Available",
             "type": "boolean"
@@ -1571,9 +1716,32 @@
             "title": "Model Type",
             "type": "string"
           },
+          "profile_applied": {
+            "default": false,
+            "title": "Profile Applied",
+            "type": "boolean"
+          },
+          "profile_source": {
+            "default": "",
+            "title": "Profile Source",
+            "type": "string"
+          },
           "provider_model_id": {
             "title": "Provider Model Id",
             "type": "string"
+          },
+          "sampling_defaults": {
+            "additionalProperties": true,
+            "title": "Sampling Defaults",
+            "type": "object"
+          },
+          "scenario_sampling_defaults": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Scenario Sampling Defaults",
+            "type": "object"
           },
           "source_adapter": {
             "default": "generic_openai",
@@ -1607,6 +1775,11 @@
               }
             ],
             "title": "Structured Output Mode"
+          },
+          "supports_top_k": {
+            "default": false,
+            "title": "Supports Top K",
+            "type": "boolean"
           }
         },
         "required": [
@@ -2901,6 +3074,7 @@
             "task_shape": "classic",
             "temperature": 0.6,
             "timeout_seconds": 120,
+            "top_k": 64,
             "top_p": 1.0
           }
         ],
@@ -3044,6 +3218,19 @@
             "description": "Optional provider timeout in seconds. Use a realistic local-model value such as 120.",
             "title": "Timeout Seconds"
           },
+          "top_k": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional top_k sampling value. Defaults to model profile or Comment Lab runtime settings.",
+            "title": "Top K"
+          },
           "top_p": {
             "anyOf": [
               {
@@ -3159,6 +3346,7 @@
             "schema_key": "label_football_entity_groups_v1",
             "temperature": 0.0,
             "timeout_seconds": 120,
+            "top_k": 64,
             "top_p": 1.0
           }
         ],
@@ -3252,6 +3440,19 @@
             ],
             "description": "Optional provider timeout in seconds. Use a realistic local-model value such as 120.",
             "title": "Timeout Seconds"
+          },
+          "top_k": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "Optional top_k sampling value. Defaults to model profile or Label Lab runtime settings.",
+            "title": "Top K"
           },
           "top_p": {
             "anyOf": [
@@ -4254,6 +4455,7 @@
                     "task_shape": "classic",
                     "temperature": 0.6,
                     "timeout_seconds": 120,
+                    "top_k": 64,
                     "top_p": 1.0
                   }
                 }
@@ -4312,6 +4514,7 @@
                     "schema_key": "label_football_entity_groups_v1",
                     "temperature": 0.0,
                     "timeout_seconds": 120,
+                    "top_k": 64,
                     "top_p": 1.0
                   }
                 }

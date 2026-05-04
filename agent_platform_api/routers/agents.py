@@ -47,6 +47,7 @@ def _router_llm_config_for_model(
     *,
     temperature: float | None = None,
     top_p: float | None = None,
+    top_k: int | None = None,
 ) -> dict[str, Any] | None:
     handle = str(model_handle or "").strip()
     if not handle.startswith("openai-proxy/") or "::" not in handle:
@@ -70,6 +71,8 @@ def _router_llm_config_for_model(
         config["temperature"] = float(temperature)
     if top_p is not None:
         config["top_p"] = float(top_p)
+    if top_k is not None:
+        config["top_k"] = int(top_k)
     return config
 
 
@@ -193,6 +196,7 @@ async def api_create_agent(request: AgentCreateRequest):
         request.model,
         temperature=request.temperature,
         top_p=request.top_p,
+        top_k=request.top_k,
     )
     if router_llm_config is not None:
         create_args["llm_config"] = router_llm_config

@@ -16,12 +16,14 @@ def test_router_llm_config_includes_create_time_sampling(monkeypatch) -> None:
         "openai-proxy/local_llama_server::gemma4",
         temperature=0.7,
         top_p=0.85,
+        top_k=64,
     )
 
     assert config is not None
     assert config["model"] == "local_llama_server::gemma4"
     assert config["temperature"] == 0.7
     assert config["top_p"] == 0.85
+    assert config["top_k"] == 64
 
 
 def test_router_llm_config_omits_unspecified_sampling(monkeypatch) -> None:
@@ -33,6 +35,7 @@ def test_router_llm_config_omits_unspecified_sampling(monkeypatch) -> None:
     assert config is not None
     assert "temperature" not in config
     assert "top_p" not in config
+    assert "top_k" not in config
 
 
 @pytest.mark.parametrize(
@@ -42,9 +45,10 @@ def test_router_llm_config_omits_unspecified_sampling(monkeypatch) -> None:
         ("temperature", 2.1),
         ("top_p", 0),
         ("top_p", 1.1),
+        ("top_k", 0),
     ],
 )
-def test_agent_create_request_rejects_invalid_sampling_ranges(field: str, value: float) -> None:
+def test_agent_create_request_rejects_invalid_sampling_ranges(field: str, value: float | int) -> None:
     kwargs = {
         "name": "agent",
         "model": "openai-proxy/local_llama_server::gemma4",

@@ -16,6 +16,7 @@ def _build_service() -> LabelingService:
             labeling_repair_retry_count=1,
             labeling_temperature=0.0,
             labeling_top_p=1.0,
+            labeling_top_k=None,
         )
     )
 

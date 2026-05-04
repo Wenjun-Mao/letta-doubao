@@ -39,6 +39,7 @@ const COPY = {
     repairRetryCount: "Repair Retry Count",
     temperature: "Temperature",
     topP: "Top P",
+    topK: "Top K",
     articleInput: "Article Text",
     articleInputPlaceholder: "Paste the article text that you want to extract entities from...",
     promptPreview: "Prompt Preview",
@@ -59,6 +60,7 @@ const COPY = {
     outputMode: "Output Mode",
     temperatureUsed: "Temperature Used",
     topPUsed: "Top P Used",
+    topKUsed: "Top K Used",
     selectedAttempt: "Selected Attempt",
     finishReason: "Finish Reason",
     responseSeconds: "Response Time (s)",
@@ -81,6 +83,7 @@ const COPY = {
     invalidRepairRetryCount: "Repair retry count must be an integer between 0 and 3.",
     invalidTemperature: "Temperature must be between 0 and 2.",
     invalidTopP: "Top P must be greater than 0 and at most 1.",
+    invalidTopK: "Top K must be a positive integer, or blank to use the model default.",
     loadingError: "Failed to load labeling options",
     generateError: "Label generation failed",
     emptyGroup: "No matches returned.",
@@ -107,6 +110,7 @@ const COPY = {
     repairRetryCount: "修复重试次数",
     temperature: "Temperature",
     topP: "Top P",
+    topK: "Top K",
     articleInput: "文章文本",
     articleInputPlaceholder: "粘贴需要提取实体的文章文本...",
     promptPreview: "Prompt 预览",
@@ -127,6 +131,7 @@ const COPY = {
     outputMode: "输出模式",
     temperatureUsed: "实际 Temperature",
     topPUsed: "实际 Top P",
+    topKUsed: "实际 Top K",
     selectedAttempt: "命中尝试",
     finishReason: "完成原因",
     responseSeconds: "响应耗时（秒）",
@@ -149,6 +154,7 @@ const COPY = {
     invalidRepairRetryCount: "修复重试次数必须是 0 到 3 之间的整数。",
     invalidTemperature: "Temperature 必须在 0 到 2 之间。",
     invalidTopP: "Top P 必须大于 0 且不超过 1。",
+    invalidTopK: "Top K 必须是正整数，或留空使用模型默认值。",
     loadingError: "加载标注配置失败",
     generateError: "标注生成失败",
     emptyGroup: "未返回匹配项。",
@@ -212,6 +218,24 @@ function parseTopP(value: string): number | null {
     return null;
   }
   return parsed;
+}
+
+function parseOptionalPositiveInt(value: string): number | undefined | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0 || String(parsed) !== trimmed) {
+    return null;
+  }
+  return parsed;
+}
+
+function samplingDefaultString(option: OptionEntry | undefined | null, scenario: "comment_lab" | "label_lab" | "agent_studio", field: "temperature" | "top_p" | "top_k"): string | null {
+  const scenarioDefaults = option?.scenario_sampling_defaults?.[scenario];
+  const value = scenarioDefaults?.[field] ?? option?.sampling_defaults?.[field];
+  return value === undefined || value === null ? null : String(value);
 }
 
 function stringifyPretty(value: unknown): string {
@@ -285,6 +309,7 @@ export default function LabelLabPage() {
   const [repairRetryCount, setRepairRetryCount] = useState("1");
   const [temperature, setTemperature] = useState("0");
   const [topP, setTopP] = useState("1");
+  const [topK, setTopK] = useState("");
 
   const [articleInput, setArticleInput] = useState("");
   const [resultJson, setResultJson] = useState("");
@@ -294,6 +319,7 @@ export default function LabelLabPage() {
   const [outputMode, setOutputMode] = useState("");
   const [temperatureUsed, setTemperatureUsed] = useState("");
   const [topPUsed, setTopPUsed] = useState("");
+  const [topKUsed, setTopKUsed] = useState("");
   const [selectedAttempt, setSelectedAttempt] = useState("");
   const [finishReason, setFinishReason] = useState("");
   const [responseSeconds, setResponseSeconds] = useState("");
@@ -383,6 +409,7 @@ export default function LabelLabPage() {
         setRepairRetryCount(`${optionsPayload.labeling.repair_retry_count}`);
         setTemperature(`${optionsPayload.labeling.temperature}`);
         setTopP(`${optionsPayload.labeling.top_p}`);
+        setTopK(optionsPayload.labeling.top_k === null || optionsPayload.labeling.top_k === undefined ? "" : `${optionsPayload.labeling.top_k}`);
       }
 
       setStatus(copy.optionsRefreshed);
@@ -396,6 +423,22 @@ export default function LabelLabPage() {
   useEffect(() => {
     void loadOptions();
   }, []);
+
+  useEffect(() => {
+    if (!selectedModel) {
+      return;
+    }
+    const nextTemperature = samplingDefaultString(selectedModel, "label_lab", "temperature");
+    const nextTopP = samplingDefaultString(selectedModel, "label_lab", "top_p");
+    const nextTopK = samplingDefaultString(selectedModel, "label_lab", "top_k");
+    if (nextTemperature !== null) {
+      setTemperature(nextTemperature);
+    }
+    if (nextTopP !== null) {
+      setTopP(nextTopP);
+    }
+    setTopK(nextTopK ?? "");
+  }, [selectedModel]);
 
   const onGenerate = async () => {
     setError("");
@@ -436,6 +479,11 @@ export default function LabelLabPage() {
       setError(copy.invalidTopP);
       return;
     }
+    const parsedTopK = parseOptionalPositiveInt(topK);
+    if (parsedTopK === null) {
+      setError(copy.invalidTopK);
+      return;
+    }
 
     setSubmitting(true);
     const startedAtMs = performance.now();
@@ -450,6 +498,7 @@ export default function LabelLabPage() {
         repair_retry_count: parsedRepairRetryCount,
         temperature: parsedTemperature,
         top_p: parsedTopP,
+        top_k: parsedTopK,
       });
       const nextResult = asObject(payload.result) as LabelExtractionResult;
       setResultJson(stringifyPretty(nextResult || {}));
@@ -459,6 +508,7 @@ export default function LabelLabPage() {
       setOutputMode(payload.output_mode || "");
       setTemperatureUsed(`${payload.temperature}`);
       setTopPUsed(`${payload.top_p}`);
+      setTopKUsed(payload.top_k === null || payload.top_k === undefined ? "" : `${payload.top_k}`);
       setSelectedAttempt(payload.selected_attempt || "");
       setFinishReason(payload.finish_reason || "");
       setResponseSeconds((Math.max(0, performance.now() - startedAtMs) / 1000).toFixed(2));
@@ -566,6 +616,11 @@ export default function LabelLabPage() {
               <span>{copy.topP}</span>
               <input className="input" type="number" min={0.01} max={1} step={0.05} value={topP} onChange={(event) => setTopP(event.target.value)} disabled={submitting} />
             </label>
+
+            <label className="field">
+              <span>{copy.topK}</span>
+              <input className="input" type="number" min={1} step={1} value={topK} onChange={(event) => setTopK(event.target.value)} placeholder="64" disabled={submitting} />
+            </label>
           </div>
 
           <div className="toolbar" style={{ marginTop: 12 }}>
@@ -630,6 +685,7 @@ export default function LabelLabPage() {
                 <div>{copy.outputMode}: {outputMode || "-"}</div>
                 <div>{copy.temperatureUsed}: {temperatureUsed || "-"}</div>
                 <div>{copy.topPUsed}: {topPUsed || "-"}</div>
+                <div>{copy.topKUsed}: {topKUsed || "-"}</div>
                 <div>{copy.selectedAttempt}: {selectedAttempt || "-"}</div>
                 <div>{copy.finishReason}: {finishReason || "-"}</div>
                 <div>{copy.responseSeconds}: {responseSeconds || "-"}</div>

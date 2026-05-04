@@ -5,8 +5,8 @@
 api_base_url = "http://127.0.0.1:8284"
 output_dir = "evals/comment_persona_eval/outputs"
 
-news_path = "evals/comment_persona_eval/inputs/sports_news_demo.txt"
-rounds = 3
+news_path = "evals/comment_persona_eval/inputs/sports_news_demo2.txt"
+rounds = 1
 concurrency = 1
 stop_on_error = false
 
@@ -16,15 +16,16 @@ persona_search = ""
 limit = 0
 
 # Comment Lab request options.
-model_key = "local_llama_server::gemma4"
+model_key = "dgx_vllm::gemma4-31b-nvfp4"
 prompt_key = "comment_v20260418"
 max_tokens = 0
 timeout_seconds = 180
 retry_count = 0
 task_shape = "all_in_system"
 cache_prompt = false
-temperature = 0.6
-top_p = 1.0
+temperature = 1
+top_p = 0.95
+top_k = 64
 
 # Transport retry is separate from Comment Lab provider retry_count.
 api_retry_count = 2

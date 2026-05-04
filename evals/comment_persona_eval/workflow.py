@@ -58,6 +58,7 @@ class EvalConfig:
     cache_prompt: bool = False
     temperature: float = 0.6
     top_p: float = 1.0
+    top_k: int | None = 64
     api_retry_count: int = 2
 
 
@@ -93,6 +94,7 @@ def load_config(path: Path) -> EvalConfig:
         cache_prompt=bool(payload.get("cache_prompt", EvalConfig.cache_prompt)),
         temperature=float(payload.get("temperature", EvalConfig.temperature)),
         top_p=float(payload.get("top_p", EvalConfig.top_p)),
+        top_k=_optional_int(payload.get("top_k", EvalConfig.top_k)),
         api_retry_count=int(payload.get("api_retry_count", EvalConfig.api_retry_count)),
     )
     validate_config(config)
@@ -124,6 +126,8 @@ def validate_config(config: EvalConfig) -> None:
         raise ConfigError("temperature must be between 0 and 2")
     if not 0 < config.top_p <= 1:
         raise ConfigError("top_p must be > 0 and <= 1")
+    if config.top_k is not None and config.top_k <= 0:
+        raise ConfigError("top_k must be > 0 when set")
     if not config.model_key:
         raise ConfigError("model_key is required")
     if not config.prompt_key:
@@ -282,6 +286,7 @@ def run_attempt(
         "cache_prompt": config.cache_prompt,
         "temperature": config.temperature,
         "top_p": config.top_p,
+        "top_k": config.top_k,
     }
     started = time.perf_counter()
     response_payload: dict[str, Any] | None = None
@@ -386,6 +391,7 @@ def _row_from_result(
         "cache_prompt": config.cache_prompt,
         "temperature": config.temperature,
         "top_p": config.top_p,
+        "top_k": config.top_k,
         "max_tokens": config.max_tokens,
         "timeout_seconds": config.timeout_seconds,
         "retry_count": config.retry_count,
@@ -432,6 +438,14 @@ def _usage_int(usage: dict[str, Any], key: str) -> int:
         return int(usage.get(key, 0) or 0)
     except (TypeError, ValueError):
         return 0
+
+
+def _optional_int(value: Any) -> int | None:
+    if value is None:
+        return None
+    if isinstance(value, str) and not value.strip():
+        return None
+    return int(value)
 
 
 def _response_error(response: httpx.Response) -> str:

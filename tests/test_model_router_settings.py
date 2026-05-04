@@ -32,16 +32,26 @@ def test_router_settings_parse_sources_and_module_visibility(monkeypatch) -> Non
                     "api_key_env": "OPENAI_API_KEY",
                     "api_key_secret": "ark-api-key",
                 },
+                {
+                    "id": "dgx_vllm",
+                    "label": "DGX Spark vLLM",
+                    "base_url": "http://100.64.35.71:8000/v1",
+                    "kind": "openai-compatible",
+                    "adapter": "vllm_openai",
+                    "enabled_for": ["comment_lab", "label_lab"],
+                },
             ]
         ),
     )
     clear_settings_cache()
     try:
         settings = get_settings()
-        assert [source.id for source in settings.sources] == ["local_llama_server", "ark"]
+        assert [source.id for source in settings.sources] == ["local_llama_server", "ark", "dgx_vllm"]
         assert settings.sources[0].visible_modules() == ("agent_studio", "comment_lab", "label_lab")
         assert settings.sources[1].visible_modules() == ("agent_studio", "comment_lab")
         assert settings.sources[1].models_endpoint() == "https://ark.example/api/v3/models"
+        assert settings.sources[2].adapter == "vllm_openai"
+        assert settings.sources[2].visible_modules() == ("comment_lab", "label_lab")
     finally:
         clear_settings_cache()
 

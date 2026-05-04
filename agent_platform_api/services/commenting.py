@@ -31,6 +31,7 @@ MAX_COMMENTING_RETRY_COUNT = 5
 DEFAULT_COMMENTING_CACHE_PROMPT = False
 DEFAULT_COMMENTING_TEMPERATURE = 0.6
 DEFAULT_COMMENTING_TOP_P = 1.0
+DEFAULT_COMMENTING_TOP_K: int | None = None
 _RETRYABLE_COMMENTING_EXCEPTIONS = (
     _RetryableCommentingError,
     httpx.TimeoutException,
@@ -82,6 +83,12 @@ class CommentingService:
         return DEFAULT_COMMENTING_TOP_P if value is None else max(0.01, min(1.0, float(value)))
 
     @staticmethod
+    def _clamp_top_k(value: int | None) -> int | None:
+        if value is None:
+            return DEFAULT_COMMENTING_TOP_K
+        return max(1, min(1000, int(value)))
+
+    @staticmethod
     def _is_llama_cpp_adapter(source_adapter: str | None) -> bool:
         return str(source_adapter or "").strip().lower() == "llama_cpp_server"
 
@@ -103,6 +110,7 @@ class CommentingService:
             "cache_prompt": bool(settings.commenting_cache_prompt),
             "temperature": self._clamp_temperature(settings.commenting_temperature),
             "top_p": self._clamp_top_p(settings.commenting_top_p),
+            "top_k": self._clamp_top_k(settings.commenting_top_k),
         }
 
     @staticmethod
@@ -224,6 +232,7 @@ class CommentingService:
         cache_prompt: bool | None = None,
         temperature: float | None = None,
         top_p: float | None = None,
+        top_k: int | None = None,
     ) -> dict[str, Any]:
         resolved_base_url = str(base_url or "").strip()
         if not resolved_base_url:
@@ -245,6 +254,7 @@ class CommentingService:
         resolved_cache_prompt = bool(runtime_defaults["cache_prompt"]) if cache_prompt is None else bool(cache_prompt)
         resolved_temperature = float(runtime_defaults["temperature"]) if temperature is None else self._clamp_temperature(temperature)
         resolved_top_p = float(runtime_defaults["top_p"]) if top_p is None else self._clamp_top_p(top_p)
+        resolved_top_k = runtime_defaults["top_k"] if top_k is None else self._clamp_top_k(top_k)
         response_runtime = {
             "max_tokens": resolved_max_tokens,
             "timeout_seconds": resolved_timeout_seconds,
@@ -252,6 +262,7 @@ class CommentingService:
             "cache_prompt": resolved_cache_prompt,
             "temperature": resolved_temperature,
             "top_p": resolved_top_p,
+            "top_k": resolved_top_k,
         }
 
         classic_payload = {
@@ -316,6 +327,8 @@ class CommentingService:
 
         if resolved_max_tokens == 0:
             payload.pop("max_tokens", None)
+        if resolved_top_k is not None:
+            payload["top_k"] = resolved_top_k
         if self._is_llama_cpp_adapter(source_adapter):
             payload["cache_prompt"] = resolved_cache_prompt
 

@@ -57,6 +57,18 @@
             ],
             "title": "Temperature"
           },
+          "top_k": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
+          },
           "top_p": {
             "anyOf": [
               {
@@ -378,6 +390,17 @@
             ],
             "title": "Temperature"
           },
+          "top_k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
+          },
           "top_p": {
             "anyOf": [
               {
@@ -536,6 +559,17 @@
             "title": "超时秒数",
             "type": "number"
           },
+          "top_k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
+          },
           "top_p": {
             "title": "Top P",
             "type": "number"
@@ -594,6 +628,17 @@
           "timeout_seconds": {
             "title": "超时秒数",
             "type": "number"
+          },
+          "top_k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
           },
           "top_p": {
             "title": "Top P",
@@ -882,6 +927,17 @@
             "title": "Temperature",
             "type": "number"
           },
+          "top_k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
+          },
           "top_p": {
             "title": "Top P",
             "type": "number"
@@ -932,6 +988,17 @@
           "timeout_seconds": {
             "title": "超时秒数",
             "type": "number"
+          },
+          "top_k": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Top K"
           },
           "top_p": {
             "title": "Top P",
@@ -1022,6 +1089,28 @@
       },
       "ApiOptionEntryResponse": {
         "properties": {
+          "agent_studio_candidate": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "智能体 工作台 候选"
+          },
+          "agent_studio_compatible": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "智能体 工作台 兼容"
+          },
           "available": {
             "anyOf": [
               {
@@ -1067,6 +1156,28 @@
             ],
             "title": "标签 实验室 可用"
           },
+          "profile_applied": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "已应用 Profile"
+          },
+          "profile_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Profile 来源"
+          },
           "provider_model_id": {
             "anyOf": [
               {
@@ -1077,6 +1188,11 @@
               }
             ],
             "title": "供应商 模型 ID"
+          },
+          "sampling_defaults": {
+            "additionalProperties": true,
+            "title": "采样 默认值",
+            "type": "object"
           },
           "scenario": {
             "anyOf": [
@@ -1093,6 +1209,14 @@
               }
             ],
             "title": "场景"
+          },
+          "scenario_sampling_defaults": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "场景 采样 默认值",
+            "type": "object"
           },
           "source_id": {
             "anyOf": [
@@ -1131,6 +1255,17 @@
               }
             ],
             "title": "结构化输出模式"
+          },
+          "supports_top_k": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "支持 Top K"
           }
         },
         "required": [
@@ -1544,6 +1679,16 @@
             "title": "智能体 工作台 可用",
             "type": "boolean"
           },
+          "agent_studio_candidate": {
+            "default": false,
+            "title": "智能体 工作台 候选",
+            "type": "boolean"
+          },
+          "agent_studio_compatible": {
+            "default": true,
+            "title": "智能体 工作台 兼容",
+            "type": "boolean"
+          },
           "comment_lab_available": {
             "title": "评论 实验室 可用",
             "type": "boolean"
@@ -1571,9 +1716,32 @@
             "title": "模型 类型",
             "type": "string"
           },
+          "profile_applied": {
+            "default": false,
+            "title": "已应用 Profile",
+            "type": "boolean"
+          },
+          "profile_source": {
+            "default": "",
+            "title": "Profile 来源",
+            "type": "string"
+          },
           "provider_model_id": {
             "title": "供应商 模型 ID",
             "type": "string"
+          },
+          "sampling_defaults": {
+            "additionalProperties": true,
+            "title": "采样 默认值",
+            "type": "object"
+          },
+          "scenario_sampling_defaults": {
+            "additionalProperties": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "场景 采样 默认值",
+            "type": "object"
           },
           "source_adapter": {
             "default": "generic_openai",
@@ -1607,6 +1775,11 @@
               }
             ],
             "title": "结构化输出模式"
+          },
+          "supports_top_k": {
+            "default": false,
+            "title": "支持 Top K",
+            "type": "boolean"
           }
         },
         "required": [
@@ -2901,6 +3074,7 @@
             "task_shape": "classic",
             "temperature": 0.6,
             "timeout_seconds": 120,
+            "top_k": 64,
             "top_p": 1.0
           }
         ],
@@ -3044,6 +3218,19 @@
             "description": "可选供应商超时时间（秒）。本地模型建议使用类似 120 的实际值。",
             "title": "超时秒数"
           },
+          "top_k": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "可选 top_k 采样值。默认使用模型 profile 或 Comment Lab 运行时设置。",
+            "title": "Top K"
+          },
           "top_p": {
             "anyOf": [
               {
@@ -3159,6 +3346,7 @@
             "schema_key": "label_football_entity_groups_v1",
             "temperature": 0.0,
             "timeout_seconds": 120,
+            "top_k": 64,
             "top_p": 1.0
           }
         ],
@@ -3252,6 +3440,19 @@
             ],
             "description": "可选供应商超时时间（秒）。本地模型建议使用类似 120 的实际值。",
             "title": "超时秒数"
+          },
+          "top_k": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "可选 top_k 采样值。默认使用模型 profile 或 Label Lab 运行时设置。",
+            "title": "Top K"
           },
           "top_p": {
             "anyOf": [
@@ -4254,6 +4455,7 @@
                     "task_shape": "classic",
                     "temperature": 0.6,
                     "timeout_seconds": 120,
+                    "top_k": 64,
                     "top_p": 1.0
                   }
                 }
@@ -4312,6 +4514,7 @@
                     "schema_key": "label_football_entity_groups_v1",
                     "temperature": 0.0,
                     "timeout_seconds": 120,
+                    "top_k": 64,
                     "top_p": 1.0
                   }
                 }

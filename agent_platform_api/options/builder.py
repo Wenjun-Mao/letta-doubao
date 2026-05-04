@@ -104,6 +104,13 @@ def runtime_options(
                 "upstream_provider_model_id": item.get("upstream_provider_model_id"),
                 "label_lab_available": item["label_lab_available"],
                 "structured_output_mode": item["structured_output_mode"],
+                "sampling_defaults": item.get("sampling_defaults", {}),
+                "scenario_sampling_defaults": item.get("scenario_sampling_defaults", {}),
+                "supports_top_k": item.get("supports_top_k", False),
+                "profile_applied": item.get("profile_applied", False),
+                "profile_source": item.get("profile_source", ""),
+                "agent_studio_candidate": item.get("agent_studio_candidate", False),
+                "agent_studio_compatible": item.get("agent_studio_compatible", True),
             }
         )
 

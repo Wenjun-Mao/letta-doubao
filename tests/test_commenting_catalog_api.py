@@ -44,6 +44,7 @@ def test_commenting_generate_uses_model_key_and_selected_source_connection(monke
             "cache_prompt": kwargs["cache_prompt"],
             "temperature": kwargs["temperature"],
             "top_p": kwargs["top_p"],
+            "top_k": kwargs["top_k"],
         }
 
     monkeypatch.setattr(commenting.commenting_service, "generate_comment", fake_generate_comment)
@@ -62,6 +63,7 @@ def test_commenting_generate_uses_model_key_and_selected_source_connection(monke
                 cache_prompt=False,
                 temperature=0.8,
                 top_p=0.9,
+                top_k=64,
             )
         )
     )
@@ -73,6 +75,7 @@ def test_commenting_generate_uses_model_key_and_selected_source_connection(monke
     assert captured["cache_prompt"] is False
     assert captured["temperature"] == 0.8
     assert captured["top_p"] == 0.9
+    assert captured["top_k"] == 64
     assert payload["model_key"] == "local_unsloth::qwen3.5-27b"
     assert payload["source_label"] == "Local Unsloth"
     assert payload["provider_model_id"] == "qwen3.5-27b"
@@ -96,9 +99,10 @@ def test_commenting_generate_request_rejects_removed_compact_task_shape() -> Non
         ("temperature", 2.1),
         ("top_p", 0),
         ("top_p", 1.1),
+        ("top_k", 0),
     ],
 )
-def test_commenting_generate_request_rejects_invalid_sampling_ranges(field: str, value: float) -> None:
+def test_commenting_generate_request_rejects_invalid_sampling_ranges(field: str, value: float | int) -> None:
     kwargs = {
         "input": "Need one comment",
         "prompt_key": "comment_v20260418",

@@ -225,6 +225,13 @@ class ApiPlatformModelCatalogEntryResponse(BaseModel):
     comment_lab_available: bool
     label_lab_available: bool
     structured_output_mode: LabelingOutputMode | None = None
+    sampling_defaults: dict[str, Any] = Field(default_factory=dict)
+    scenario_sampling_defaults: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    supports_top_k: bool = False
+    profile_applied: bool = False
+    profile_source: str = ""
+    agent_studio_candidate: bool = False
+    agent_studio_compatible: bool = True
 
 
 class ApiPlatformModelCatalogResponse(BaseModel):

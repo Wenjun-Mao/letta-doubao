@@ -37,6 +37,7 @@ DEFAULT_LABELING_REPAIR_RETRY_COUNT = 1
 MAX_LABELING_REPAIR_RETRY_COUNT = 3
 DEFAULT_LABELING_TEMPERATURE = 0.0
 DEFAULT_LABELING_TOP_P = 1.0
+DEFAULT_LABELING_TOP_K: int | None = None
 
 
 class LabelingService:
@@ -72,6 +73,12 @@ class LabelingService:
     def _clamp_top_p(value: float | None) -> float:
         return DEFAULT_LABELING_TOP_P if value is None else max(0.01, min(1.0, float(value)))
 
+    @staticmethod
+    def _clamp_top_k(value: int | None) -> int | None:
+        if value is None:
+            return DEFAULT_LABELING_TOP_K
+        return max(1, min(1000, int(value)))
+
     @classmethod
     def _resolve_output_mode(cls, value: str | None) -> str:
         resolved = str(value or "").strip().lower()
@@ -95,6 +102,7 @@ class LabelingService:
             "repair_retry_count": self._clamp_repair_retry_count(settings.labeling_repair_retry_count),
             "temperature": self._clamp_temperature(settings.labeling_temperature),
             "top_p": self._clamp_top_p(settings.labeling_top_p),
+            "top_k": self._clamp_top_k(settings.labeling_top_k),
         }
 
     def _post_chat_completions(
@@ -124,6 +132,7 @@ class LabelingService:
         max_tokens: int,
         temperature: float,
         top_p: float,
+        top_k: int | None,
     ) -> dict[str, Any]:
         if output_mode in {"strict_json_schema", "json_schema"}:
             payload = {
@@ -157,6 +166,8 @@ class LabelingService:
 
         if max_tokens == 0:
             payload.pop("max_tokens", None)
+        if top_k is not None:
+            payload["top_k"] = top_k
         return payload
 
     def _build_repair_payload(
@@ -171,6 +182,7 @@ class LabelingService:
         max_tokens: int,
         temperature: float,
         top_p: float,
+        top_k: int | None,
         invalid_output: str,
         validation_errors: list[str],
     ) -> dict[str, Any]:
@@ -184,6 +196,7 @@ class LabelingService:
             max_tokens=max_tokens,
             temperature=temperature,
             top_p=top_p,
+            top_k=top_k,
         )
         payload["messages"] = [
             payload["messages"][0],
@@ -253,6 +266,7 @@ class LabelingService:
         repair_retry_count: int | None = None,
         temperature: float | None = None,
         top_p: float | None = None,
+        top_k: int | None = None,
     ) -> dict[str, Any]:
         resolved_base_url = str(base_url or "").strip()
         if not resolved_base_url:
@@ -286,6 +300,7 @@ class LabelingService:
             else self._clamp_temperature(temperature)
         )
         resolved_top_p = float(runtime_defaults["top_p"]) if top_p is None else self._clamp_top_p(top_p)
+        resolved_top_k = runtime_defaults["top_k"] if top_k is None else self._clamp_top_k(top_k)
         resolved_output_mode = self._resolve_output_mode(output_mode)
 
         attempts: list[tuple[str, dict[str, Any]]] = [
@@ -301,6 +316,7 @@ class LabelingService:
                     max_tokens=resolved_max_tokens,
                     temperature=resolved_temperature,
                     top_p=resolved_top_p,
+                    top_k=resolved_top_k,
                 ),
             )
         ]
@@ -346,6 +362,7 @@ class LabelingService:
                     "repair_retry_count": resolved_repair_retry_count,
                     "temperature": resolved_temperature,
                     "top_p": resolved_top_p,
+                    "top_k": resolved_top_k,
                 }
 
             if attempt_name == "primary" and resolved_repair_retry_count > 0:
@@ -362,6 +379,7 @@ class LabelingService:
                             max_tokens=resolved_max_tokens,
                             temperature=resolved_temperature,
                             top_p=resolved_top_p,
+                            top_k=resolved_top_k,
                             invalid_output=last_invalid_output,
                             validation_errors=last_errors,
                         ),

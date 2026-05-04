@@ -73,6 +73,7 @@ def test_labeling_generate_uses_model_key_and_selected_source_connection(monkeyp
             "validation_errors": [],
             "temperature": kwargs["temperature"],
             "top_p": kwargs["top_p"],
+            "top_k": kwargs["top_k"],
         }
 
     monkeypatch.setattr(labeling.labeling_service, "generate_labels", fake_generate_labels)
@@ -88,6 +89,7 @@ def test_labeling_generate_uses_model_key_and_selected_source_connection(monkeyp
                 repair_retry_count=1,
                 temperature=0.2,
                 top_p=0.9,
+                top_k=64,
             )
         )
     )
@@ -97,6 +99,7 @@ def test_labeling_generate_uses_model_key_and_selected_source_connection(monkeyp
     assert captured["model"] == "gemma4"
     assert captured["temperature"] == 0.2
     assert captured["top_p"] == 0.9
+    assert captured["top_k"] == 64
     assert captured["output_mode"] == "json_schema"
     assert captured["output_schema_name"] == "label_entity_groups_v1"
     assert payload["source_label"] == "Local llama-server"
@@ -104,6 +107,7 @@ def test_labeling_generate_uses_model_key_and_selected_source_connection(monkeyp
     assert payload["schema_key"] == "label_entity_groups_v1"
     assert payload["temperature"] == 0.2
     assert payload["top_p"] == 0.9
+    assert payload["top_k"] == 64
     assert payload["result"]["people"] == ["Messi"]
 
 
@@ -114,9 +118,10 @@ def test_labeling_generate_uses_model_key_and_selected_source_connection(monkeyp
         ("temperature", 2.1),
         ("top_p", 0),
         ("top_p", 1.1),
+        ("top_k", 0),
     ],
 )
-def test_labeling_generate_request_rejects_invalid_sampling_ranges(field: str, value: float) -> None:
+def test_labeling_generate_request_rejects_invalid_sampling_ranges(field: str, value: float | int) -> None:
     kwargs = {
         "input": "Messi scored.",
         "prompt_key": "label_generic_entities_v1",

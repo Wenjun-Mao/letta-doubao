@@ -24,6 +24,18 @@
     "api_key_secret": ""
   },
   {
+    "id": "dgx_vllm",
+    "label": "DGX Spark vLLM",
+    "base_url": "http://100.64.35.71:8000/v1",
+    "kind": "openai-compatible",
+    "adapter": "vllm_openai",
+    "enabled": true,
+    "enabled_for": ["comment_lab", "label_lab"],
+    "letta_handle_prefix": "openai-proxy",
+    "api_key_env": "",
+    "api_key_secret": ""
+  },
+  {
     "id": "local_unsloth",
     "label": "Local Unsloth Studio",
     "base_url": "http://100.81.194.12:2234/v1",

@@ -25,6 +25,7 @@ class AgentCreateRequest(BaseModel):
     embedding: str | None = None
     temperature: float | None = Field(default=None, ge=0, le=2)
     top_p: float | None = Field(default=None, gt=0, le=1)
+    top_k: int | None = Field(default=None, gt=0)
 
 
 class ApiOptionEntryResponse(BaseModel):
@@ -39,6 +40,13 @@ class ApiOptionEntryResponse(BaseModel):
     provider_model_id: str | None = None
     label_lab_available: bool | None = None
     structured_output_mode: LabelingOutputMode | None = None
+    sampling_defaults: dict[str, Any] = Field(default_factory=dict)
+    scenario_sampling_defaults: dict[str, dict[str, Any]] = Field(default_factory=dict)
+    supports_top_k: bool | None = None
+    profile_applied: bool | None = None
+    profile_source: str | None = None
+    agent_studio_candidate: bool | None = None
+    agent_studio_compatible: bool | None = None
 
 
 class ApiOptionsDefaultsResponse(BaseModel):
@@ -53,6 +61,7 @@ class ApiOptionsDefaultsResponse(BaseModel):
 class ApiAgentStudioRuntimeDefaultsResponse(BaseModel):
     temperature: float | None = None
     top_p: float | None = None
+    top_k: int | None = None
 
 
 class ApiOptionsResponse(BaseModel):

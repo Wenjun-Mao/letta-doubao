@@ -13,6 +13,7 @@ class ApiLabelingRuntimeDefaultsResponse(BaseModel):
     repair_retry_count: int
     temperature: float
     top_p: float
+    top_k: int | None = None
 
 
 class LabelingGenerateRequest(BaseModel):
@@ -30,6 +31,7 @@ class LabelingGenerateRequest(BaseModel):
                     "repair_retry_count": 1,
                     "temperature": 0.0,
                     "top_p": 1.0,
+                    "top_k": 64,
                 }
             ]
         }
@@ -49,6 +51,7 @@ class LabelingGenerateRequest(BaseModel):
     repair_retry_count: int | None = Field(default=None, ge=0, le=3, description="Number of structured-output repair attempts after validation failure.")
     temperature: float | None = Field(default=None, ge=0, le=2, description="Sampling temperature. Defaults to Label Lab runtime settings.")
     top_p: float | None = Field(default=None, gt=0, le=1, description="Nucleus sampling top_p. Defaults to Label Lab runtime settings.")
+    top_k: int | None = Field(default=None, gt=0, description="Optional top_k sampling value. Defaults to model profile or Label Lab runtime settings.")
 
 
 class ApiLabelingGenerateResponse(BaseModel):
@@ -70,3 +73,4 @@ class ApiLabelingGenerateResponse(BaseModel):
     validation_errors: list[str] = Field(default_factory=list)
     temperature: float
     top_p: float
+    top_k: int | None = None

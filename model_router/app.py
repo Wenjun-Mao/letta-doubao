@@ -179,9 +179,33 @@ async def chat_completions(
 
     upstream_payload = dict(payload)
     upstream_payload["model"] = routed_model.provider_model_id
+    upstream_payload = _apply_sampling_defaults(routed_model, source, upstream_payload)
     if bool(upstream_payload.get("stream", False)):
         return _stream_chat_completion(source, upstream_payload)
     return _post_chat_completion(source, upstream_payload)
+
+
+def _apply_sampling_defaults(
+    routed_model: RoutedModel,
+    source: RouterSourceConfig,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    defaults = routed_model.sampling_defaults or {}
+    next_payload = dict(payload)
+    for field in ("temperature", "top_p"):
+        if _payload_missing(next_payload, field) and defaults.get(field) is not None:
+            next_payload[field] = defaults[field]
+    if _supports_top_k(routed_model, source) and _payload_missing(next_payload, "top_k") and defaults.get("top_k") is not None:
+        next_payload["top_k"] = defaults["top_k"]
+    return next_payload
+
+
+def _payload_missing(payload: dict[str, Any], field: str) -> bool:
+    return field not in payload or payload.get(field) is None
+
+
+def _supports_top_k(routed_model: RoutedModel, source: RouterSourceConfig) -> bool:
+    return routed_model.supports_top_k or source.adapter in {"llama_cpp_server", "vllm_openai"}
 
 
 def _unknown_model_error(requested_model: str) -> JSONResponse:

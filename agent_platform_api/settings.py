@@ -25,13 +25,16 @@ class AgentPlatformSettings(BaseSettings):
     commenting_cache_prompt: bool = False
     commenting_temperature: float = 0.6
     commenting_top_p: float = 1.0
+    commenting_top_k: int | None = None
     labeling_timeout_seconds: float = 60.0
     labeling_max_tokens: int = 1024
     labeling_repair_retry_count: int = 1
     labeling_temperature: float = 0.0
     labeling_top_p: float = 1.0
+    labeling_top_k: int | None = None
     agent_studio_temperature: float | None = None
     agent_studio_top_p: float | None = None
+    agent_studio_top_k: int | None = None
     options_cache_ttl_seconds: int = 30
     model_discovery_timeout_seconds: float = 5.0
     persona_db_path: str = "data/personas/personas.sqlite3"
@@ -101,7 +104,23 @@ class AgentPlatformSettings(BaseSettings):
     def _clamp_top_p(cls, value: float) -> float:
         return max(0.01, min(1.0, float(value)))
 
-    @field_validator("agent_studio_temperature", "agent_studio_top_p", mode="before")
+    @field_validator("commenting_top_k", "labeling_top_k", "agent_studio_top_k", mode="before")
+    @classmethod
+    def _empty_top_k_default_to_none(cls, value: object) -> object:
+        if value is None:
+            return None
+        if isinstance(value, str) and not value.strip():
+            return None
+        return value
+
+    @field_validator("commenting_top_k", "labeling_top_k")
+    @classmethod
+    def _clamp_top_k(cls, value: int | None) -> int | None:
+        if value is None:
+            return None
+        return max(1, min(1000, int(value)))
+
+    @field_validator("agent_studio_temperature", "agent_studio_top_p", "agent_studio_top_k", mode="before")
     @classmethod
     def _empty_sampling_default_to_none(cls, value: object) -> object:
         if value is None:
@@ -123,6 +142,13 @@ class AgentPlatformSettings(BaseSettings):
         if value is None:
             return None
         return max(0.01, min(1.0, float(value)))
+
+    @field_validator("agent_studio_top_k")
+    @classmethod
+    def _clamp_optional_agent_top_k(cls, value: int | None) -> int | None:
+        if value is None:
+            return None
+        return max(1, min(1000, int(value)))
 
     @field_validator("labeling_timeout_seconds")
     @classmethod

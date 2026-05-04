@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any
 
 import httpx
@@ -15,6 +15,7 @@ from model_router.settings import (
     RouterSourceStatus,
     get_settings,
 )
+from model_router.profiles import ModelProfile, load_model_profiles
 from ade_core.model_allowlist import load_configured_source_allowlist
 
 
@@ -85,6 +86,13 @@ class RoutedModel:
     comment_lab_available: bool
     label_lab_available: bool
     structured_output_mode: str | None
+    sampling_defaults: dict[str, float | int] = field(default_factory=dict)
+    scenario_sampling_defaults: dict[str, dict[str, float | int]] = field(default_factory=dict)
+    supports_top_k: bool = False
+    profile_applied: bool = False
+    profile_source: str = ""
+    agent_studio_candidate: bool = False
+    agent_studio_compatible: bool = True
 
     def as_dict(self) -> dict[str, Any]:
         return {
@@ -103,6 +111,15 @@ class RoutedModel:
             "comment_lab_available": self.comment_lab_available,
             "label_lab_available": self.label_lab_available,
             "structured_output_mode": self.structured_output_mode,
+            "sampling_defaults": dict(self.sampling_defaults),
+            "scenario_sampling_defaults": {
+                key: dict(value) for key, value in self.scenario_sampling_defaults.items()
+            },
+            "supports_top_k": self.supports_top_k,
+            "profile_applied": self.profile_applied,
+            "profile_source": self.profile_source,
+            "agent_studio_candidate": self.agent_studio_candidate,
+            "agent_studio_compatible": self.agent_studio_compatible,
         }
 
 
@@ -159,6 +176,7 @@ class RouterCatalogService:
 
     def flatten(self, snapshot: RouterCatalogSnapshot) -> list[RoutedModel]:
         models: list[RoutedModel] = []
+        profiles = self._load_profiles()
         for source in snapshot.sources:
             if source.status != "healthy":
                 continue
@@ -167,11 +185,18 @@ class RouterCatalogService:
                     continue
                 is_llm = model.model_type == "llm"
                 router_model_id = build_router_model_id(source.id, model.provider_model_id)
-                agent_studio_available = is_llm and "agent_studio" in source.module_visibility
+                profile = profiles.get(router_model_id)
+                agent_studio_compatible = True if profile is None else profile.agent_studio_compatible
+                agent_studio_available = (
+                    is_llm
+                    and "agent_studio" in source.module_visibility
+                    and agent_studio_compatible
+                )
                 label_lab_available = is_llm and "label_lab" in source.module_visibility
                 structured_output_mode = (
                     self._structured_output_mode(source) if label_lab_available else None
                 )
+                supports_top_k = self._supports_top_k(source.adapter) or bool(profile and profile.supports_top_k)
                 models.append(
                     RoutedModel(
                         router_model_id=router_model_id,
@@ -190,9 +215,21 @@ class RouterCatalogService:
                         comment_lab_available=is_llm and "comment_lab" in source.module_visibility,
                         label_lab_available=label_lab_available,
                         structured_output_mode=structured_output_mode,
+                        sampling_defaults=profile.sampling_defaults.as_payload() if profile else {},
+                        scenario_sampling_defaults=profile.scenario_defaults_payload() if profile else {},
+                        supports_top_k=supports_top_k,
+                        profile_applied=profile is not None,
+                        profile_source=profile.profile_source if profile else "",
+                        agent_studio_candidate=bool(profile and profile.agent_studio_candidate),
+                        agent_studio_compatible=agent_studio_compatible,
                     )
                 )
         return models
+
+    def _load_profiles(self) -> dict[str, ModelProfile]:
+        settings = self._settings_factory()
+        profiles_file = str(getattr(settings, "model_profiles_file", "") or "config/model_router_model_profiles.json")
+        return load_model_profiles(profiles_file)
 
     def find_routed_model(
         self,
@@ -431,6 +468,12 @@ class RouterCatalogService:
     def _structured_output_mode(source: RouterSourceSnapshot) -> str:
         if source.adapter == "llama_cpp_server":
             return "json_schema"
+        if source.adapter == "vllm_openai":
+            return "json_schema"
         if source.adapter == "ark_openai" or source.id == "ark":
             return "strict_json_schema"
         return "best_effort_prompt_json"
+
+    @staticmethod
+    def _supports_top_k(adapter: str) -> bool:
+        return str(adapter or "").strip().lower() in {"llama_cpp_server", "vllm_openai"}

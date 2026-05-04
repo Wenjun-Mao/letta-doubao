@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from types import SimpleNamespace
 
 from model_router.catalog import (
@@ -14,11 +15,12 @@ from ade_core.model_allowlist import SourceAllowlistLoadResult
 import model_router.catalog as router_catalog_module
 
 
-def _settings_with_sources(*sources: RouterSourceConfig) -> SimpleNamespace:
+def _settings_with_sources(*sources: RouterSourceConfig, model_profiles_file: str = "missing-model-profiles.json") -> SimpleNamespace:
     return SimpleNamespace(
         sources=list(sources),
         cache_ttl_seconds=30,
         discovery_timeout_seconds=5.0,
+        model_profiles_file=model_profiles_file,
     )
 
 
@@ -104,6 +106,61 @@ def test_router_catalog_filters_ark_through_chat_allowlist(monkeypatch) -> None:
     assert ark_source.raw_model_count == 3
     assert ark_source.filtered_model_count == 1
     assert [model.router_model_id for model in models] == ["ark::doubao-seed-1-8-251228"]
+
+
+def test_router_catalog_enriches_models_from_profiles_and_gates_agent_studio(monkeypatch, tmp_path) -> None:
+    profiles_path = tmp_path / "model_profiles.json"
+    profiles_path.write_text(
+        json.dumps(
+            {
+                "dgx_vllm::gemma4-31b-nvfp4": {
+                    "base_model": "nvidia/Gemma-4-31B-IT-NVFP4",
+                    "profile_source": "https://huggingface.co/google/gemma-4-31B-it",
+                    "supports_top_k": True,
+                    "agent_studio_candidate": True,
+                    "agent_studio_compatible": False,
+                    "sampling_defaults": {"temperature": 1.0, "top_p": 0.95, "top_k": 64},
+                    "scenario_sampling_defaults": {
+                        "comment_lab": {"temperature": 1.0, "top_p": 0.95, "top_k": 64},
+                        "label_lab": {"temperature": 0.0, "top_p": 0.95, "top_k": 64},
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    dgx = RouterSourceConfig(
+        id="dgx_vllm",
+        label="DGX Spark vLLM",
+        base_url="http://100.64.35.71:8000/v1",
+        adapter="vllm_openai",
+        enabled_for=["agent_studio", "comment_lab", "label_lab"],
+    )
+    service = RouterCatalogService(
+        settings_factory=lambda: _settings_with_sources(dgx, model_profiles_file=str(profiles_path))
+    )
+    monkeypatch.setattr(router_catalog_module, "load_configured_source_allowlist", lambda source_id: None)
+    monkeypatch.setattr(
+        service,
+        "_fetch_models_payload",
+        lambda source, *, settings: {"data": [{"id": "gemma4-31b-nvfp4"}]},
+    )
+
+    models = service.flatten(service.snapshot(force_refresh=True))
+
+    assert len(models) == 1
+    model = models[0]
+    assert model.router_model_id == "dgx_vllm::gemma4-31b-nvfp4"
+    assert model.profile_applied is True
+    assert model.supports_top_k is True
+    assert model.sampling_defaults == {"temperature": 1.0, "top_p": 0.95, "top_k": 64}
+    assert model.scenario_sampling_defaults["label_lab"]["temperature"] == 0.0
+    assert model.agent_studio_candidate is True
+    assert model.agent_studio_compatible is False
+    assert model.agent_studio_available is False
+    assert model.letta_handle is None
+    assert model.comment_lab_available is True
+    assert model.label_lab_available is True
 
 
 def test_router_model_id_helpers() -> None:

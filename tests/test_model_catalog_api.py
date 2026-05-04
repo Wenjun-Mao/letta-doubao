@@ -52,6 +52,21 @@ class _FakeRouterClient:
                     "raw_model_count": 3,
                     "filtered_model_count": 1,
                 },
+                {
+                    "id": "dgx_vllm",
+                    "label": "DGX Spark vLLM",
+                    "kind": "openai-compatible",
+                    "adapter": "vllm_openai",
+                    "base_url": "http://100.64.35.71:8000/v1",
+                    "module_visibility": ["comment_lab", "label_lab"],
+                    "status": "healthy",
+                    "detail": "ok",
+                    "models": [{"provider_model_id": "gemma4-31b-nvfp4", "model_type": "llm"}],
+                    "allowlist_applied": None,
+                    "allowlist_checked_at": None,
+                    "raw_model_count": 1,
+                    "filtered_model_count": 1,
+                },
             ],
             "items": [
                 {
@@ -70,6 +85,13 @@ class _FakeRouterClient:
                     "comment_lab_available": True,
                     "label_lab_available": True,
                     "structured_output_mode": "json_schema",
+                    "sampling_defaults": {},
+                    "scenario_sampling_defaults": {},
+                    "supports_top_k": True,
+                    "profile_applied": False,
+                    "profile_source": "",
+                    "agent_studio_candidate": False,
+                    "agent_studio_compatible": True,
                 },
                 {
                     "router_model_id": "ark::doubao-seed-1-8-251228",
@@ -87,6 +109,40 @@ class _FakeRouterClient:
                     "comment_lab_available": True,
                     "label_lab_available": False,
                     "structured_output_mode": None,
+                    "sampling_defaults": {},
+                    "scenario_sampling_defaults": {},
+                    "supports_top_k": False,
+                    "profile_applied": False,
+                    "profile_source": "",
+                    "agent_studio_candidate": False,
+                    "agent_studio_compatible": True,
+                },
+                {
+                    "router_model_id": "dgx_vllm::gemma4-31b-nvfp4",
+                    "model_key": "dgx_vllm::gemma4-31b-nvfp4",
+                    "source_id": "dgx_vllm",
+                    "source_label": "DGX Spark vLLM",
+                    "source_kind": "openai-compatible",
+                    "source_adapter": "vllm_openai",
+                    "source_base_url": "http://100.64.35.71:8000/v1",
+                    "module_visibility": ["comment_lab", "label_lab"],
+                    "provider_model_id": "gemma4-31b-nvfp4",
+                    "model_type": "llm",
+                    "letta_handle": None,
+                    "agent_studio_available": False,
+                    "comment_lab_available": True,
+                    "label_lab_available": True,
+                    "structured_output_mode": "json_schema",
+                    "sampling_defaults": {"temperature": 1.0, "top_p": 0.95, "top_k": 64},
+                    "scenario_sampling_defaults": {
+                        "comment_lab": {"temperature": 1.0, "top_p": 0.95, "top_k": 64},
+                        "label_lab": {"temperature": 0.0, "top_p": 0.95, "top_k": 64},
+                    },
+                    "supports_top_k": True,
+                    "profile_applied": True,
+                    "profile_source": "https://huggingface.co/google/gemma-4-31B-it",
+                    "agent_studio_candidate": True,
+                    "agent_studio_compatible": False,
                 },
             ],
         }
@@ -119,16 +175,34 @@ def test_options_api_uses_router_catalog_for_all_scenarios(monkeypatch) -> None:
     assert [item["key"] for item in comment_payload["models"]] == [
         "local_llama_server::gemma4",
         "ark::doubao-seed-1-8-251228",
+        "dgx_vllm::gemma4-31b-nvfp4",
     ]
-    assert [item["key"] for item in label_payload["models"]] == ["local_llama_server::gemma4"]
+    assert [item["key"] for item in label_payload["models"]] == [
+        "local_llama_server::gemma4",
+        "dgx_vllm::gemma4-31b-nvfp4",
+    ]
     assert label_payload["models"][0]["structured_output_mode"] == "json_schema"
+    dgx_comment = next(item for item in comment_payload["models"] if item["key"] == "dgx_vllm::gemma4-31b-nvfp4")
+    dgx_label = next(item for item in label_payload["models"] if item["key"] == "dgx_vllm::gemma4-31b-nvfp4")
+    assert dgx_comment["scenario_sampling_defaults"]["comment_lab"] == {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 64,
+    }
+    assert dgx_label["scenario_sampling_defaults"]["label_lab"] == {
+        "temperature": 0.0,
+        "top_p": 0.95,
+        "top_k": 64,
+    }
     assert label_payload["defaults"]["schema_key"] == "label_entity_groups_v1"
-    assert chat_payload["agent_studio"] == {"temperature": None, "top_p": None}
+    assert chat_payload["agent_studio"] == {"temperature": None, "top_p": None, "top_k": None}
     assert comment_payload["commenting"]["cache_prompt"] is False
     assert comment_payload["commenting"]["temperature"] == 0.6
     assert comment_payload["commenting"]["top_p"] == 1.0
+    assert comment_payload["commenting"]["top_k"] is None
     assert label_payload["labeling"]["temperature"] == 0.0
     assert label_payload["labeling"]["top_p"] == 1.0
+    assert label_payload["labeling"]["top_k"] is None
 
 
 def test_model_catalog_api_reports_router_source_health_and_items(monkeypatch) -> None:
@@ -144,6 +218,7 @@ def test_model_catalog_api_reports_router_source_health_and_items(monkeypatch) -
     ark_source = next(source for source in payload["sources"] if source["id"] == "ark")
     llama_model = next(item for item in payload["items"] if item["source_id"] == "local_llama_server")
     ark_model = next(item for item in payload["items"] if item["source_id"] == "ark")
+    dgx_model = next(item for item in payload["items"] if item["source_id"] == "dgx_vllm")
 
     assert payload["generated_at"] == 123.0
     assert payload["router"]["base_url"] == "http://model-router.local/v1"
@@ -154,3 +229,7 @@ def test_model_catalog_api_reports_router_source_health_and_items(monkeypatch) -
     assert llama_model["upstream_provider_model_id"] == "gemma4"
     assert llama_model["label_lab_available"] is True
     assert ark_model["agent_studio_available"] is False
+    assert dgx_model["profile_applied"] is True
+    assert dgx_model["supports_top_k"] is True
+    assert dgx_model["agent_studio_candidate"] is True
+    assert dgx_model["agent_studio_compatible"] is False

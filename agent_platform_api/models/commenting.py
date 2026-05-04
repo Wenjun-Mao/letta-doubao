@@ -14,6 +14,7 @@ class ApiCommentingRuntimeDefaultsResponse(BaseModel):
     cache_prompt: bool
     temperature: float
     top_p: float
+    top_k: int | None = None
 
 
 class CommentingGenerateRequest(BaseModel):
@@ -33,6 +34,7 @@ class CommentingGenerateRequest(BaseModel):
                     "cache_prompt": False,
                     "temperature": 0.6,
                     "top_p": 1.0,
+                    "top_k": 64,
                 }
             ]
         }
@@ -62,6 +64,7 @@ class CommentingGenerateRequest(BaseModel):
     )
     temperature: float | None = Field(default=None, ge=0, le=2, description="Sampling temperature. Defaults to Comment Lab runtime settings.")
     top_p: float | None = Field(default=None, gt=0, le=1, description="Nucleus sampling top_p. Defaults to Comment Lab runtime settings.")
+    top_k: int | None = Field(default=None, gt=0, description="Optional top_k sampling value. Defaults to model profile or Comment Lab runtime settings.")
 
 
 class ApiCommentingGenerateResponse(BaseModel):
@@ -81,6 +84,7 @@ class ApiCommentingGenerateResponse(BaseModel):
     cache_prompt: bool
     temperature: float
     top_p: float
+    top_k: int | None = None
     content_source: str | None = None
     selected_attempt: str
     finish_reason: str | None = None

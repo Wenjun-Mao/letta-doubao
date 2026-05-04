@@ -56,6 +56,17 @@ def enriched_catalog_items(force_refresh: bool = False) -> list[dict[str, Any]]:
                 "comment_lab_available": (not is_embedding) and bool(raw_item.get("comment_lab_available", False)),
                 "label_lab_available": (not is_embedding) and bool(raw_item.get("label_lab_available", False)),
                 "structured_output_mode": raw_item.get("structured_output_mode"),
+                "sampling_defaults": raw_item.get("sampling_defaults") if isinstance(raw_item.get("sampling_defaults"), dict) else {},
+                "scenario_sampling_defaults": (
+                    raw_item.get("scenario_sampling_defaults")
+                    if isinstance(raw_item.get("scenario_sampling_defaults"), dict)
+                    else {}
+                ),
+                "supports_top_k": bool(raw_item.get("supports_top_k", False)),
+                "profile_applied": bool(raw_item.get("profile_applied", False)),
+                "profile_source": str(raw_item.get("profile_source", "") or ""),
+                "agent_studio_candidate": bool(raw_item.get("agent_studio_candidate", False)),
+                "agent_studio_compatible": bool(raw_item.get("agent_studio_compatible", True)),
             }
         )
     return items

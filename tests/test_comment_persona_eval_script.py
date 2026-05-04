@@ -31,10 +31,11 @@ def test_default_config_loads_comment_lab_values() -> None:
     assert config.retry_count == 0
     assert config.task_shape == "all_in_system"
     assert config.cache_prompt is False
-    assert config.temperature == 0.6
-    assert config.top_p == 1.0
-    assert config.news_path.name == "sports_news_demo.txt"
-    assert config.rounds == 3
+    assert config.temperature == 1.0
+    assert config.top_p == 0.95
+    assert config.top_k == 64
+    assert config.news_path.name == "sports_news_demo2.txt"
+    assert config.rounds == 1
 
 
 def test_fetch_comment_personas_filters_by_key_search_and_limit() -> None:
@@ -119,6 +120,7 @@ def test_run_attempt_uses_comment_lab_payload_and_flattens_success() -> None:
         cache_prompt=False,
         temperature=0.7,
         top_p=0.95,
+        top_k=64,
     )
     persona = {"key": "comment_demo", "label": "Demo", "description": "Demo persona"}
     with httpx.Client(base_url="http://test", transport=httpx.MockTransport(handler)) as client:
@@ -144,6 +146,7 @@ def test_run_attempt_uses_comment_lab_payload_and_flattens_success() -> None:
         "cache_prompt": False,
         "temperature": 0.7,
         "top_p": 0.95,
+        "top_k": 64,
     }
     assert row["status"] == "ok"
     assert row["content"] == "这条新闻确实值得继续观察。"
@@ -152,6 +155,7 @@ def test_run_attempt_uses_comment_lab_payload_and_flattens_success() -> None:
     assert row["cache_prompt"] is False
     assert row["temperature"] == 0.7
     assert row["top_p"] == 0.95
+    assert row["top_k"] == 64
     assert row["timings_cache_n"] == 0
     assert row["timings_prompt_n"] == 123
     assert row["timings_predicted_n"] == 24
@@ -183,6 +187,7 @@ def test_write_artifacts_preserves_csv_and_raw_jsonl(tmp_path) -> None:
             "cache_prompt": False,
             "temperature": 0.6,
             "top_p": 1.0,
+            "top_k": 64,
             "max_tokens": 0,
             "timeout_seconds": 180,
             "retry_count": 0,
@@ -237,6 +242,7 @@ def test_artifact_writer_streams_attempts_before_context_closes(tmp_path) -> Non
         "cache_prompt": False,
         "temperature": 0.6,
         "top_p": 1.0,
+        "top_k": 64,
         "max_tokens": 0,
         "timeout_seconds": 180,
         "retry_count": 0,

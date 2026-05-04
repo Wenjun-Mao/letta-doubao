@@ -32,6 +32,7 @@ const COPY = {
     cachePromptHint: "Off by default for fair persona comparisons on llama-server.",
     temperature: "Temperature",
     topP: "Top P",
+    topK: "Top K",
     userInput: "Input Text",
     userInputPlaceholder: "Paste a news summary, a thread excerpt, or your own draft context here...",
     generate: "Generate Comment",
@@ -48,6 +49,7 @@ const COPY = {
     cachePromptUsed: "Prompt Cache Used",
     temperatureUsed: "Temperature Used",
     topPUsed: "Top P Used",
+    topKUsed: "Top K Used",
     runtimeMetaTitle: "Runtime",
     timingMetaTitle: "Timing",
     tokenMetaTitle: "Token Usage",
@@ -79,6 +81,7 @@ const COPY = {
     invalidRetryCount: "Retry count must be an integer between 0 and 5.",
     invalidTemperature: "Temperature must be between 0 and 2.",
     invalidTopP: "Top P must be greater than 0 and at most 1.",
+    invalidTopK: "Top K must be a positive integer, or blank to use the model default.",
     loadingError: "Failed to load commenting options",
     generateError: "Comment generation failed",
   },
@@ -107,6 +110,7 @@ const COPY = {
     cachePromptHint: "默认关闭，便于在 llama-server 上公平比较 Persona。",
     temperature: "Temperature",
     topP: "Top P",
+    topK: "Top K",
     userInput: "输入文本",
     userInputPlaceholder: "粘贴新闻摘要、评论串内容，或你的草稿上下文...",
     generate: "生成评论",
@@ -123,6 +127,7 @@ const COPY = {
     cachePromptUsed: "实际 Prompt 缓存",
     temperatureUsed: "实际 Temperature",
     topPUsed: "实际 Top P",
+    topKUsed: "实际 Top K",
     runtimeMetaTitle: "运行参数",
     timingMetaTitle: "时序",
     tokenMetaTitle: "Token 使用",
@@ -154,6 +159,7 @@ const COPY = {
     invalidRetryCount: "重试次数必须是 0 到 5 之间的整数。",
     invalidTemperature: "Temperature 必须在 0 到 2 之间。",
     invalidTopP: "Top P 必须大于 0 且不超过 1。",
+    invalidTopK: "Top K 必须是正整数，或留空使用模型默认值。",
     loadingError: "加载评论配置失败",
     generateError: "评论生成失败",
   },
@@ -222,6 +228,24 @@ function parseTopP(value: string): number | null {
   return parsed;
 }
 
+function parseOptionalPositiveInt(value: string): number | undefined | null {
+  const trimmed = value.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed) || parsed <= 0 || String(parsed) !== trimmed) {
+    return null;
+  }
+  return parsed;
+}
+
+function samplingDefaultString(option: OptionEntry | undefined, scenario: "comment_lab" | "label_lab" | "agent_studio", field: "temperature" | "top_p" | "top_k"): string | null {
+  const scenarioDefaults = option?.scenario_sampling_defaults?.[scenario];
+  const value = scenarioDefaults?.[field] ?? option?.sampling_defaults?.[field];
+  return value === undefined || value === null ? null : String(value);
+}
+
 function asObject(value: unknown): Record<string, unknown> {
   if (value && typeof value === "object" && !Array.isArray(value)) {
     return value as Record<string, unknown>;
@@ -284,6 +308,7 @@ function formatRawRequestForHuman(value: unknown): string {
   lines.push(`Model: ${String(payload.model ?? "-")}`);
   lines.push(`Temperature: ${String(payload.temperature ?? "-")}`);
   lines.push(`Top P: ${String(payload.top_p ?? "-")}`);
+  lines.push(`Top K: ${String(payload.top_k ?? "-")}`);
   lines.push(`Cache Prompt: ${String(payload.cache_prompt ?? "-")}`);
   lines.push(`Max Tokens: ${String(payload.max_tokens ?? "-")}`);
 
@@ -378,6 +403,7 @@ export default function CommentLabPage() {
   const [cachePrompt, setCachePrompt] = useState(false);
   const [temperature, setTemperature] = useState("0.6");
   const [topP, setTopP] = useState("1");
+  const [topK, setTopK] = useState("");
 
   const [userInput, setUserInput] = useState("");
   const [output, setOutput] = useState("");
@@ -389,6 +415,7 @@ export default function CommentLabPage() {
   const [cachePromptUsed, setCachePromptUsed] = useState("");
   const [temperatureUsed, setTemperatureUsed] = useState("");
   const [topPUsed, setTopPUsed] = useState("");
+  const [topKUsed, setTopKUsed] = useState("");
   const [usagePromptTokens, setUsagePromptTokens] = useState("");
   const [usageCompletionTokens, setUsageCompletionTokens] = useState("");
   const [usageTotalTokens, setUsageTotalTokens] = useState("");
@@ -447,6 +474,7 @@ export default function CommentLabPage() {
         setCachePrompt(Boolean(payload.commenting.cache_prompt));
         setTemperature(`${payload.commenting.temperature}`);
         setTopP(`${payload.commenting.top_p}`);
+        setTopK(payload.commenting.top_k === null || payload.commenting.top_k === undefined ? "" : `${payload.commenting.top_k}`);
       }
 
       setStatus(copy.optionsRefreshed);
@@ -460,6 +488,23 @@ export default function CommentLabPage() {
   useEffect(() => {
     void loadOptions();
   }, []);
+
+  useEffect(() => {
+    const selected = models.find((option) => option.key === model);
+    if (!selected) {
+      return;
+    }
+    const nextTemperature = samplingDefaultString(selected, "comment_lab", "temperature");
+    const nextTopP = samplingDefaultString(selected, "comment_lab", "top_p");
+    const nextTopK = samplingDefaultString(selected, "comment_lab", "top_k");
+    if (nextTemperature !== null) {
+      setTemperature(nextTemperature);
+    }
+    if (nextTopP !== null) {
+      setTopP(nextTopP);
+    }
+    setTopK(nextTopK ?? "");
+  }, [model, models]);
 
   const onGenerate = async () => {
     setError("");
@@ -503,6 +548,11 @@ export default function CommentLabPage() {
       setError(copy.invalidTopP);
       return;
     }
+    const parsedTopK = parseOptionalPositiveInt(topK);
+    if (parsedTopK === null) {
+      setError(copy.invalidTopK);
+      return;
+    }
 
     setSubmitting(true);
     const startedAtMs = performance.now();
@@ -519,6 +569,7 @@ export default function CommentLabPage() {
         cache_prompt: cachePrompt,
         temperature: parsedTemperature,
         top_p: parsedTopP,
+        top_k: parsedTopK,
       });
       setOutput(payload.content || "");
       setProvider(payload.provider || "");
@@ -529,6 +580,7 @@ export default function CommentLabPage() {
       setCachePromptUsed(payload.cache_prompt ? "true" : "false");
       setTemperatureUsed(`${payload.temperature}`);
       setTopPUsed(`${payload.top_p}`);
+      setTopKUsed(payload.top_k === null || payload.top_k === undefined ? "" : `${payload.top_k}`);
       const usage = asObject(payload.usage);
       const completionTokensDetails = asObject(usage.completion_tokens_details);
       setUsagePromptTokens(asIntString(usage.prompt_tokens));
@@ -716,6 +768,20 @@ export default function CommentLabPage() {
             </label>
 
             <label className="field">
+              <span>{copy.topK}</span>
+              <input
+                className="input"
+                type="number"
+                min={1}
+                step={1}
+                value={topK}
+                onChange={(event) => setTopK(event.target.value)}
+                placeholder="64"
+                disabled={submitting}
+              />
+            </label>
+
+            <label className="field">
               <span>{copy.cachePrompt}</span>
               <label className="muted" style={{ fontSize: 12 }}>
                 <input
@@ -791,6 +857,9 @@ export default function CommentLabPage() {
                 </div>
                 <div>
                   {copy.topPUsed}: {topPUsed || "-"}
+                </div>
+                <div>
+                  {copy.topKUsed}: {topKUsed || "-"}
                 </div>
                 <div>
                   {copy.maxTokensUsed}: {maxTokensUsed || "-"}

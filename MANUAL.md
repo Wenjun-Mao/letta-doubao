@@ -13,7 +13,7 @@ The current stack works end to end with:
 - Letta server in Docker
 - Postgres + pgvector in Docker
 - `model_router` as the single OpenAI-compatible LLM front door
-- llama-server and Ark as active router upstreams, with LM Studio and Unsloth Studio as optional standby sources
+- llama-server, DGX/vLLM, and Ark as active router upstreams, with LM Studio and Unsloth Studio as optional standby sources
 - Letta's built-in embedding backend for agent memory
 - Two marimo notebook files that can also be executed as script-based smoke tests
 
@@ -59,7 +59,8 @@ Why:
 - ADE modules need richer source diagnostics than blind OpenAI-compatible consumers can see.
 
 Consequence:
-- `config/model_router_sources.json` is the single model-source configuration file.
+- `config/model_router_sources.json` is the single source endpoint configuration file.
+- `config/model_router_model_profiles.json` layers advisory model intelligence on discovered router models, including recommended `temperature`, `top_p`, `top_k`, and Agent Studio compatibility flags.
 - Agent Studio sees router-backed Letta handles, while Comment Lab and Label Lab call the router directly.
 
 ### 2. Docker Compose For The Local Stack
@@ -265,7 +266,8 @@ Expected result:
 ### Unified Model Router
 
 Important:
-- `model_router` now uses `config/model_router_sources.json` as the single source of truth for Agent Studio, Comment Lab, Label Lab, and future ADE modules.
+- `model_router` now uses `config/model_router_sources.json` as the single source endpoint config for Agent Studio, Comment Lab, Label Lab, and future ADE modules.
+- `config/model_router_model_profiles.json` stores model-level defaults and compatibility notes discovered from model cards, provider docs, and local smoke tests.
 - Letta is pointed at the router through `OPENAI_API_BASE=http://model_router:8290/v1` in Compose, so it only needs one OpenAI-compatible provider.
 - `agent_platform_api` reads `/v1/router/model-catalog` and calls the router for stateless Comment Lab and Label Lab generation. The router is mandatory for normal ADE model access.
 
@@ -278,8 +280,10 @@ Notes:
 - Comment Lab uses source-scoped model keys in the form `<source-id>::<provider-model-id>` so duplicate model names remain distinct across providers.
 - The local port split is intentional:
   - `8081` is the active llama-server endpoint for local Comment Lab and Label Lab work.
+  - `100.64.35.71:8000` is the DGX Spark vLLM endpoint for larger local models and is initially visible to Comment Lab and Label Lab only.
   - `2234` remains optional Unsloth Studio standby.
   - `1234` remains optional LM Studio standby plus Letta bootstrap compatibility.
+- Model profiles are advisory. The router fills omitted `temperature`, `top_p`, and supported `top_k` values from the profile, but explicit caller values always win.
 - llama-server runtime settings remain host-side operations. Loaded GGUF, context sizing, GPU offload, and reasoning mode are expected to be adjusted in the launch command on the machine running llama-server, not through ADE.
 - Unsloth Studio and LM Studio may be offline or have no loaded model for long periods. In that state they should either be disabled in `config/model_router_sources.json` or appear only as `unreachable`/`empty` in diagnostics without blocking normal llama-server-first use.
 - Ark model visibility is filtered through the checked-in allowlist report at `agent_platform_api/catalog_data/ark_chat_probe_report.json`, which is regenerated with `uv run python evals/provider_model_probe/run.py --source-id ark --mode chat-probe --write`.
@@ -411,6 +415,7 @@ If you change the default Agent Studio model later:
 
 Update both:
 - `config/model_router_sources.json` `enabled_for` module tags for the desired upstream/model
+- `config/model_router_model_profiles.json` if the selected model has recommended sampling defaults or needs an Agent Studio compatibility flag
 - `LETTA_MODEL_HANDLE`
 
 Rule:
@@ -428,6 +433,7 @@ If you change ADE provider discovery later:
 
 Update:
 - `config/model_router_sources.json`
+- `config/model_router_model_profiles.json` if the new provider/model needs model-specific sampling or capability notes
 - no second Agent Platform source file is needed; `agent_platform_api` reads router diagnostics instead of traversing providers directly
 - any referenced source auth env vars such as `LLAMA_SERVER_API_KEY`, `UNSLOTH_API_KEY`, or `OPENAI_API_KEY`
 

@@ -23,6 +23,7 @@ def commenting_runtime_defaults() -> ApiCommentingRuntimeDefaultsResponse:
         cache_prompt=bool(defaults.get("cache_prompt", False)),
         temperature=float(defaults.get("temperature", 0.6)),
         top_p=float(defaults.get("top_p", 1.0)),
+        top_k=defaults.get("top_k"),
     )
 
 
@@ -34,6 +35,7 @@ def labeling_runtime_defaults() -> ApiLabelingRuntimeDefaultsResponse:
         repair_retry_count=int(defaults.get("repair_retry_count", 1)),
         temperature=float(defaults.get("temperature", 0.0)),
         top_p=float(defaults.get("top_p", 1.0)),
+        top_k=defaults.get("top_k"),
     )
 
 
@@ -42,4 +44,5 @@ def agent_studio_runtime_defaults() -> ApiAgentStudioRuntimeDefaultsResponse:
     return ApiAgentStudioRuntimeDefaultsResponse(
         temperature=settings.agent_studio_temperature,
         top_p=settings.agent_studio_top_p,
+        top_k=settings.agent_studio_top_k,
     )

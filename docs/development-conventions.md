@@ -6,7 +6,7 @@ This repo favors boring, discoverable structure over clever scattering. If a fut
 
 - Root `config/` is reserved for application/runtime source-of-truth config.
 - Workflow-specific config belongs beside the workflow runner.
-- Current root config should stay limited to `config/model_router_sources.json` unless a new project-wide runtime config is intentionally introduced.
+- Current root config should stay limited to project-wide runtime inputs such as `config/model_router_sources.json` and `config/model_router_model_profiles.json`.
 
 ## Workflow And Eval Folders
 

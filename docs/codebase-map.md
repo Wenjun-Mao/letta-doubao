@@ -20,7 +20,7 @@ The router is the canonical LLM access layer. `agent_platform_api` should not tr
 
 ## Backend Packages
 
-- `model_router/`: the first-party OpenAI-compatible router. It owns upstream source discovery, source health, Ark allowlist filtering, model id routing, and module visibility.
+- `model_router/`: the first-party OpenAI-compatible router. It owns upstream source discovery, source health, Ark allowlist filtering, model profiles, model id routing, and module visibility.
 - `agent_platform_api/`: the ADE backend API. It owns routes, Pydantic response/request models, feature services, registries, Letta orchestration, and router catalog consumption.
 - `agent_platform_api/services/`: feature services for Agent Studio/Letta operations, Comment Lab, and Label Lab.
 - `agent_platform_api/registries/`: registries for file-backed prompts/schemas/tools, SQLite-backed personas, and agent lifecycle metadata.
@@ -46,6 +46,7 @@ The router is the canonical LLM access layer. `agent_platform_api` should not tr
 ## Persistent Content
 
 - `config/model_router_sources.json`: the single model-source config file. Edit this to enable, disable, reorder, or retag LLM upstreams.
+- `config/model_router_model_profiles.json`: router model intelligence such as recommended sampling defaults, `top_k` support, and Agent Studio compatibility flags.
 - `prompts/system_prompts/`: prompt templates grouped by scenario.
 - `agent_platform_api/seed_data/personas.jsonl`: checked-in seed personas loaded into SQLite on first startup.
 - `data/personas/personas.sqlite3`: tracked SQLite persona library; SQLite sidecars remain ignored.
@@ -60,6 +61,7 @@ The router is the canonical LLM access layer. `agent_platform_api` should not tr
 | Task | Start Here |
 | --- | --- |
 | Add or disable an LLM backend | `config/model_router_sources.json` |
+| Add or tune model-specific defaults | `config/model_router_model_profiles.json` |
 | Change model discovery/routing behavior | `model_router/catalog.py` and `model_router/app.py` |
 | Change Comment Lab generation | `agent_platform_api/services/commenting.py` and `agent_platform_api/routers/commenting.py` |
 | Change Label Lab generation | `agent_platform_api/services/labeling.py`, `agent_platform_api/services/labeling_helpers.py`, and `agent_platform_api/routers/labeling.py` |
