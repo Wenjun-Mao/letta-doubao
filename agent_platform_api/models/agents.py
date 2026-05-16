@@ -20,7 +20,7 @@ class AgentCreateRequest(BaseModel):
     scenario: ScenarioType = "chat"
     name: str = "dev-agent"
     model: str = ""
-    prompt_key: str = "chat_v20260418"
+    prompt_key: str = "chat_v20260516"
     persona_key: str = "chat_linxiaotang"
     embedding: str | None = None
     temperature: float | None = Field(default=None, ge=0, le=2)

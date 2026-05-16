@@ -401,7 +401,7 @@ export default function AgentStudioPage() {
 
   const [createName, setCreateName] = useState("ade-agent");
   const [createModel, setCreateModel] = useState("");
-  const [createPromptKey, setCreatePromptKey] = useState("chat_v20260418");
+  const [createPromptKey, setCreatePromptKey] = useState("chat_v20260516");
   const [createPersonaKey, setCreatePersonaKey] = useState("chat_linxiaotang");
   const [createEmbedding, setCreateEmbedding] = useState("");
   const [createTemperature, setCreateTemperature] = useState("");
@@ -589,7 +589,7 @@ export default function AgentStudioPage() {
       if (current && nextPrompts.some((item) => item.key === current)) {
         return current;
       }
-      return optionsPayload.defaults?.prompt_key || nextPrompts[0]?.key || "chat_v20260418";
+      return optionsPayload.defaults?.prompt_key || nextPrompts[0]?.key || "chat_v20260516";
     });
     setCreatePersonaKey((current) => {
       if (current && nextPersonas.some((item) => item.key === current)) {
@@ -702,7 +702,7 @@ export default function AgentStudioPage() {
         const resolvedPromptKey =
           requestedPromptKey && promptKeys.includes(requestedPromptKey)
             ? requestedPromptKey
-            : optionsPayload.defaults?.prompt_key || optionsPayload.prompts?.[0]?.key || "chat_v20260418";
+            : optionsPayload.defaults?.prompt_key || optionsPayload.prompts?.[0]?.key || "chat_v20260516";
 
         const resolvedPersonaKey =
           requestedPersonaKey && personaKeys.includes(requestedPersonaKey)

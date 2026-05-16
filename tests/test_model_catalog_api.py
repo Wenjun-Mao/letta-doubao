@@ -235,6 +235,8 @@ def test_options_api_uses_router_catalog_for_all_scenarios(monkeypatch) -> None:
     label_payload = asyncio.run(core.api_get_options(refresh=True, scenario="label"))
 
     assert chat_payload["defaults"]["model"] == ""
+    assert chat_payload["defaults"]["prompt_key"] == "chat_v20260516"
+    assert {item["key"] for item in chat_payload["prompts"]} >= {"chat_v20260418", "chat_v20260516"}
     assert [item["key"] for item in chat_payload["models"]] == [
         "openai-proxy/local_llama_server::gemma4",
         "openai-proxy/ark::doubao-seed-1-8-251228",

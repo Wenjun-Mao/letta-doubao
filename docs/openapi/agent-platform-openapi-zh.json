@@ -30,7 +30,7 @@
             "type": "string"
           },
           "prompt_key": {
-            "default": "chat_v20260418",
+            "default": "chat_v20260516",
             "title": "提示词键",
             "type": "string"
           },
@@ -3712,13 +3712,130 @@
       "PlatformTestRunRequest": {
         "additionalProperties": false,
         "properties": {
+          "embedding": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "向量模型"
+          },
+          "fixture_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Fixture 键"
+          },
+          "judge_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Judge Enabled"
+          },
+          "judge_model_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Judge 模型 键"
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "模型"
+          },
+          "persona_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Persona 键"
+          },
+          "prompt_key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "提示词键"
+          },
+          "retry_count": {
+            "anyOf": [
+              {
+                "maximum": 5.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "重试次数"
+          },
+          "rounds": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rounds"
+          },
           "run_type": {
             "enum": [
               "platform_api_e2e_check",
-              "ade_mvp_smoke_e2e_check"
+              "ade_mvp_smoke_e2e_check",
+              "chat_memory_eval"
             ],
             "title": "运行类型",
             "type": "string"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "exclusiveMinimum": 0.0,
+                "maximum": 600.0,
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "超时秒数"
           }
         },
         "required": [

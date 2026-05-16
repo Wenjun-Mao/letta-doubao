@@ -1,7 +1,9 @@
 from .chat.chat_v20260418 import PROMPT as CHAT_V20260418_PROMPT
+from .chat.chat_v20260516 import PROMPT as CHAT_V20260516_PROMPT
 from .comment.comment_v20260418 import PROMPT as COMMENT_V20260418_PROMPT
 
 __all__ = [
     "CHAT_V20260418_PROMPT",
+    "CHAT_V20260516_PROMPT",
     "COMMENT_V20260418_PROMPT",
 ]

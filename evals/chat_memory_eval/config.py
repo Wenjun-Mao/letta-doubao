@@ -31,7 +31,7 @@ class ChatMemoryEvalConfig:
     stop_on_error: bool = False
     keep_agents: bool = False
     model: str = DEFAULT_AGENT_MODEL_HANDLE
-    prompt_key: str = "chat_v20260418"
+    prompt_key: str = "chat_v20260516"
     persona_key: str = "chat_linxiaotang"
     embedding: str = "letta/letta-free"
     timeout_seconds: float = 180.0

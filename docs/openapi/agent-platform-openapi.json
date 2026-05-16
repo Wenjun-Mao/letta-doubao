@@ -30,7 +30,7 @@
             "type": "string"
           },
           "prompt_key": {
-            "default": "chat_v20260418",
+            "default": "chat_v20260516",
             "title": "Prompt Key",
             "type": "string"
           },

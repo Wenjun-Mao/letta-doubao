@@ -38,7 +38,7 @@ The default config is `evals/chat_memory_eval/config.toml`.
 | `fixture_key` | `recent_user_chat_turns` | Fixture JSON in `fixtures/`. |
 | `rounds` | `3` | Number of fresh agents to run. |
 | `model` | `openai-proxy/dgx_vllm::qwen3.6-35b-a3b-fp8` | Agent Studio model handle. |
-| `prompt_key` | `chat_v20260418` | Chat prompt key. |
+| `prompt_key` | `chat_v20260516` | Chat prompt key. |
 | `persona_key` | `chat_linxiaotang` | Chat persona key. |
 | `embedding` | `letta/letta-free` | Letta embedding handle. |
 | `timeout_seconds` | `180` | Runtime timeout sent to `/api/v1/chat`. |

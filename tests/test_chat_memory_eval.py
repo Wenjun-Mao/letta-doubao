@@ -34,6 +34,7 @@ def test_chat_memory_config_loads_defaults_and_cli_overrides(tmp_path) -> None:
 
     updated = apply_cli_overrides(config, args)
 
+    assert config.prompt_key == "chat_v20260516"
     assert updated.output_dir == tmp_path
     assert updated.model == "openai-proxy/test::model"
     assert updated.rounds == 1

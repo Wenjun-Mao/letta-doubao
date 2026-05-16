@@ -1,7 +1,7 @@
 import { OptionEntry } from "../../lib/api";
 
 export const CHAT_MEMORY_DEFAULT_MODEL = "openai-proxy/dgx_vllm::qwen3.6-35b-a3b-fp8";
-export const CHAT_MEMORY_DEFAULT_PROMPT = "chat_v20260418";
+export const CHAT_MEMORY_DEFAULT_PROMPT = "chat_v20260516";
 export const CHAT_MEMORY_DEFAULT_PERSONA = "chat_linxiaotang";
 export const CHAT_MEMORY_DEFAULT_EMBEDDING = "letta/letta-free";
 export const CHAT_MEMORY_FIXTURES = ["recent_user_chat_turns"];

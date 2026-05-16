@@ -68,7 +68,7 @@ def test_platform_chat_memory_eval_request_accepts_focused_fields() -> None:
     request = PlatformTestRunRequest(
         run_type="chat_memory_eval",
         model="openai-proxy/dgx_vllm::qwen3.6-35b-a3b-fp8",
-        prompt_key="chat_v20260418",
+        prompt_key="chat_v20260516",
         persona_key="chat_linxiaotang",
         embedding="letta/letta-free",
         rounds=1,

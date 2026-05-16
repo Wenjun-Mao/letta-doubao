@@ -9,6 +9,10 @@ DEFAULT_PROMPT_META: dict[str, dict[str, str]] = {
         "label": "Chat V20260418",
         "description": "Chat scenario prompt baseline for memory-augmented user conversations.",
     },
+    "chat_v20260516": {
+        "label": "Chat V20260516",
+        "description": "Chat scenario prompt baseline with stricter user-memory update guidance.",
+    },
     "comment_v20260418": {
         "label": "Comment V20260418",
         "description": "Comment scenario prompt baseline for stateless news and thread responses.",
