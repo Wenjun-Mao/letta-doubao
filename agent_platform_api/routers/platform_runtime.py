@@ -209,7 +209,7 @@ async def api_platform_create_test_run(request: PlatformTestRunRequest):
 
     try:
         return test_orchestrator.create_run(
-            run_type=request.run_type,
+            **request.model_dump(exclude_none=True),
         )
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc

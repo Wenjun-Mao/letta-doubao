@@ -9,10 +9,12 @@ Supporting files:
 
 - `tests/shared/config_defaults.py`: shared base URLs and default handles for the live checks
 - `tests/outputs/platform_orchestrator/`: transient runtime logs written by orchestrated Test Center runs
+- Chat/model behavior evals live under `evals/`, for example `evals/chat_memory_eval/`
 
 ## Maintained Entry Points
 
 - `uv run python -m pytest`
+- `uv run python evals/chat_memory_eval/run.py --config evals/chat_memory_eval/config.toml --rounds 1`
 - `uv run python tests/checks/platform_api_e2e_check.py`
 - `uv run python tests/checks/ade_mvp_smoke_e2e_check.py`
 

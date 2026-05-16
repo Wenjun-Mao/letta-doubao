@@ -167,6 +167,7 @@ The maintained verification surface under `tests/` is:
 $env:PYTHONPATH='.'
 uv run python -m pytest
 uv run python evals/provider_model_probe/run.py --source-id ark --mode chat-probe --write
+uv run python evals/chat_memory_eval/run.py --config evals/chat_memory_eval/config.toml --rounds 1
 uv run python tests/checks/platform_api_e2e_check.py
 uv run python tests/checks/ade_mvp_smoke_e2e_check.py
 ```
@@ -200,7 +201,7 @@ curl http://127.0.0.1:8284/api/v1/options?scenario=label
 - `GET /api/v1/platform/test-runs`
 	- Lists orchestrated backend test runs.
 - `POST /api/v1/platform/test-runs`
-	- Starts one orchestrated backend check execution. Supported run types are `platform_api_e2e_check` and `ade_mvp_smoke_e2e_check`.
+	- Starts one orchestrated backend check/eval execution. Supported run types are `platform_api_e2e_check`, `ade_mvp_smoke_e2e_check`, and `chat_memory_eval`.
 - `GET /api/v1/platform/test-runs/{run_id}`
 	- Retrieves run status, tail logs, and exit code.
 - `POST /api/v1/platform/test-runs/{run_id}/cancel`

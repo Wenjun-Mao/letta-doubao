@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Literal
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .common import LabelingOutputMode
 
@@ -43,7 +43,41 @@ class PlatformTestRunRequest(BaseModel):
     run_type: Literal[
         "platform_api_e2e_check",
         "ade_mvp_smoke_e2e_check",
+        "chat_memory_eval",
     ]
+    model: str | None = None
+    prompt_key: str | None = None
+    persona_key: str | None = None
+    embedding: str | None = None
+    rounds: int | None = Field(default=None, ge=1, le=100)
+    fixture_key: str | None = None
+    timeout_seconds: float | None = Field(default=None, gt=0, le=600)
+    retry_count: int | None = Field(default=None, ge=0, le=5)
+    judge_enabled: bool | None = None
+    judge_model_key: str | None = None
+
+    @model_validator(mode="after")
+    def _chat_memory_fields_only_for_chat_memory_eval(self) -> PlatformTestRunRequest:
+        chat_memory_fields = {
+            "model",
+            "prompt_key",
+            "persona_key",
+            "embedding",
+            "rounds",
+            "fixture_key",
+            "timeout_seconds",
+            "retry_count",
+            "judge_enabled",
+            "judge_model_key",
+        }
+        if self.run_type != "chat_memory_eval":
+            provided = sorted(chat_memory_fields.intersection(self.model_fields_set))
+            if provided:
+                raise ValueError(
+                    "Chat memory eval fields are only accepted when run_type='chat_memory_eval': "
+                    + ", ".join(provided)
+                )
+        return self
 
 
 class ApiPlatformRuntimeCapabilitiesResponse(BaseModel):

@@ -1,0 +1,28 @@
+# Chat memory evaluation defaults.
+# Run from the project root:
+#   uv run python evals/chat_memory_eval/run.py --config evals/chat_memory_eval/config.toml --rounds 1
+
+api_base_url = "http://127.0.0.1:8284"
+output_dir = "evals/chat_memory_eval/outputs"
+fixtures_dir = "evals/chat_memory_eval/fixtures"
+fixture_key = "recent_user_chat_turns"
+
+rounds = 3
+stop_on_error = false
+keep_agents = false
+
+model = "openai-proxy/dgx_vllm::qwen3.6-35b-a3b-fp8"
+prompt_key = "chat_v20260418"
+persona_key = "chat_linxiaotang"
+embedding = "letta/letta-free"
+timeout_seconds = 180
+retry_count = 0
+
+# Advisory judge only. Deterministic checks remain the official pass/fail.
+judge_enabled = true
+judge_model_key = ""
+judge_timeout_seconds = 120
+
+# Transport retry for script-to-Agent-Platform requests.
+api_retry_count = 2
+

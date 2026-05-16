@@ -9,6 +9,7 @@ data/personas/
 .tmp/
 diagnostics/
 tests/outputs/
+evals/*/outputs/
 letta-souce-code/
 .github/
 .vscode/

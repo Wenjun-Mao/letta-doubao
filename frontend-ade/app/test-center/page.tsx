@@ -3,17 +3,28 @@
 import { useEffect, useMemo, useState } from "react";
 
 import {
+  OptionEntry,
   PlatformArtifact,
   PlatformRunRecord,
   PlatformRunType,
   cancelTestRun,
   createTestRun,
+  fetchOptions,
   getTestRun,
   listRunArtifacts,
   listTestRuns,
   readRunArtifact,
 } from "../../lib/api";
 import { useI18n } from "../../lib/i18n";
+import {
+  CHAT_MEMORY_DEFAULT_EMBEDDING,
+  CHAT_MEMORY_DEFAULT_MODEL,
+  CHAT_MEMORY_DEFAULT_PERSONA,
+  CHAT_MEMORY_DEFAULT_PROMPT,
+  CHAT_MEMORY_FIXTURES,
+  ChatMemoryEvalFields,
+  chooseAvailable,
+} from "./chat-memory-eval-fields";
 
 const COPY = {
   en: {
@@ -21,6 +32,16 @@ const COPY = {
     title: "Test Center",
     createRunTitle: "Create Test Run",
     runType: "Run type",
+    chatMemoryTitle: "Chat Memory Eval",
+    model: "Model",
+    prompt: "Prompt",
+    persona: "Persona",
+    embedding: "Embedding",
+    fixture: "Fixture",
+    rounds: "Rounds",
+    timeoutSeconds: "Timeout (seconds)",
+    retryCount: "Retry Count",
+    judgeEnabled: "Advisory LLM judge",
     submitting: "Submitting...",
     createRun: "Create Run",
     refreshRuns: "Refresh Runs",
@@ -53,6 +74,16 @@ const COPY = {
     title: "测试中心",
     createRunTitle: "创建测试运行",
     runType: "运行类型",
+    chatMemoryTitle: "聊天记忆评测",
+    model: "模型",
+    prompt: "提示词",
+    persona: "人设",
+    embedding: "Embedding",
+    fixture: "对话样本",
+    rounds: "轮数",
+    timeoutSeconds: "超时（秒）",
+    retryCount: "重试次数",
+    judgeEnabled: "启用辅助 LLM 评审",
     submitting: "提交中...",
     createRun: "创建运行",
     refreshRuns: "刷新运行列表",
@@ -85,6 +116,7 @@ const COPY = {
 const RUN_TYPES: PlatformRunType[] = [
   "platform_api_e2e_check",
   "ade_mvp_smoke_e2e_check",
+  "chat_memory_eval",
 ];
 
 function toErrorMessage(exc: unknown): string {
@@ -105,6 +137,19 @@ export default function TestCenterPage() {
   const [selectedRun, setSelectedRun] = useState<PlatformRunRecord | null>(null);
 
   const [runType, setRunType] = useState<PlatformRunType>("platform_api_e2e_check");
+  const [chatModels, setChatModels] = useState<OptionEntry[]>([]);
+  const [chatPrompts, setChatPrompts] = useState<OptionEntry[]>([]);
+  const [chatPersonas, setChatPersonas] = useState<OptionEntry[]>([]);
+  const [chatEmbeddings, setChatEmbeddings] = useState<OptionEntry[]>([]);
+  const [evalModel, setEvalModel] = useState(CHAT_MEMORY_DEFAULT_MODEL);
+  const [evalPromptKey, setEvalPromptKey] = useState(CHAT_MEMORY_DEFAULT_PROMPT);
+  const [evalPersonaKey, setEvalPersonaKey] = useState(CHAT_MEMORY_DEFAULT_PERSONA);
+  const [evalEmbedding, setEvalEmbedding] = useState(CHAT_MEMORY_DEFAULT_EMBEDDING);
+  const [evalFixtureKey, setEvalFixtureKey] = useState(CHAT_MEMORY_FIXTURES[0]);
+  const [evalRounds, setEvalRounds] = useState("3");
+  const [evalTimeoutSeconds, setEvalTimeoutSeconds] = useState("180");
+  const [evalRetryCount, setEvalRetryCount] = useState("0");
+  const [evalJudgeEnabled, setEvalJudgeEnabled] = useState(true);
 
   const [artifacts, setArtifacts] = useState<PlatformArtifact[]>([]);
   const [selectedArtifactId, setSelectedArtifactId] = useState("");
@@ -136,13 +181,29 @@ export default function TestCenterPage() {
     setArtifacts(artifactPayload.items || []);
   };
 
+  const refreshChatOptions = async () => {
+    const payload = await fetchOptions("chat");
+    const models = Array.isArray(payload.models) ? payload.models.filter((item) => item.available !== false) : [];
+    const prompts = Array.isArray(payload.prompts) ? payload.prompts : [];
+    const personas = Array.isArray(payload.personas) ? payload.personas : [];
+    const embeddings = Array.isArray(payload.embeddings) ? payload.embeddings.filter((item) => item.available !== false) : [];
+    setChatModels(models);
+    setChatPrompts(prompts);
+    setChatPersonas(personas);
+    setChatEmbeddings(embeddings);
+    setEvalModel((current) => chooseAvailable(current, models, CHAT_MEMORY_DEFAULT_MODEL));
+    setEvalPromptKey((current) => chooseAvailable(current, prompts, payload.defaults?.prompt_key || CHAT_MEMORY_DEFAULT_PROMPT));
+    setEvalPersonaKey((current) => chooseAvailable(current, personas, payload.defaults?.persona_key || CHAT_MEMORY_DEFAULT_PERSONA));
+    setEvalEmbedding((current) => chooseAvailable(current, embeddings, payload.defaults?.embedding || CHAT_MEMORY_DEFAULT_EMBEDDING));
+  };
+
   useEffect(() => {
     let cancelled = false;
     const run = async () => {
       setLoading(true);
       setError("");
       try {
-        await refreshRuns();
+        await Promise.all([refreshRuns(), refreshChatOptions()]);
       } catch (exc) {
         if (!cancelled) {
           setError(toErrorMessage(exc));
@@ -182,8 +243,24 @@ export default function TestCenterPage() {
     setError("");
     setStatus("");
     try {
-      const created = await createTestRun({
+      const payload = {
         run_type: runType,
+        ...(runType === "chat_memory_eval"
+          ? {
+              model: evalModel,
+              prompt_key: evalPromptKey,
+              persona_key: evalPersonaKey,
+              embedding: evalEmbedding,
+              fixture_key: evalFixtureKey,
+              rounds: Math.max(1, Number.parseInt(evalRounds, 10) || 1),
+              timeout_seconds: Math.max(1, Number.parseFloat(evalTimeoutSeconds) || 180),
+              retry_count: Math.max(0, Number.parseInt(evalRetryCount, 10) || 0),
+              judge_enabled: evalJudgeEnabled,
+            }
+          : {}),
+      };
+      const created = await createTestRun({
+        ...payload,
       });
       setStatus(`${copy.createdRun} ${created.run_id}`);
       setSelectedRunId(created.run_id);
@@ -250,6 +327,33 @@ export default function TestCenterPage() {
               ))}
             </select>
           </label>
+          {runType === "chat_memory_eval" ? (
+            <ChatMemoryEvalFields
+              copy={copy}
+              chatModels={chatModels}
+              chatPrompts={chatPrompts}
+              chatPersonas={chatPersonas}
+              chatEmbeddings={chatEmbeddings}
+              evalModel={evalModel}
+              evalPromptKey={evalPromptKey}
+              evalPersonaKey={evalPersonaKey}
+              evalEmbedding={evalEmbedding}
+              evalFixtureKey={evalFixtureKey}
+              evalRounds={evalRounds}
+              evalTimeoutSeconds={evalTimeoutSeconds}
+              evalRetryCount={evalRetryCount}
+              evalJudgeEnabled={evalJudgeEnabled}
+              setEvalModel={setEvalModel}
+              setEvalPromptKey={setEvalPromptKey}
+              setEvalPersonaKey={setEvalPersonaKey}
+              setEvalEmbedding={setEvalEmbedding}
+              setEvalFixtureKey={setEvalFixtureKey}
+              setEvalRounds={setEvalRounds}
+              setEvalTimeoutSeconds={setEvalTimeoutSeconds}
+              setEvalRetryCount={setEvalRetryCount}
+              setEvalJudgeEnabled={setEvalJudgeEnabled}
+            />
+          ) : null}
         </div>
         <div className="toolbar" style={{ marginTop: 10 }}>
           <button className="button" onClick={() => void onCreateRun()} disabled={busy || loading}>

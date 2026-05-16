@@ -1,0 +1,48 @@
+{
+  "key": "recent_user_chat_turns",
+  "description": "Restored from the deleted 2026-04-01 real chat fixture used by the old memory update runner.",
+  "turns": [
+    "你好，我叫张伟",
+    "跟我说说你自己吧",
+    "你喜欢小狗吗？我有一只小狗叫Rocky",
+    "是一只哈士奇。你有小狗吗？",
+    "要不要我送你一只？",
+    "你花店有些什么花呀都？收入好吗？",
+    "我过来光顾你生意好不好？你花店在哪里啊？"
+  ],
+  "expected_facts": [
+    {
+      "key": "user_name",
+      "label": "User name",
+      "aliases": ["张伟"]
+    },
+    {
+      "key": "dog_name",
+      "label": "Dog name",
+      "aliases": ["Rocky", "rocky"]
+    },
+    {
+      "key": "dog_breed",
+      "label": "Dog breed",
+      "aliases": ["哈士奇", "Husky", "husky"]
+    }
+  ],
+  "forbidden_reply_substrings": [
+    "我是ai",
+    "我是一个ai",
+    "作为ai",
+    "语言模型",
+    "大语言模型",
+    "虚拟助手",
+    "虚拟角色",
+    "我是虚拟",
+    "我是模拟",
+    "我不是真的",
+    "我并不真实",
+    "我不是真实",
+    "线上角色",
+    "我是机器人",
+    "程序生成"
+  ]
+}
+

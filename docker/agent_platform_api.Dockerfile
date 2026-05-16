@@ -14,6 +14,7 @@ RUN --mount=type=cache,target=/root/.cache/uv \
 COPY ade_core ./ade_core
 COPY agent_platform_api ./agent_platform_api
 COPY config ./config
+COPY evals ./evals
 COPY prompts ./prompts
 COPY schemas ./schemas
 COPY tests ./tests

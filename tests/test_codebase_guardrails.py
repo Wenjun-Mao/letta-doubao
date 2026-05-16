@@ -92,6 +92,7 @@ def test_no_tracked_generated_or_stale_artifacts() -> None:
         "frontend-ade/.next/",
         "frontend-ade/node_modules/",
         "evals/comment_persona_eval/outputs/",
+        "evals/chat_memory_eval/outputs/",
         "evals/provider_model_probe/outputs/",
         "temps/",
         "notebooks/zz",
@@ -140,6 +141,7 @@ def test_docs_do_not_reference_removed_comment_eval_paths() -> None:
 def test_eval_workflows_are_self_documenting() -> None:
     workflows = [
         PROJECT_ROOT / "evals" / "comment_persona_eval",
+        PROJECT_ROOT / "evals" / "chat_memory_eval",
         PROJECT_ROOT / "evals" / "provider_model_probe",
     ]
     offenders = [

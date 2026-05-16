@@ -72,6 +72,7 @@ The router is the canonical LLM access layer. `agent_platform_api` should not tr
 | Change Schema Center behavior | `agent_platform_api/registries/label_schema.py` and `agent_platform_api/routers/schema_center.py` |
 | Change Agent Studio / Letta orchestration | `agent_platform_api/services/agent_platform.py` and `agent_platform_api/routers/agents.py` |
 | Run Comment Persona Eval | `uv run python evals/comment_persona_eval/run.py --config evals/comment_persona_eval/config.toml` |
+| Run Chat Memory Eval | `uv run python evals/chat_memory_eval/run.py --config evals/chat_memory_eval/config.toml --rounds 1` |
 | Change frontend page behavior | the matching `frontend-ade/app/<module>/page.tsx` file |
 | Update OpenAPI artifacts | `uv run python scripts/export_openapi.py` |
 | Re-probe Ark usable models | `uv run python evals/provider_model_probe/run.py --source-id ark --mode chat-probe --write` |

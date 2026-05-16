@@ -28,6 +28,8 @@ class PlatformTestOrchestrator:
         self,
         *,
         run_type: str,
+        output_dir: Path,
+        options: dict[str, Any],
     ) -> list[str]:
         python = sys.executable
 
@@ -35,6 +37,29 @@ class PlatformTestOrchestrator:
             return [python, "tests/checks/platform_api_e2e_check.py"]
         if run_type == "ade_mvp_smoke_e2e_check":
             return [python, "tests/checks/ade_mvp_smoke_e2e_check.py"]
+        if run_type == "chat_memory_eval":
+            command = [
+                python,
+                "evals/chat_memory_eval/run.py",
+                "--config",
+                "evals/chat_memory_eval/config.toml",
+                "--output-dir",
+                str(output_dir),
+            ]
+            _append_option(command, "--model", options.get("model"))
+            _append_option(command, "--prompt-key", options.get("prompt_key"))
+            _append_option(command, "--persona-key", options.get("persona_key"))
+            _append_option(command, "--embedding", options.get("embedding"))
+            _append_option(command, "--fixture-key", options.get("fixture_key"))
+            _append_option(command, "--judge-model-key", options.get("judge_model_key"))
+            _append_option(command, "--rounds", options.get("rounds"))
+            _append_option(command, "--timeout-seconds", options.get("timeout_seconds"))
+            _append_option(command, "--retry-count", options.get("retry_count"))
+            if options.get("judge_enabled") is True:
+                command.append("--judge-enabled")
+            if options.get("judge_enabled") is False:
+                command.append("--no-judge-enabled")
+            return command
 
         raise ValueError(f"Unsupported run_type: {run_type}")
 
@@ -72,25 +97,50 @@ class PlatformTestOrchestrator:
                 }
             )
 
+        output_dir = str(run.get("output_dir", "") or "")
+        if output_dir:
+            output_path = Path(output_dir).resolve()
+            if output_path.is_dir():
+                for path in sorted(item for item in output_path.rglob("*") if item.is_file()):
+                    if log_file and path.resolve() == Path(log_file).resolve():
+                        continue
+                    relative = path.relative_to(output_path).as_posix()
+                    artifact_id = relative.replace("/", "__")
+                    artifacts.append(
+                        {
+                            "artifact_id": artifact_id,
+                            "type": path.suffix.lower().lstrip(".") or "artifact",
+                            "path": str(path.resolve()),
+                            "exists": True,
+                            "size_bytes": path.stat().st_size,
+                        }
+                    )
+
         return artifacts
 
     def create_run(
         self,
         *,
         run_type: str,
+        **options: Any,
     ) -> dict[str, Any]:
+        run_id = str(uuid.uuid4())
+        output_dir = (self._log_root / run_id).resolve()
+        output_dir.mkdir(parents=True, exist_ok=True)
         command = self._build_command(
             run_type=run_type,
+            output_dir=output_dir,
+            options=options,
         )
 
-        run_id = str(uuid.uuid4())
-        log_file = str((self._log_root / f"{run_id}.log").resolve())
+        log_file = str((output_dir / "orchestrator.log").resolve())
 
         run: dict[str, Any] = {
             "run_id": run_id,
             "run_type": run_type,
             "status": "queued",
             "command": command,
+            "output_dir": str(output_dir),
             "created_at": _utc_now_iso(),
             "started_at": "",
             "finished_at": "",
@@ -202,6 +252,7 @@ class PlatformTestOrchestrator:
                 return None
             run_snapshot = {
                 "log_file": str(run.get("log_file", "") or ""),
+                "output_dir": str(run.get("output_dir", "") or ""),
             }
 
         return self._resolve_artifacts(run_snapshot)
@@ -251,3 +302,11 @@ class PlatformTestOrchestrator:
                 process.terminate()
 
             return self._public_record(run)
+
+
+def _append_option(command: list[str], flag: str, value: Any) -> None:
+    if value is None:
+        return
+    if isinstance(value, str) and not value.strip():
+        return
+    command.extend([flag, str(value)])

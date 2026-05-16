@@ -394,6 +394,7 @@ Remove-Item Env:MARIMO_SMOKE_ONLY
 ```powershell
 $env:PYTHONPATH="."
 uv run python -m pytest
+uv run python evals/chat_memory_eval/run.py --config evals/chat_memory_eval/config.toml --rounds 1
 uv run python tests/checks/platform_api_e2e_check.py
 uv run python tests/checks/ade_mvp_smoke_e2e_check.py
 ```

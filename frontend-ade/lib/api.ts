@@ -18,7 +18,7 @@ type RequestOptions = {
 export type Scenario = "chat" | "comment" | "label";
 export type CommentingTaskShape = "classic" | "all_in_system" | "structured_output";
 export type LabelingOutputMode = "strict_json_schema" | "json_schema" | "best_effort_prompt_json";
-export type PlatformRunType = "platform_api_e2e_check" | "ade_mvp_smoke_e2e_check";
+export type PlatformRunType = "platform_api_e2e_check" | "ade_mvp_smoke_e2e_check" | "chat_memory_eval";
 export type SamplingDefaults = {
   temperature?: number | null;
   top_p?: number | null;
@@ -308,6 +308,20 @@ export type PlatformArtifact = {
   path: string;
   exists: boolean;
   size_bytes: number;
+};
+
+export type CreateTestRunPayload = {
+  run_type: PlatformRunType;
+  model?: string;
+  prompt_key?: string;
+  persona_key?: string;
+  embedding?: string;
+  rounds?: number;
+  fixture_key?: string;
+  timeout_seconds?: number;
+  retry_count?: number;
+  judge_enabled?: boolean;
+  judge_model_key?: string;
 };
 
 function cacheKey(path: string): string {
@@ -1163,9 +1177,7 @@ export function listTestRuns() {
   return requestJson<{ items: PlatformRunRecord[] }>("/api/v1/platform/test-runs", { cacheTtlMs: 3_000 });
 }
 
-export function createTestRun(payload: {
-  run_type: PlatformRunType;
-}) {
+export function createTestRun(payload: CreateTestRunPayload) {
   return requestJson<PlatformRunRecord>("/api/v1/platform/test-runs", {
     method: "POST",
     body: payload,
