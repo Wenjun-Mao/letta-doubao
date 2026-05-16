@@ -4,7 +4,6 @@ import asyncio
 
 import agent_platform_api.options.catalog as options_catalog
 import agent_platform_api.options.letta_catalog as letta_catalog
-import agent_platform_api.runtime as runtime
 from agent_platform_api.routers import core, platform_meta
 
 
@@ -58,14 +57,17 @@ class _FakeRouterClient:
                     "kind": "openai-compatible",
                     "adapter": "vllm_openai",
                     "base_url": "http://100.64.35.71:8000/v1",
-                    "module_visibility": ["comment_lab", "label_lab"],
+                    "module_visibility": ["agent_studio", "comment_lab", "label_lab"],
                     "status": "healthy",
                     "detail": "ok",
-                    "models": [{"provider_model_id": "gemma4-31b-nvfp4", "model_type": "llm"}],
+                    "models": [
+                        {"provider_model_id": "gemma4-31b-nvfp4", "model_type": "llm"},
+                        {"provider_model_id": "qwen3.6-35b-a3b-fp8", "model_type": "llm"},
+                    ],
                     "allowlist_applied": None,
                     "allowlist_checked_at": None,
-                    "raw_model_count": 1,
-                    "filtered_model_count": 1,
+                    "raw_model_count": 2,
+                    "filtered_model_count": 2,
                 },
             ],
             "items": [
@@ -150,6 +152,64 @@ class _FakeRouterClient:
                     "agent_studio_candidate": True,
                     "agent_studio_compatible": False,
                 },
+                {
+                    "router_model_id": "dgx_vllm::qwen3.6-35b-a3b-fp8",
+                    "model_key": "dgx_vllm::qwen3.6-35b-a3b-fp8",
+                    "source_id": "dgx_vllm",
+                    "source_label": "DGX Spark vLLM",
+                    "source_kind": "openai-compatible",
+                    "source_adapter": "vllm_openai",
+                    "source_base_url": "http://100.64.35.71:8000/v1",
+                    "module_visibility": ["agent_studio", "comment_lab", "label_lab"],
+                    "provider_model_id": "qwen3.6-35b-a3b-fp8",
+                    "model_type": "llm",
+                    "letta_handle": "openai-proxy/dgx_vllm::qwen3.6-35b-a3b-fp8",
+                    "agent_studio_available": True,
+                    "comment_lab_available": True,
+                    "label_lab_available": True,
+                    "structured_output_mode": "json_schema",
+                    "sampling_defaults": {
+                        "temperature": 1.0,
+                        "top_p": 0.95,
+                        "top_k": 20,
+                        "min_p": 0.0,
+                        "presence_penalty": 1.5,
+                        "repetition_penalty": 1.0,
+                    },
+                    "scenario_sampling_defaults": {
+                        "agent_studio": {
+                            "temperature": 1.0,
+                            "top_p": 0.95,
+                            "top_k": 20,
+                            "min_p": 0.0,
+                            "presence_penalty": 1.5,
+                            "repetition_penalty": 1.0,
+                        },
+                        "comment_lab": {
+                            "temperature": 1.0,
+                            "top_p": 0.95,
+                            "top_k": 20,
+                            "min_p": 0.0,
+                            "presence_penalty": 1.5,
+                            "repetition_penalty": 1.0,
+                        },
+                        "label_lab": {
+                            "temperature": 1.0,
+                            "top_p": 0.95,
+                            "top_k": 20,
+                            "min_p": 0.0,
+                            "presence_penalty": 1.5,
+                            "repetition_penalty": 1.0,
+                        },
+                    },
+                    "supports_top_k": True,
+                    "supports_thinking": True,
+                    "thinking_default_enabled": True,
+                    "profile_applied": True,
+                    "profile_source": "temps/new_LLM/llm/settings.py",
+                    "agent_studio_candidate": True,
+                    "agent_studio_compatible": True,
+                },
             ],
         }
 
@@ -164,6 +224,7 @@ def test_options_api_uses_router_catalog_for_all_scenarios(monkeypatch) -> None:
             {
                 "openai-proxy/local_llama_server::gemma4",
                 "openai-proxy/ark::doubao-seed-1-8-251228",
+                "openai-proxy/dgx_vllm::qwen3.6-35b-a3b-fp8",
             },
             {"letta/letta-free"},
         ),
@@ -177,19 +238,27 @@ def test_options_api_uses_router_catalog_for_all_scenarios(monkeypatch) -> None:
     assert [item["key"] for item in chat_payload["models"]] == [
         "openai-proxy/local_llama_server::gemma4",
         "openai-proxy/ark::doubao-seed-1-8-251228",
+        "openai-proxy/dgx_vllm::qwen3.6-35b-a3b-fp8",
     ]
     assert [item["key"] for item in comment_payload["models"]] == [
         "local_llama_server::gemma4",
         "ark::doubao-seed-1-8-251228",
         "dgx_vllm::gemma4-31b-nvfp4",
+        "dgx_vllm::qwen3.6-35b-a3b-fp8",
     ]
     assert [item["key"] for item in label_payload["models"]] == [
         "local_llama_server::gemma4",
         "dgx_vllm::gemma4-31b-nvfp4",
+        "dgx_vllm::qwen3.6-35b-a3b-fp8",
     ]
     assert label_payload["models"][0]["structured_output_mode"] == "json_schema"
     dgx_comment = next(item for item in comment_payload["models"] if item["key"] == "dgx_vllm::gemma4-31b-nvfp4")
     dgx_label = next(item for item in label_payload["models"] if item["key"] == "dgx_vllm::gemma4-31b-nvfp4")
+    qwen_chat = next(
+        item
+        for item in chat_payload["models"]
+        if item["key"] == "openai-proxy/dgx_vllm::qwen3.6-35b-a3b-fp8"
+    )
     assert dgx_comment["scenario_sampling_defaults"]["comment_lab"] == {
         "temperature": 1.0,
         "top_p": 0.95,
@@ -200,6 +269,17 @@ def test_options_api_uses_router_catalog_for_all_scenarios(monkeypatch) -> None:
         "top_p": 0.95,
         "top_k": 64,
     }
+    assert qwen_chat["scenario_sampling_defaults"]["agent_studio"] == {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 1.5,
+        "repetition_penalty": 1.0,
+    }
+    assert qwen_chat["supports_thinking"] is True
+    assert qwen_chat["thinking_default_enabled"] is True
+    assert qwen_chat["agent_studio_compatible"] is True
     assert label_payload["defaults"]["schema_key"] == "label_entity_groups_v1"
     assert chat_payload["agent_studio"] == {"temperature": None, "top_p": None, "top_k": None}
     assert comment_payload["commenting"]["cache_prompt"] is False
@@ -217,7 +297,13 @@ def test_model_catalog_api_reports_router_source_health_and_items(monkeypatch) -
     monkeypatch.setattr(
         letta_catalog,
         "resolve_letta_catalog_handles",
-        lambda: ({"openai-proxy/local_llama_server::gemma4"}, {"letta/letta-free"}),
+        lambda: (
+            {
+                "openai-proxy/local_llama_server::gemma4",
+                "openai-proxy/dgx_vllm::qwen3.6-35b-a3b-fp8",
+            },
+            {"letta/letta-free"},
+        ),
     )
 
     payload = asyncio.run(platform_meta.api_platform_model_catalog(refresh=True))
@@ -225,6 +311,7 @@ def test_model_catalog_api_reports_router_source_health_and_items(monkeypatch) -
     llama_model = next(item for item in payload["items"] if item["source_id"] == "local_llama_server")
     ark_model = next(item for item in payload["items"] if item["source_id"] == "ark")
     dgx_model = next(item for item in payload["items"] if item["source_id"] == "dgx_vllm")
+    qwen_model = next(item for item in payload["items"] if item["model_key"] == "dgx_vllm::qwen3.6-35b-a3b-fp8")
 
     assert payload["generated_at"] == 123.0
     assert payload["router"]["base_url"] == "http://model-router.local/v1"
@@ -241,3 +328,10 @@ def test_model_catalog_api_reports_router_source_health_and_items(monkeypatch) -
     assert dgx_model["thinking_default_enabled"] is False
     assert dgx_model["agent_studio_candidate"] is True
     assert dgx_model["agent_studio_compatible"] is False
+    assert qwen_model["agent_studio_available"] is True
+    assert qwen_model["comment_lab_available"] is True
+    assert qwen_model["label_lab_available"] is True
+    assert qwen_model["thinking_default_enabled"] is True
+    assert qwen_model["sampling_defaults"]["min_p"] == 0.0
+    assert qwen_model["sampling_defaults"]["presence_penalty"] == 1.5
+    assert qwen_model["sampling_defaults"]["repetition_penalty"] == 1.0

@@ -21,4 +21,5 @@ frontend-ade/.next/
 frontend-ade/.turbo/
 frontend-ade/.env.local
 frontend-ade/.env.production.local
-
+.playwright-cli/
+.playwright-mcp/

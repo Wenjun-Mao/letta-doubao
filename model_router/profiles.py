@@ -21,6 +21,9 @@ class SamplingDefaults(BaseModel):
     temperature: float | None = None
     top_p: float | None = None
     top_k: int | None = None
+    min_p: float | None = None
+    presence_penalty: float | None = None
+    repetition_penalty: float | None = None
 
     @field_validator("temperature")
     @classmethod
@@ -42,6 +45,16 @@ class SamplingDefaults(BaseModel):
             raise ValueError("top_p must be > 0 and <= 1")
         return resolved
 
+    @field_validator("min_p")
+    @classmethod
+    def _validate_min_p(cls, value: float | None) -> float | None:
+        if value is None:
+            return None
+        resolved = float(value)
+        if resolved < 0 or resolved > 1:
+            raise ValueError("min_p must be between 0 and 1")
+        return resolved
+
     @field_validator("top_k")
     @classmethod
     def _validate_top_k(cls, value: int | None) -> int | None:
@@ -52,6 +65,26 @@ class SamplingDefaults(BaseModel):
             raise ValueError("top_k must be > 0")
         return resolved
 
+    @field_validator("presence_penalty")
+    @classmethod
+    def _validate_presence_penalty(cls, value: float | None) -> float | None:
+        if value is None:
+            return None
+        resolved = float(value)
+        if resolved < -2 or resolved > 2:
+            raise ValueError("presence_penalty must be between -2 and 2")
+        return resolved
+
+    @field_validator("repetition_penalty")
+    @classmethod
+    def _validate_repetition_penalty(cls, value: float | None) -> float | None:
+        if value is None:
+            return None
+        resolved = float(value)
+        if resolved <= 0:
+            raise ValueError("repetition_penalty must be > 0")
+        return resolved
+
     def merged_with(self, override: "SamplingDefaults | None") -> "SamplingDefaults":
         if override is None:
             return self
@@ -59,6 +92,17 @@ class SamplingDefaults(BaseModel):
             temperature=override.temperature if override.temperature is not None else self.temperature,
             top_p=override.top_p if override.top_p is not None else self.top_p,
             top_k=override.top_k if override.top_k is not None else self.top_k,
+            min_p=override.min_p if override.min_p is not None else self.min_p,
+            presence_penalty=(
+                override.presence_penalty
+                if override.presence_penalty is not None
+                else self.presence_penalty
+            ),
+            repetition_penalty=(
+                override.repetition_penalty
+                if override.repetition_penalty is not None
+                else self.repetition_penalty
+            ),
         )
 
     def as_payload(self) -> dict[str, float | int]:

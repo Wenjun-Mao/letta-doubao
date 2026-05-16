@@ -167,6 +167,95 @@ def test_router_catalog_enriches_models_from_profiles_and_gates_agent_studio(mon
     assert model.label_lab_available is True
 
 
+def test_router_catalog_exposes_qwen_vllm_profile_to_all_modules(monkeypatch, tmp_path) -> None:
+    profiles_path = tmp_path / "model_profiles.json"
+    profiles_path.write_text(
+        json.dumps(
+            {
+                "dgx_vllm::qwen3.6-35b-a3b-fp8": {
+                    "base_model": "Qwen/Qwen3.6-35B-A3B-FP8",
+                    "profile_source": "temps/new_LLM/llm/settings.py",
+                    "supports_top_k": True,
+                    "supports_thinking": True,
+                    "thinking_default_enabled": True,
+                    "agent_studio_candidate": True,
+                    "agent_studio_compatible": True,
+                    "sampling_defaults": {
+                        "temperature": 1.0,
+                        "top_p": 0.95,
+                        "top_k": 20,
+                        "min_p": 0.0,
+                        "presence_penalty": 1.5,
+                        "repetition_penalty": 1.0,
+                    },
+                    "scenario_sampling_defaults": {
+                        "agent_studio": {
+                            "temperature": 1.0,
+                            "top_p": 0.95,
+                            "top_k": 20,
+                            "min_p": 0.0,
+                            "presence_penalty": 1.5,
+                            "repetition_penalty": 1.0,
+                        },
+                        "comment_lab": {
+                            "temperature": 1.0,
+                            "top_p": 0.95,
+                            "top_k": 20,
+                            "min_p": 0.0,
+                            "presence_penalty": 1.5,
+                            "repetition_penalty": 1.0,
+                        },
+                        "label_lab": {
+                            "temperature": 1.0,
+                            "top_p": 0.95,
+                            "top_k": 20,
+                            "min_p": 0.0,
+                            "presence_penalty": 1.5,
+                            "repetition_penalty": 1.0,
+                        },
+                    },
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    dgx = RouterSourceConfig(
+        id="dgx_vllm",
+        label="DGX Spark vLLM",
+        base_url="http://100.64.35.71:8000/v1",
+        adapter="vllm_openai",
+        enabled_for=["agent_studio", "comment_lab", "label_lab"],
+    )
+    service = RouterCatalogService(
+        settings_factory=lambda: _settings_with_sources(dgx, model_profiles_file=str(profiles_path))
+    )
+    monkeypatch.setattr(router_catalog_module, "load_configured_source_allowlist", lambda source_id: None)
+    monkeypatch.setattr(
+        service,
+        "_fetch_models_payload",
+        lambda source, *, settings: {"data": [{"id": "qwen3.6-35b-a3b-fp8"}]},
+    )
+
+    models = service.flatten(service.snapshot(force_refresh=True))
+
+    assert len(models) == 1
+    model = models[0]
+    assert model.router_model_id == "dgx_vllm::qwen3.6-35b-a3b-fp8"
+    assert model.letta_handle == "openai-proxy/dgx_vllm::qwen3.6-35b-a3b-fp8"
+    assert model.agent_studio_available is True
+    assert model.comment_lab_available is True
+    assert model.label_lab_available is True
+    assert model.thinking_default_enabled is True
+    assert model.sampling_defaults == {
+        "temperature": 1.0,
+        "top_p": 0.95,
+        "top_k": 20,
+        "min_p": 0.0,
+        "presence_penalty": 1.5,
+        "repetition_penalty": 1.0,
+    }
+
+
 def test_router_model_id_helpers() -> None:
     assert build_router_model_id("local", "gemma4") == "local::gemma4"
     assert normalize_router_model_id("openai-proxy/local::gemma4") == "local::gemma4"

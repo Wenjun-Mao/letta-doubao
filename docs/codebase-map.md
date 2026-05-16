@@ -46,7 +46,7 @@ The router is the canonical LLM access layer. `agent_platform_api` should not tr
 ## Persistent Content
 
 - `config/model_router_sources.json`: the single model-source config file. Edit this to enable, disable, reorder, or retag LLM upstreams.
-- `config/model_router_model_profiles.json`: router model intelligence such as recommended sampling defaults, `top_k` support, and Agent Studio compatibility flags.
+- `config/model_router_model_profiles.json`: router model intelligence such as recommended sampling defaults, thinking support, and Agent Studio compatibility flags.
 - `prompts/system_prompts/`: prompt templates grouped by scenario.
 - `agent_platform_api/seed_data/personas.jsonl`: checked-in seed personas loaded into SQLite on first startup.
 - `data/personas/personas.sqlite3`: tracked SQLite persona library; SQLite sidecars remain ignored.

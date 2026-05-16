@@ -165,8 +165,17 @@ def test_router_injects_profile_sampling_defaults_for_vllm_when_omitted(monkeypa
         comment_lab_available=True,
         label_lab_available=True,
         structured_output_mode="json_schema",
-        sampling_defaults={"temperature": 1.0, "top_p": 0.95, "top_k": 64},
+        sampling_defaults={
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "top_k": 20,
+            "min_p": 0.0,
+            "presence_penalty": 1.5,
+            "repetition_penalty": 1.0,
+        },
         supports_top_k=True,
+        supports_thinking=True,
+        thinking_default_enabled=True,
         profile_applied=True,
     )
 
@@ -189,7 +198,11 @@ def test_router_injects_profile_sampling_defaults_for_vllm_when_omitted(monkeypa
     assert captured["payload"]["model"] == "gemma4-31b-nvfp4"
     assert captured["payload"]["temperature"] == 1.0
     assert captured["payload"]["top_p"] == 0.95
-    assert captured["payload"]["top_k"] == 64
+    assert captured["payload"]["top_k"] == 20
+    assert captured["payload"]["min_p"] == 0.0
+    assert captured["payload"]["presence_penalty"] == 1.5
+    assert captured["payload"]["repetition_penalty"] == 1.0
+    assert captured["payload"]["chat_template_kwargs"] == {"enable_thinking": True}
 
 
 def test_router_preserves_explicit_sampling_values(monkeypatch) -> None:
@@ -216,8 +229,17 @@ def test_router_preserves_explicit_sampling_values(monkeypatch) -> None:
         comment_lab_available=True,
         label_lab_available=True,
         structured_output_mode="json_schema",
-        sampling_defaults={"temperature": 1.0, "top_p": 0.95, "top_k": 64},
+        sampling_defaults={
+            "temperature": 1.0,
+            "top_p": 0.95,
+            "top_k": 20,
+            "min_p": 0.0,
+            "presence_penalty": 1.5,
+            "repetition_penalty": 1.0,
+        },
         supports_top_k=True,
+        supports_thinking=True,
+        thinking_default_enabled=True,
     )
 
     def fake_post(_source: RouterSourceConfig, payload: dict[str, Any]):
@@ -237,6 +259,10 @@ def test_router_preserves_explicit_sampling_values(monkeypatch) -> None:
             "temperature": 0.4,
             "top_p": 0.8,
             "top_k": 16,
+            "min_p": 0.2,
+            "presence_penalty": 0.3,
+            "repetition_penalty": 1.1,
+            "chat_template_kwargs": {"enable_thinking": False, "tokenize": False},
         },
         headers={"Authorization": "Bearer router-token"},
     )
@@ -245,6 +271,10 @@ def test_router_preserves_explicit_sampling_values(monkeypatch) -> None:
     assert captured["payload"]["temperature"] == 0.4
     assert captured["payload"]["top_p"] == 0.8
     assert captured["payload"]["top_k"] == 16
+    assert captured["payload"]["min_p"] == 0.2
+    assert captured["payload"]["presence_penalty"] == 0.3
+    assert captured["payload"]["repetition_penalty"] == 1.1
+    assert captured["payload"]["chat_template_kwargs"] == {"enable_thinking": False, "tokenize": False}
 
 
 def test_router_drops_non_positive_max_tokens_before_forwarding(monkeypatch) -> None:
@@ -298,7 +328,7 @@ def test_router_does_not_inject_top_k_for_generic_sources(monkeypatch) -> None:
         comment_lab_available=True,
         label_lab_available=False,
         structured_output_mode=None,
-        sampling_defaults={"temperature": 0.7, "top_p": 0.9, "top_k": 64},
+        sampling_defaults={"temperature": 0.7, "top_p": 0.9, "top_k": 64, "min_p": 0.0},
         supports_top_k=False,
     )
 
@@ -321,6 +351,8 @@ def test_router_does_not_inject_top_k_for_generic_sources(monkeypatch) -> None:
     assert captured["payload"]["temperature"] == 0.7
     assert captured["payload"]["top_p"] == 0.9
     assert "top_k" not in captured["payload"]
+    assert "min_p" not in captured["payload"]
+    assert "chat_template_kwargs" not in captured["payload"]
 
 
 def test_router_unknown_model_reports_source_status(monkeypatch) -> None:

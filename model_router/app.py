@@ -207,6 +207,15 @@ def _apply_sampling_defaults(
             next_payload[field] = defaults[field]
     if _supports_top_k(routed_model, source) and _payload_missing(next_payload, "top_k") and defaults.get("top_k") is not None:
         next_payload["top_k"] = defaults["top_k"]
+    if _is_vllm_source(source):
+        for field in ("min_p", "presence_penalty", "repetition_penalty"):
+            if _payload_missing(next_payload, field) and defaults.get(field) is not None:
+                next_payload[field] = defaults[field]
+        if routed_model.supports_thinking and _chat_template_kwargs_missing(next_payload, "enable_thinking"):
+            next_payload["chat_template_kwargs"] = {
+                **_existing_chat_template_kwargs(next_payload),
+                "enable_thinking": routed_model.thinking_default_enabled,
+            }
     return next_payload
 
 
@@ -214,8 +223,24 @@ def _payload_missing(payload: dict[str, Any], field: str) -> bool:
     return field not in payload or payload.get(field) is None
 
 
+def _existing_chat_template_kwargs(payload: dict[str, Any]) -> dict[str, Any]:
+    value = payload.get("chat_template_kwargs")
+    return dict(value) if isinstance(value, dict) else {}
+
+
+def _chat_template_kwargs_missing(payload: dict[str, Any], field: str) -> bool:
+    value = payload.get("chat_template_kwargs")
+    if not isinstance(value, dict):
+        return True
+    return field not in value or value.get(field) is None
+
+
 def _supports_top_k(routed_model: RoutedModel, source: RouterSourceConfig) -> bool:
     return routed_model.supports_top_k or source.adapter in {"llama_cpp_server", "vllm_openai"}
+
+
+def _is_vllm_source(source: RouterSourceConfig) -> bool:
+    return source.adapter == "vllm_openai"
 
 
 def _unknown_model_error(requested_model: str) -> JSONResponse:

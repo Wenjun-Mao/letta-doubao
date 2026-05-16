@@ -24,17 +24,17 @@ def _response(status_code: int, payload: dict[str, Any], request: httpx.Request)
 def test_default_config_loads_comment_lab_values() -> None:
     config = load_config(Path("evals/comment_persona_eval/config.toml"))
 
-    assert config.model_key == "dgx_vllm::gemma4-31b-nvfp4"
+    assert config.model_key == "dgx_vllm::qwen3.6-35b-a3b-fp8"
     assert config.prompt_key == "comment_v20260418"
     assert config.max_tokens == 0
     assert config.timeout_seconds == 180
     assert config.retry_count == 0
     assert config.task_shape == "all_in_system"
     assert config.cache_prompt is False
-    assert config.enable_thinking is False
+    assert config.enable_thinking is True
     assert config.temperature == 1.0
     assert config.top_p == 0.95
-    assert config.top_k == 64
+    assert config.top_k == 20
     assert config.news_path.name == "sports_news_demo2.txt"
     assert config.rounds == 1
 

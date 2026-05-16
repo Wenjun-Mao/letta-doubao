@@ -23,6 +23,9 @@ export type SamplingDefaults = {
   temperature?: number | null;
   top_p?: number | null;
   top_k?: number | null;
+  min_p?: number | null;
+  presence_penalty?: number | null;
+  repetition_penalty?: number | null;
 };
 
 export type OptionEntry = {

@@ -30,10 +30,10 @@
     "kind": "openai-compatible",
     "adapter": "vllm_openai",
     "enabled": true,
-    "enabled_for": ["comment_lab", "label_lab"],
+    "enabled_for": ["agent_studio", "comment_lab", "label_lab"],
     "letta_handle_prefix": "openai-proxy",
-    "api_key_env": "",
-    "api_key_secret": ""
+    "api_key_env": "DGX_VLLM_API_KEY",
+    "api_key_secret": "dgx-vllm-api-key"
   },
   {
     "id": "local_unsloth",

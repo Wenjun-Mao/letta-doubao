@@ -26,24 +26,24 @@ The default config is `evals/comment_persona_eval/config.toml`.
 | --- | --- | --- |
 | `api_base_url` | `http://127.0.0.1:8284` | Agent Platform API base URL. |
 | `output_dir` | `evals/comment_persona_eval/outputs` | Directory for generated CSV/JSONL artifacts. |
-| `news_path` | `evals/comment_persona_eval/inputs/sports_news_demo.txt` | Text file used as the Comment Lab input. |
-| `rounds` | `3` | Number of times each persona comments on the same input. |
+| `news_path` | `evals/comment_persona_eval/inputs/sports_news_demo2.txt` | Text file used as the Comment Lab input. |
+| `rounds` | `1` | Number of times each persona comments on the same input. |
 | `concurrency` | `1` | Reserved for future use; only `1` is supported because local LLM serving is GPU-bound. |
 | `stop_on_error` | `false` | Stop the run after the first failed attempt. |
 | `persona_keys` | `[]` | Optional explicit list of persona keys to run. |
 | `persona_search` | `""` | Optional server-side Prompt Center persona search query. |
 | `limit` | `0` | Optional cap on matched personas; `0` means no cap. |
-| `model_key` | `local_llama_server::gemma4` | Router-scoped Comment Lab model key. |
+| `model_key` | `dgx_vllm::qwen3.6-35b-a3b-fp8` | Router-scoped Comment Lab model key. |
 | `prompt_key` | `comment_v20260418` | Comment Lab system prompt key. |
 | `max_tokens` | `0` | Comment Lab token budget; `0` means no `max_tokens` is sent. |
 | `timeout_seconds` | `180` | Provider timeout sent to Comment Lab. |
 | `retry_count` | `0` | Comment Lab provider retry count. |
 | `task_shape` | `all_in_system` | Prompt packing strategy. |
 | `cache_prompt` | `false` | llama.cpp prompt-cache toggle. Keep off for fair persona comparison runs. |
-| `enable_thinking` | `false` | vLLM/Gemma thinking toggle. Set `true` for `dgx_vllm::gemma4-31b-nvfp4` to request separated reasoning in `raw_reply.choices[0].message.reasoning`; expect much slower runs. Use an explicit `max_tokens` budget such as `1024` or `2048` instead of no-limit `0`. |
-| `temperature` | `0.6` | Comment Lab sampling temperature. |
-| `top_p` | `1.0` | Comment Lab nucleus sampling value. |
-| `top_k` | `64` | Optional top-k sampling value; set blank/omit in custom configs to leave unset. |
+| `enable_thinking` | `true` | vLLM/Qwen thinking toggle sent through `chat_template_kwargs.enable_thinking`. |
+| `temperature` | `1.0` | Comment Lab sampling temperature. |
+| `top_p` | `0.95` | Comment Lab nucleus sampling value. |
+| `top_k` | `20` | Optional top-k sampling value; set blank/omit in custom configs to leave unset. |
 | `api_retry_count` | `2` | Transport retry count for script-to-API calls. |
 
 CLI overrides:
@@ -69,5 +69,5 @@ Both files are written incrementally. If a run is stopped early, open the latest
 
 - If persona listing fails, make sure `agent_platform_api` is rebuilt/restarted and can open `data/personas/personas.sqlite3`.
 - If the script says `model_key ... is not available`, copy an exact key from `GET /api/v1/options?scenario=comment`; Ark model ids are exact, including version fragments such as `2-0`.
-- If model calls fail, check `http://127.0.0.1:8290/v1/router/model-catalog` and confirm `local_llama_server::gemma4` is healthy.
+- If model calls fail, check `http://127.0.0.1:8290/v1/router/model-catalog` and confirm `dgx_vllm::qwen3.6-35b-a3b-fp8` is healthy.
 - If the run is slow, lower `rounds`, use `--persona-key`, or use `--limit` for a pilot run.
